@@ -474,21 +474,17 @@ Scope {
                     }
                 }
                 Rectangle {
-                    width: parent.width; height: 170; radius: 24; color: "#1c3045"
+                    width: parent.width; height: 92; radius: 22; color: "#1c3045"
                     Column {
-                        anchors.left: parent.left; anchors.bottom: parent.bottom
-                        anchors.leftMargin: 22; anchors.bottomMargin: 22; spacing: 7
+                        anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
+                        anchors.leftMargin: 20; spacing: 5
                         Text {
-                            text: "FAIRPHONE 4"; color: "#9bb1c5"
-                            font.pixelSize: 12; font.letterSpacing: 1.5
+                            text: "ZAMARTEOS PURE"; color: "#ffffff"
+                            font.pixelSize: 21; font.weight: Font.DemiBold; font.letterSpacing: 1
                         }
                         Text {
-                            text: "ZamarteOS Pure"; color: "#ffffff"
-                            font.pixelSize: 24; font.weight: Font.DemiBold
-                        }
-                        Text {
-                            text: Qt.formatDateTime(root.now, "dddd, d MMMM  •  HH:mm")
-                            color: "#b7c8d6"; font.pixelSize: 14
+                            text: "Ustawienia telefonu • Fairphone 4"
+                            color: "#b7c8d6"; font.pixelSize: 13
                         }
                     }
                 }
@@ -498,22 +494,35 @@ Scope {
                 }
                 Repeater {
                     model: [
-                        { title: "Sieć i połączenia", subtitle: "Konfiguracja sieci", words: ["network", "connections", "sieć"] },
-                        { title: "Dźwięk", subtitle: "Urządzenia audio", words: ["sound", "audio", "dźwięk"] },
-                        { title: "Ustawienia", subtitle: "Ustawienia systemu", words: ["settings", "ustawienia", "control center"] }
+                        { title: "Sieć i połączenia", subtitle: "Wi-Fi, Bluetooth, sieć komórkowa", words: ["network", "connections", "wifi", "sieć"] },
+                        { title: "Dźwięk i wibracje", subtitle: "Głośność, dzwonek, urządzenia audio", words: ["sound", "audio", "volume", "dźwięk"] },
+                        { title: "Wyświetlacz i tapety", subtitle: "Jasność, ekran, wygląd systemu", words: ["display", "appearance", "wallpaper", "wyświetlacz"] },
+                        { title: "Bateria i zasilanie", subtitle: "Stan baterii i oszczędzanie energii", words: ["power", "battery", "bateria"] },
+                        { title: "Aplikacje", subtitle: "Zainstalowane programy i uprawnienia", words: ["applications", "software", "apps", "aplikacje"] },
+                        { title: "Prywatność i bezpieczeństwo", subtitle: "Blokada ekranu i ochrona danych", words: ["privacy", "security", "lock", "bezpieczeństwo"] },
+                        { title: "Język i region", subtitle: "Polski język i formaty regionalne", words: ["language", "locale", "region", "język"] },
+                        { title: "Informacje o systemie", subtitle: "Wersja ZamarteOS i urządzenie", words: ["about", "system information", "informacje"] }
                     ]
                     delegate: Rectangle {
                         required property var modelData
-                        width: parent.width; height: 76; radius: 19
+                        width: parent.width; height: 66; radius: 18
                         color: "#192b3d"; border.width: 1; border.color: "#2e465d"
                         Column {
                             anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: 18; spacing: 4
+                            anchors.leftMargin: 16; spacing: 3
                             Text {
                                 text: modelData.title; color: "#edf3f8"
-                                font.pixelSize: 16; font.weight: Font.DemiBold
+                                font.pixelSize: 15; font.weight: Font.DemiBold
                             }
-                            Text { text: modelData.subtitle; color: "#91a4ba"; font.pixelSize: 12 }
+                            Text {
+                                text: modelData.subtitle; color: "#91a4ba"; font.pixelSize: 11
+                                elide: Text.ElideRight; width: controlCenter.width - 92
+                            }
+                        }
+                        Text {
+                            anchors.right: parent.right; anchors.rightMargin: 16
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "›"; color: "#a9d7c9"; font.pixelSize: 25
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -523,8 +532,8 @@ Scope {
                 }
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
-                    text: "Elementy sterowania sprzętem zostaną podłączone do usług systemowych w kolejnym etapie. Ten ekran nie udaje jeszcze działających przełączników."
-                    color: "#8095a9"; font.pixelSize: 12
+                    text: "Menu jest przygotowane. Poszczególne ustawienia będą stopniowo podłączane do usług systemowych — nie pokazujemy fikcyjnych przełączników."
+                    color: "#8095a9"; font.pixelSize: 11
                 }
             }
         }
