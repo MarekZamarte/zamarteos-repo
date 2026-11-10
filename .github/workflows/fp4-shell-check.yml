@@ -9,6 +9,7 @@ on:
       - zamarteos-pure-fp4-dev
     paths:
       - "packaging/zamarteos-shell/**"
+      - "scripts/apply-zamarteos-overlay.sh"
       - ".github/workflows/fp4-shell-check.yml"
   workflow_dispatch:
 
