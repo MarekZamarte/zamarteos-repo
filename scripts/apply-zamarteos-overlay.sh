@@ -21,6 +21,10 @@ META="$ROOT/pkgbuilds/moarchy-meta/PKGBUILD"
 if ! grep -q "'zamarteos-shell'" "$META"; then
   sed -i "/^  'moarchy-device'$/a\\  'zamarteos-shell'" "$META"
 fi
+# Bump package releases because both payloads changed. This matters for future
+# pacman upgrades, not only for a clean first image build.
+sed -i 's/^pkgrel=2$/pkgrel=3/' "$META"
+sed -i 's/^pkgrel=18$/pkgrel=19/' "$ROOT/pkgbuilds/moarchy/PKGBUILD"
 
 # Moarchy's session startup already calls omarchy-launch-shell, which delegates
 # to moarchy-restart-shell. Keep that startup contract but point it at our own
