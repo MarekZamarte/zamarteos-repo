@@ -50,7 +50,7 @@ for _ in $(seq 40); do
 done
 [[ -f "$STATE" ]] && exit 0
 mkdir -p "$(dirname "$LOG")"
-QS_NO_RELOAD_POPUP=1 setsid quickshell -n -p /usr/share/zamarteos-shell >"$LOG" 2>&1 &
+QS_NO_RELOAD_POPUP=1 setsid qs -n -p /usr/share/zamarteos-shell >"$LOG" 2>&1 &
 EOF
 chmod +x "$ROOT/bin/moarchy-restart-shell"
 
