@@ -393,7 +393,7 @@ Scope {
                 text: root.notice; color: "#ffffff"; font.pixelSize: 13
             }
         }
-    }    }
+    }
 
     // A narrow always-visible launcher bar keeps the app drawer reachable
     // while ordinary application windows are in the foreground.
