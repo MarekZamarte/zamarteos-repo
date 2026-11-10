@@ -1,0 +1,62 @@
+name: FP4 reference build (not a release)
+
+on:
+  push:
+    branches:
+      - zamarteos-pure-fp4-dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-fp4-reference:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+    steps:
+      - name: Checkout ZamarteOS manifest
+        uses: actions/checkout@v4
+
+      - name: Check build host
+        run: |
+          set -euxo pipefail
+          uname -m
+          test "$(uname -m)" = aarch64
+          docker info
+
+      - name: Fetch pinned FP4 hardware base
+        env:
+          BASE_COMMIT: c78bcd1f43340c447e0016ab45a5fa99f186810c
+        run: |
+          set -euxo pipefail
+          git clone https://github.com/taufderl/moarchy.git moarchy-base
+          git -C moarchy-base checkout --detach "$BASE_COMMIT"
+          test "$(git -C moarchy-base rev-parse HEAD)" = "$BASE_COMMIT"
+
+      - name: Build FP4 packages
+        working-directory: moarchy-base
+        run: |
+          set -euxo pipefail
+          DEVICES=fp4 ./scripts/provision.sh build
+
+      - name: Build FP4 reference image (never flash)
+        working-directory: moarchy-base
+        run: |
+          set -euxo pipefail
+          DEVICE=fp4 ./scripts/build-image.sh
+          IMAGE="$(find images -mindepth 1 -maxdepth 1 -type d -name 'moarchy-fp4-*' | sort | tail -n 1)"
+          test -n "$IMAGE"
+          ./scripts/verify-image.sh "$IMAGE"
+          printf '%s\n' "$IMAGE" > ../reference-image-path.txt
+
+      - name: Upload reference artifact and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-fp4-reference-${{ github.run_number }}
+          path: |
+            moarchy-base/images/moarchy-fp4-*/
+            moarchy-base/packages/.build-manifest
+            reference-image-path.txt
+          if-no-files-found: warn
+          retention-days: 14
