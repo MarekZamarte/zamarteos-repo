@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: zamarteos-fp4-shell-check
+  group: zamarteos-fp4-shell-check-v2-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   build-shell-package:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
