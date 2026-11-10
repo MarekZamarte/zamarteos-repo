@@ -23,18 +23,29 @@ It must not be flashed. Save the complete build log and image artifact.
 
 Acceptance checks:
 1. Kernel package builds from the pinned source commit.
-2. The image builder completes for DEVICE=fp4.
-3. Image verification passes.
-4. The artifact includes the FP4 device package, Q6Voice modules and
-   q6voiced configuration.
-5. The build log and source pins are retained with the artifact.
+2. The ZamarteOS shell package builds and qmllint passes.
+3. The image builder completes for DEVICE=fp4.
+4. Image verification passes.
+5. The artifact includes the FP4 device package, Q6Voice modules, q6voiced
+   configuration and zamarteos-shell.
+6. The build log and source pins are retained with the artifact.
 
 ## Milestone 2 — ZamarteOS shell
 
 A first prototype now exists under packaging/zamarteos-shell. It provides a
-home screen, desktop-entry app drawer, search and control-centre entry points.
-The prototype still needs an ARM64 QML lint/build and on-device interaction
-checks. Do not ship the upstream Moarchy/Omarchy shell as the final UI.
+home screen, desktop-entry app drawer, search, a persistent top strip, a
+control-centre entry point and a PAM-backed Wayland session lock.
+
+The tracked overlay script integrates it into the pinned FP4 image build:
+- copies the package into the base tree's pkgbuilds/;
+- adds it to moarchy-meta;
+- redirects the existing session shell launcher to the ZamarteOS config;
+- redirects the existing lock helper to the ZamarteOS IPC lock endpoint.
+
+This replaces the user shell only. It does not replace the kernel, modem,
+firmware, NetworkManager or audio services. The QML still needs an ARM64
+qmllint/package build and real FP4 tests. Do not ship the upstream
+Moarchy/Omarchy shell as the final UI.
 
 The first shell milestone will provide:
 - ZamarteOS home screen and application drawer;
