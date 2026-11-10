@@ -195,7 +195,7 @@ Scope {
         anchors { top: true; bottom: true; left: true; right: true }
         aboveWindows: root.drawerOpen || root.controlOpen
         exclusiveZone: 0
-        focusable: true
+        focusable: root.drawerOpen || root.controlOpen
         color: "#0b111b"
 
         Rectangle {
