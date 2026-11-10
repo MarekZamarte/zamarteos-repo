@@ -1,0 +1,26 @@
+# ZamarteOS Pure FP4 — pinned engineering inputs.
+# Change pins deliberately; never build from a floating HEAD.
+
+[base]
+repository = "https://github.com/taufderl/moarchy"
+ref = "fp4"
+commit = "c78bcd1f43340c447e0016ab45a5fa99f186810c"
+
+[device.fp4]
+soc = "Qualcomm SM7225 / SM6350"
+kernel_repository = "https://github.com/sm6350-mainline/linux"
+kernel_ref = "sm6350-7.2.y"
+kernel_commit = "5ba18a1da7133a04fa9bf5c1b5cde3e718d7c41b"
+kernel_version = "7.2.0"
+
+[telephony]
+daemon_repository = "https://gitlab.postmarketos.org/postmarketOS/q6voiced"
+daemon_ref = "0.3.1"
+voice_pcm_card = 0
+voice_pcm_device = 3
+voice_pcm_name = "VoiceMMode1"
+
+[build]
+target_arch = "aarch64"
+build_reference_image_only = true
+flash_device = false
