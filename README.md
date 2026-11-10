@@ -16,7 +16,9 @@ Androidowy format `boot.img` jest wyłącznie formatem startowym wymaganym przez
 - [x] Wybrana baza sprzętowa FP4 z udokumentowanym testem dźwięku rozmów.
 - [x] Utworzona osobna gałąź rozwojowa.
 - [ ] Powtarzalny build referencyjnej bazy FP4 w GitHub Actions.
-- [ ] Własna powłoka ZamarteOS — bez powłoki Moarchy/Omarchy.
+- [x] Pierwszy prototyp powłoki QML: ekran główny, szuflada aplikacji i centrum telefonu.
+- [ ] Kompilacja i test QML na Quickshell/Hyprland dla ARM64.
+- [ ] Doprowadzenie powłoki do poziomu codziennego użycia: klawiatura ekranowa, gesty, blokada i powiadomienia.
 - [ ] Integracja aplikacji i testy fizycznego telefonu.
 - [ ] Obraz do wgrania dopiero po testach.
 
