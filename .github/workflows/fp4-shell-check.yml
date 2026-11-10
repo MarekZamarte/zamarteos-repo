@@ -54,7 +54,7 @@ jobs:
       - name: Fetch pinned FP4 base
         run: |
           set -euxo pipefail
-          git clone https://github.com/taufderl/moarchy.git moarchy-base
+          git clone --branch fp4 --single-branch https://github.com/taufderl/moarchy.git moarchy-base
           git -C moarchy-base checkout --detach c78bcd1f43340c447e0016ab45a5fa99f186810c
 
       - name: Apply and verify ZamarteOS integration
