@@ -3,3 +3,5 @@ The workflow applies the tracked ZamarteOS shell overlay and builds an image art
 This file is a CI trigger only. It does not flash or modify any phone.
 
 Rebuild request: latest ZamarteOS branch head, 2026-11-10.
+
+Rebuild request: include package manifest, image package list, provenance and checksum verification.
