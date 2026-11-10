@@ -50,6 +50,28 @@ QS_NO_RELOAD_POPUP=1 setsid quickshell -n -p /usr/share/zamarteos-shell >"$LOG" 
 EOF
 chmod +x "$ROOT/bin/moarchy-restart-shell"
 
+# Polish system locale. Keep en_US generated as a fallback, but make
+# Polish the active locale so dates and system messages match the shell.
+python3 - "$ROOT/image/configure.sh" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+old_locale = """sed -i 's/^#\\(en_US.UTF-8 UTF-8\\)/\\1/' "$ROOTDIR/etc/locale.gen"
+"""
+new_locale = """sed -i -e 's/^#\\(en_US.UTF-8 UTF-8\\)/\\1/' -e 's/^#\\(pl_PL.UTF-8 UTF-8\\)/\\1/' "$ROOTDIR/etc/locale.gen"
+"""
+old_lang = """echo 'LANG=en_US.UTF-8' > "$ROOTDIR/etc/locale.conf"
+"""
+new_lang = """printf 'LANG=pl_PL.UTF-8\\nLANGUAGE=pl_PL:pl\\n' > "$ROOTDIR/etc/locale.conf"
+"""
+if old_locale not in source or old_lang not in source:
+    raise SystemExit("Expected locale settings not found in pinned FP4 image/configure.sh")
+source = source.replace(old_locale, new_locale, 1).replace(old_lang, new_lang, 1)
+path.write_text(source)
+PY
+
 # Keep the existing power/idle path (moarchy-screen -> moarchy-lock), but
 # direct the actual lock request to our PAM-backed Quickshell session lock.
 cat > "$ROOT/bin/moarchy-lock" <<'EOF'
