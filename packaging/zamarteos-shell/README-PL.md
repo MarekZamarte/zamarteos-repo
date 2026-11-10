@@ -10,7 +10,7 @@ pozostawiając kernel, sterowniki, modem i usługi sprzętowe z bazy FP4.
 - szuflada aplikacji oparta na zainstalowanych plikach .desktop;
 - wyszukiwanie aplikacji i ich ikon;
 - pasek ZamarteOS dostępny nad uruchomionymi oknami;
-- centrum telefonu z odnośnikami do ustawień;
+- centrum telefonu z polskim menu: sieć, dźwięk, wyświetlacz i tapety, bateria, aplikacje, prywatność, język oraz informacje o systemie;
 - blokada sesji Wayland przez WlSessionLock;
 - sprawdzanie hasła konta przez PAM i osobny profil /etc/pam.d/zamarteos-lock.
 
