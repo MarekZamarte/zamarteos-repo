@@ -287,10 +287,12 @@ Scope {
                             Rectangle {
                                 width: 62; height: 62; radius: 21
                                 color: "#21394d"; anchors.horizontalCenter: parent.horizontalCenter
-                                Text {
+                                Image {
                                     anchors.centerIn: parent
-                                    text: (modelData.name || "A").substring(0, 1).toUpperCase()
-                                    color: "#d7f0e6"; font.pixelSize: 27; font.weight: Font.DemiBold
+                                    width: 38
+                                    height: 38
+                                    source: Quickshell.iconPath(modelData.icon, "application-x-executable")
+                                    fillMode: Image.PreserveAspectFit
                                 }
                             }
                             Text {
