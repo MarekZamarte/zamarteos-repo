@@ -65,6 +65,22 @@ jobs:
           test -n "$IMAGE"
           ./scripts/verify-image.sh "$IMAGE"
           printf '%s\n' "$IMAGE" > ../reference-image-path.txt
+          IMAGE_NAME="$(basename "$IMAGE")"
+          (
+            cd "$IMAGE"
+            sha256sum -c "$IMAGE_NAME.sha256"
+          )
+          test -s packages/.build-manifest
+          cp packages/.build-manifest ../reference-build-manifest.txt
+          test -s "images/${IMAGE_NAME}.packages"
+          cp "images/${IMAGE_NAME}.packages" ../reference-image-packages.txt
+          test -s "images/${IMAGE_NAME}.build-info"
+          cp "images/${IMAGE_NAME}.build-info" ../reference-image-build-info.txt
+          {
+            printf 'zamarteos_repo_commit=%s\n' "$GITHUB_SHA"
+            printf 'moarchy_overlay_commit=%s\n' "$(git rev-parse HEAD)"
+            printf 'pinned_hardware_base_commit=%s\n' "c78bcd1f43340c447e0016ab45a5fa99f186810c"
+          } > ../reference-provenance.txt
 
       - name: Upload reference artifact and logs
         if: always()
@@ -74,6 +90,13 @@ jobs:
           path: |
             moarchy-base/images/moarchy-fp4-*/
             moarchy-base/packages/.build-manifest
+            moarchy-base/images/moarchy-fp4-*.packages
+            moarchy-base/images/moarchy-fp4-*.build-info
             reference-image-path.txt
+            reference-build-manifest.txt
+            reference-image-packages.txt
+            reference-image-build-info.txt
+            reference-provenance.txt
           if-no-files-found: warn
           retention-days: 14
+          include-hidden-files: true
