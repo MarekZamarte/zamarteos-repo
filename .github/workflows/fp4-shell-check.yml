@@ -1,6 +1,9 @@
 name: ZamarteOS shell package check
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - zamarteos-pure-fp4-dev
