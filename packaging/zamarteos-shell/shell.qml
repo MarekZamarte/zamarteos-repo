@@ -18,6 +18,14 @@ Scope {
         noticeTimer.restart()
     }
 
+    function authenticateLock() {
+        if (lockInput.length === 0 || pam.active)
+            return
+        lockError = ""
+        if (!pam.start())
+            lockError = "Nie można uruchomić uwierzytelniania"
+    }
+
     function launchByKeywords(keywords, label) {
         const entries = DesktopEntries.applications.values
         for (let i = 0; i < entries.length; ++i) {
@@ -153,10 +161,7 @@ Scope {
                                             root.lockInput = root.lockInput.slice(0, -1)
                                             root.lockError = ""
                                         } else if (modelData === "↵") {
-                                            if (root.lockInput.length > 0 && !pam.active) {
-                                                root.lockError = ""
-                                                pam.start()
-                                            }
+                                            root.authenticateLock()
                                         } else if (root.lockInput.length < 32) {
                                             root.lockInput += modelData
                                             root.lockError = ""
