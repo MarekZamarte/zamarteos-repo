@@ -15,7 +15,8 @@ check() {
   grep -q 'PamContext' "$srcdir/shell.qml"
   grep -q 'zamarteos-lock' "$srcdir/shell.qml"
   grep -q 'DesktopEntries.applications' "$srcdir/shell.qml"
-  qmllint -I /usr/lib/qt6/qml "$srcdir/shell.qml"
+  test -x /usr/lib/qt6/bin/qmllint
+  /usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml "$srcdir/shell.qml"
 }
 
 package() {
