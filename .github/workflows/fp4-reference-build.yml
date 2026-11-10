@@ -26,7 +26,7 @@ jobs:
           BASE_COMMIT: c78bcd1f43340c447e0016ab45a5fa99f186810c
         run: |
           set -euxo pipefail
-          git clone https://github.com/taufderl/moarchy.git moarchy-base
+          git clone --branch fp4 --single-branch https://github.com/taufderl/moarchy.git moarchy-base
           git -C moarchy-base checkout --detach "$BASE_COMMIT"
           test "$(git -C moarchy-base rev-parse HEAD)" = "$BASE_COMMIT"
 
