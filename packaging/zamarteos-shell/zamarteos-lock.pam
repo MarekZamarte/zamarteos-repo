@@ -1,0 +1,4 @@
+# PAM policy for the ZamarteOS lock screen.
+# Quickshell PamContext handles the auth conversation; use the current Unix
+# account password. PamContext currently supports auth rules only.
+auth required pam_unix.so
