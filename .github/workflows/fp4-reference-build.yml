@@ -2,6 +2,11 @@ name: FP4 reference build (not a release)
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - zamarteos-pure-fp4-dev
+    paths:
+      - "build-trigger/fp4-reference-image"
 
 permissions:
   contents: read
