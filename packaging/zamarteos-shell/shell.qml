@@ -60,7 +60,7 @@ Scope {
 
     PamContext {
         id: pam
-        config: "login"
+        config: "zamarteos-lock"
         onPamMessage: {
             if (responseRequired)
                 respond(root.lockInput)
