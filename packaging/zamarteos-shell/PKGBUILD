@@ -6,6 +6,7 @@ arch=('any')
 url="https://github.com/MarekZamarte/zamarteos-repo"
 license=('GPL-3.0-or-later')
 depends=('quickshell' 'hyprland')
+makedepends=('qt6-declarative')
 source=('shell.qml' 'hyprland.conf' 'zamarteos-session' 'zamarteos-shell' 'zamarteos.desktop')
 sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
@@ -15,6 +16,7 @@ check() {
   grep -q 'PanelWindow' "$srcdir/shell.qml"
   grep -q 'DesktopEntries.applications' "$srcdir/shell.qml"
   grep -q 'exec-once = zamarteos-shell' "$srcdir/hyprland.conf"
+  qmllint -I /usr/lib/qt6/qml "$srcdir/shell.qml"
 }
 
 package() {
