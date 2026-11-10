@@ -1,0 +1,5 @@
+#!/bin/sh
+export XDG_CURRENT_DESKTOP=ZamarteOS
+export XDG_SESSION_DESKTOP=zamarteos
+export XDG_SESSION_TYPE=wayland
+exec Hyprland --config /usr/share/zamarteos-shell/hyprland.conf
