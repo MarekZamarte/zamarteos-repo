@@ -93,6 +93,7 @@ Scope {
                     }
 
                     Column {
+                        width: Math.max(100, parent.width - 152)
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 2
                         Text {
@@ -105,8 +106,6 @@ Scope {
                             font.pixelSize: 11; font.letterSpacing: 1.5
                         }
                     }
-
-                    Item { width: Math.max(0, parent.width - 280); height: 1 }
 
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
