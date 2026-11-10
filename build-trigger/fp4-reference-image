@@ -5,3 +5,5 @@ This file is a CI trigger only. It does not flash or modify any phone.
 Rebuild request: latest ZamarteOS branch head, 2026-11-10.
 
 Rebuild request: include package manifest, image package list, provenance and checksum verification.
+
+Rebuild request: corrected verifier patch and complete manifest audit.
