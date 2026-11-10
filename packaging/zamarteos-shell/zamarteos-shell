@@ -1,2 +1,2 @@
 #!/bin/sh
-exec quickshell --path /usr/share/zamarteos-shell/shell.qml
+exec qs --path /usr/share/zamarteos-shell/shell.qml
