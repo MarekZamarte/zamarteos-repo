@@ -69,6 +69,7 @@ jobs:
           grep -q "'zamarteos-shell'" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
           grep -q "qs ipc call zamarteos-lock lock" moarchy-base/bin/moarchy-lock
           grep -q "quickshell -n -p /usr/share/zamarteos-shell" moarchy-base/bin/moarchy-restart-shell
+          grep -q "pl_PL.UTF-8" moarchy-base/image/configure.sh
           test -f moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           test -f moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-lock.pam
           git -C moarchy-base diff --check
