@@ -1,0 +1,37 @@
+name: ZamarteOS shell package check
+
+on:
+  push:
+    branches:
+      - zamarteos-pure-fp4-dev
+    paths:
+      - "packaging/zamarteos-shell/**"
+      - ".github/workflows/fp4-shell-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-shell-package:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build package in pinned Arch Linux ARM environment
+        run: |
+          set -euxo pipefail
+          docker run --rm --platform linux/arm64 \
+            -v "$PWD:/repo" \
+            -w /repo/packaging/zamarteos-shell \
+            docker.io/menci/archlinuxarm@sha256:f7c6f64c0f246f41775e01793340c49f8e9abf3991141c25405361d56b100ccb \
+            bash -lc '
+              set -euxo pipefail
+              pacman -Syu --noconfirm base-devel quickshell hyprland
+              useradd -m builder
+              echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
+              chown -R builder:builder /repo
+              runuser -u builder -- makepkg --noconfirm --cleanbuild
+              ls -lh *.pkg.tar.*
+            '
