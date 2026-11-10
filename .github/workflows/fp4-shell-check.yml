@@ -43,3 +43,28 @@ jobs:
               runuser -u builder -- makepkg --noconfirm --cleanbuild
               ls -lh *.pkg.tar.*
             '
+
+  overlay-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch pinned FP4 base
+        run: |
+          set -euxo pipefail
+          git clone https://github.com/taufderl/moarchy.git moarchy-base
+          git -C moarchy-base checkout --detach c78bcd1f43340c447e0016ab45a5fa99f186810c
+
+      - name: Apply and verify ZamarteOS integration
+        run: |
+          set -euxo pipefail
+          bash scripts/apply-zamarteos-overlay.sh moarchy-base
+          bash -n moarchy-base/bin/moarchy-lock
+          bash -n moarchy-base/bin/moarchy-restart-shell
+          grep -q "'zamarteos-shell'" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
+          grep -q "qs ipc call zamarteos-lock lock" moarchy-base/bin/moarchy-lock
+          grep -q "quickshell -n -p /usr/share/zamarteos-shell" moarchy-base/bin/moarchy-restart-shell
+          test -f moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          test -f moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-lock.pam
+          git -C moarchy-base diff --check
