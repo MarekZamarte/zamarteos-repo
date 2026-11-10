@@ -21,7 +21,7 @@ W środowisku Arch Linux ARM z pakietami base-devel, quickshell i hyprland:
 
 Najpierw uruchom powłokę wewnątrz istniejącej sesji Wayland:
 
-    quickshell --path /usr/share/zamarteos-shell/shell.qml
+    qs --path /usr/share/zamarteos-shell/shell.qml
 
 Nie wybieraj jeszcze sesji ZamarteOS na ekranie logowania. Konfiguracja wejścia
 dotykowego, klawiatury ekranowej, blokady, zasilania, modemu i usług audio nie
