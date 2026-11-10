@@ -1,28 +1,24 @@
 pkgname=zamarteos-shell
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="ZamarteOS Pure mobile home shell for Fairphone 4"
-arch=('any')
+arch=('aarch64')
 url="https://github.com/MarekZamarte/zamarteos-repo"
 license=('unknown')
 depends=('quickshell' 'hyprland')
 makedepends=('qt6-declarative')
-source=('shell.qml' 'hyprland.conf' 'zamarteos-session' 'zamarteos-shell' 'zamarteos.desktop')
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+source=('shell.qml' 'zamarteos-lock.pam')
+sha256sums=('SKIP' 'SKIP')
 
 check() {
-  bash -n "$srcdir/zamarteos-session"
-  bash -n "$srcdir/zamarteos-shell"
-  grep -q 'PanelWindow' "$srcdir/shell.qml"
+  grep -q 'WlSessionLock' "$srcdir/shell.qml"
+  grep -q 'PamContext' "$srcdir/shell.qml"
+  grep -q 'zamarteos-lock' "$srcdir/shell.qml"
   grep -q 'DesktopEntries.applications' "$srcdir/shell.qml"
-  grep -q 'exec-once = zamarteos-shell' "$srcdir/hyprland.conf"
   qmllint -I /usr/lib/qt6/qml "$srcdir/shell.qml"
 }
 
 package() {
   install -Dm644 "$srcdir/shell.qml" "$pkgdir/usr/share/zamarteos-shell/shell.qml"
-  install -Dm644 "$srcdir/hyprland.conf" "$pkgdir/usr/share/zamarteos-shell/hyprland.conf"
-  install -Dm755 "$srcdir/zamarteos-session" "$pkgdir/usr/bin/zamarteos-session"
-  install -Dm755 "$srcdir/zamarteos-shell" "$pkgdir/usr/bin/zamarteos-shell"
-  install -Dm644 "$srcdir/zamarteos.desktop" "$pkgdir/usr/share/wayland-sessions/zamarteos.desktop"
+  install -Dm644 "$srcdir/zamarteos-lock.pam" "$pkgdir/etc/pam.d/zamarteos-lock"
 }
