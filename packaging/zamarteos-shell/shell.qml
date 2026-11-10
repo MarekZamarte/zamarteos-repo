@@ -1,4 +1,6 @@
 import Quickshell
+import Quickshell.Wayland
+import Quickshell.Services.Pam
 import QtQuick
 
 Scope {
@@ -8,6 +10,8 @@ Scope {
     property bool controlOpen: false
     property string searchText: ""
     property string notice: ""
+    property string lockInput: ""
+    property string lockError: ""
 
     function showNotice(message) {
         notice = message
@@ -43,6 +47,142 @@ Scope {
         id: noticeTimer
         interval: 3200
         onTriggered: root.notice = ""
+    }
+
+    IpcHandler {
+        target: "zamarteos-lock"
+        function lock(): void {
+            root.lockInput = ""
+            root.lockError = ""
+            sessionLock.locked = true
+        }
+    }
+
+    PamContext {
+        id: pam
+        config: "login"
+        onPamMessage: {
+            if (responseRequired)
+                respond(root.lockInput)
+        }
+        onCompleted: result => {
+            const success = result === PamResult.Success
+            root.lockInput = ""
+            root.lockError = success ? "" : "Kod nieprawidłowy"
+            if (success)
+                sessionLock.locked = false
+        }
+    }
+
+    WlSessionLock {
+        id: sessionLock
+        WlSessionLockSurface {
+            color: "#0b111b"
+            Rectangle {
+                anchors.fill: parent
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#142235" }
+                    GradientStop { position: 1.0; color: "#0b111b" }
+                }
+                Column {
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width - 48, 340)
+                    spacing: 18
+                    Text {
+                        width: parent.width
+                        text: "ZAMARTEOS"
+                        color: "#d7f0e6"
+                        font.pixelSize: 18
+                        font.weight: Font.Bold
+                        font.letterSpacing: 3
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    Text {
+                        width: parent.width
+                        text: Qt.formatDateTime(root.now, "HH:mm")
+                        color: "#ffffff"
+                        font.pixelSize: 62
+                        font.weight: Font.Light
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    Text {
+                        width: parent.width
+                        text: Qt.formatDateTime(root.now, "dddd, d MMMM")
+                        color: "#a9bdcf"
+                        font.pixelSize: 15
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    Text {
+                        width: parent.width
+                        text: "Wprowadź kod telefonu"
+                        color: "#eaf0f5"
+                        font.pixelSize: 15
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    Text {
+                        width: parent.width
+                        text: "● ".repeat(root.lockInput.length)
+                        color: "#d7f0e6"
+                        font.pixelSize: 20
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    Grid {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        columns: 3
+                        spacing: 12
+                        Repeater {
+                            model: ["1","2","3","4","5","6","7","8","9","⌫","0","↵"]
+                            delegate: Rectangle {
+                                required property string modelData
+                                width: 82
+                                height: 62
+                                radius: 20
+                                color: "#26394d"
+                                border.width: 1
+                                border.color: "#3a526b"
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: modelData
+                                    color: "#ffffff"
+                                    font.pixelSize: 22
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        if (modelData === "⌫") {
+                                            root.lockInput = root.lockInput.slice(0, -1)
+                                            root.lockError = ""
+                                        } else if (modelData === "↵") {
+                                            if (root.lockInput.length > 0 && !pam.active) {
+                                                root.lockError = ""
+                                                pam.start()
+                                            }
+                                        } else if (root.lockInput.length < 32) {
+                                            root.lockInput += modelData
+                                            root.lockError = ""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Text {
+                        width: parent.width
+                        text: root.lockError
+                        color: "#ff9a9a"
+                        font.pixelSize: 14
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    Text {
+                        width: parent.width
+                        text: pam.active ? "Sprawdzanie…" : "Odblokowanie chronione przez PAM"
+                        color: "#8095a9"
+                        font.pixelSize: 11
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                }
+            }
+        }
     }
 
     PanelWindow {
