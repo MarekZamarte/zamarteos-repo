@@ -39,6 +39,8 @@ jobs:
               set -euxo pipefail
               pacman-key --init
               pacman-key --populate archlinuxarm
+              # QEMU runner kernel lacks Landlock; disable pacman download sandbox only inside this disposable CI container.
+              sed -i '/^\[options\]/a DisableSandbox' /etc/pacman.conf
               printf "%b" "\\n[danctnix]\\nSigLevel = Never\\nServer = https://archmobile.mirror.danctnix.org/\$repo/\$arch/\\n" >> /etc/pacman.conf
               pacman -Syu --noconfirm base-devel quickshell hyprland qt6-declarative pam
               useradd -m builder
