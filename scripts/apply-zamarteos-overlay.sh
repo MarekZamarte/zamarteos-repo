@@ -85,4 +85,43 @@ exec timeout 3 qs ipc call zamarteos-lock lock >/dev/null 2>&1
 EOF
 chmod +x "$ROOT/bin/moarchy-lock"
 
+ 
+# Extend the pinned base verifier so a green image check also proves that the
+# ZamarteOS shell package and its session/lock wiring are actually in rootfs.
+python3 - "$ROOT/image/verify.sh" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+marker = "# ZamarteOS Pure overlay checks"
+needle = "have /usr/bin/quickshell\n"
+checks = """# ZamarteOS Pure overlay checks
+have /usr/share/zamarteos-shell/shell.qml
+have /etc/pam.d/zamarteos-lock
+if grep -Fq 'qs -n -p /usr/share/zamarteos-shell' "$R/usr/lib/moarchy/bin/moarchy-restart-shell"; then
+  ok "the session launcher starts the ZamarteOS Quickshell"
+else
+  no "the session launcher does not start /usr/share/zamarteos-shell"
+fi
+if grep -Fq 'qs ipc call zamarteos-lock lock' "$R/usr/lib/moarchy/bin/moarchy-lock"; then
+  ok "the screen-lock command reaches the ZamarteOS PAM lock"
+else
+  no "the screen-lock command is not wired to zamarteos-lock"
+fi
+if grep -q '^LANG=pl_PL.UTF-8
+echo "ZamarteOS overlay applied to $ROOT"
+ "$R/etc/locale.conf"; then
+  ok "Polish is the active system locale"
+else
+  no "the active system locale is not pl_PL.UTF-8"
+fi
+"""
+if marker not in source:
+    if needle not in source:
+        raise SystemExit("Could not find the Quickshell check in the pinned image verifier")
+    source = source.replace(needle, needle + checks, 1)
+    path.write_text(source)
+PY
+
 echo "ZamarteOS overlay applied to $ROOT"
