@@ -8,6 +8,10 @@ on:
     paths:
       - "build-trigger/fp4-reference-image"
 
+concurrency:
+  group: zamarteos-fp4-reference-image
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
