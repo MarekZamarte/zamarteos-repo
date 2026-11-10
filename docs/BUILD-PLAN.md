@@ -31,8 +31,10 @@ Acceptance checks:
 
 ## Milestone 2 — ZamarteOS shell
 
-Create a separate QuickShell/QML package under this repository. Do not ship the
-upstream Moarchy/Omarchy shell as the final user interface.
+A first prototype now exists under packaging/zamarteos-shell. It provides a
+home screen, desktop-entry app drawer, search and control-centre entry points.
+The prototype still needs an ARM64 QML lint/build and on-device interaction
+checks. Do not ship the upstream Moarchy/Omarchy shell as the final UI.
 
 The first shell milestone will provide:
 - ZamarteOS home screen and application drawer;
