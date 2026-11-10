@@ -47,7 +47,7 @@ Scope {
 
     PanelWindow {
         anchors { top: true; bottom: true; left: true; right: true }
-        aboveWindows: false
+        aboveWindows: root.drawerOpen || root.controlOpen
         exclusiveZone: 0
         focusable: true
         color: "#0b111b"
@@ -393,5 +393,69 @@ Scope {
                 text: root.notice; color: "#ffffff"; font.pixelSize: 13
             }
         }
+    }    }
+
+    // A narrow always-visible launcher bar keeps the app drawer reachable
+    // while ordinary application windows are in the foreground.
+    PanelWindow {
+        anchors { top: true; left: true; right: true }
+        implicitHeight: 56
+        aboveWindows: true
+        exclusiveZone: 0
+        focusable: false
+        color: "#101b29"
+
+        Text {
+            anchors.left: parent.left
+            anchors.leftMargin: 18
+            anchors.verticalCenter: parent.verticalCenter
+            text: "ZAMARTEOS"
+            color: "#eaf2f5"
+            font.pixelSize: 14
+            font.weight: Font.Bold
+            font.letterSpacing: 1.4
+        }
+
+        Row {
+            anchors.right: parent.right
+            anchors.rightMargin: 12
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 8
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Qt.formatDateTime(root.now, "HH:mm")
+                color: "#d7e3ed"
+                font.pixelSize: 15
+                font.weight: Font.DemiBold
+            }
+
+            Rectangle {
+                width: 42; height: 40; radius: 13
+                color: "#294157"
+                Text { anchors.centerIn: parent; text: "▦"; color: "#e8f1f6"; font.pixelSize: 19 }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        root.controlOpen = false
+                        root.drawerOpen = !root.drawerOpen
+                    }
+                }
+            }
+
+            Rectangle {
+                width: 42; height: 40; radius: 13
+                color: "#294157"
+                Text { anchors.centerIn: parent; text: "☷"; color: "#e8f1f6"; font.pixelSize: 19 }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        root.drawerOpen = false
+                        root.controlOpen = !root.controlOpen
+                    }
+                }
+            }
+        }
     }
+}
 }
