@@ -223,10 +223,10 @@ cred_start = source.find("# A locked password is ! or *", source.find('sec "cred
 if cred_start < 0:
     raise SystemExit("Could not find the credential checks in the pinned verifier")
 loop_start = source.find("for acct in moarchy root;", cred_start)
-loop_end = source.find("\\ndone\\n", loop_start)
+loop_end = source.find(chr(10) + "done" + chr(10), loop_start)
 if loop_start < 0 or loop_end < 0:
     raise SystemExit("Could not find the account credential loop")
-loop_end += len("\\ndone\\n")
+loop_end += len(chr(10) + "done" + chr(10))
 
 secure_credentials = """# A published image must contain no usable password hash. The owner chooses
 # a private PIN on first boot, before getty can start the autologin session.
@@ -243,16 +243,14 @@ if grep -RqsE '^[[:space:]]*[^#[:space:]].*NOPASSWD[[:space:]]*:' "$R/etc/sudoer
 else
   ok "no active passwordless sudo rules"
 fi
-if grep -Eq '^%wheel ALL=\\(ALL:ALL\\) ALL
- "$R/etc/sudoers.d/10-zamarteos-wheel" 2>/dev/null; then
+if grep -Fqx '%wheel ALL=(ALL:ALL) ALL' "$R/etc/sudoers.d/10-zamarteos-wheel" 2>/dev/null; then
   ok "wheel sudo requires the user's password"
 else
   no "wheel sudo is missing its password-required rule"
-fi
-"""
+fi"""
 source = source[:cred_start] + secure_credentials + source[loop_end:]
 
-test_marker = '[ -e "$R/etc/moarchy-debug-image" ] && no "this is a DEBUG image -- do not publish" \\n'
+test_marker = '[ -e "$R/etc/moarchy-debug-image" ]'
 test_block = """# Exercise the PIN prompt without changing the image's real shadow database.
 sec "behaviour: ZamarteOS first-boot PIN setup"
 TESTBIN="$R/tmp/zamarteos-verify-bin"
