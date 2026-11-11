@@ -21,10 +21,9 @@ META="$ROOT/pkgbuilds/moarchy-meta/PKGBUILD"
 if ! grep -q "'zamarteos-shell'" "$META"; then
   sed -i "/^  'moarchy-device'$/a\\  'zamarteos-shell'" "$META"
 fi
-# Bump package releases because both payloads changed. This matters for future
-# pacman upgrades, not only for a clean first image build.
+# Bump the meta package because its dependency set now includes the PIN service.
+# This makes the change visible to pacman on already-installed development images.
 sed -i 's/^pkgrel=2$/pkgrel=3/' "$META"
-sed -i 's/^pkgrel=18$/pkgrel=19/' "$ROOT/pkgbuilds/moarchy/PKGBUILD"
 
 # Keep the upstream session launcher intact. It starts the complete Quickshell
 # host, plugin registry, app drawer, control center and Settings. Replacing it
@@ -67,7 +66,7 @@ import sys
 
 path = Path(sys.argv[1])
 source = path.read_text()
-needle = "have /usr/bin/quickshell\\n"
+needle = "have /usr/bin/quickshell\n"
 lines = [
     "# ZamarteOS Pure integration checks",
     "have /usr/lib/zamarteos/firstboot-pin",
@@ -133,7 +132,7 @@ if start < 0 or end < 0:
 
 user_setup = """# --- the user (I8) ---------------------------------------------------------
 # No credential is baked into the image. The account stays locked until the
-# ZamarteOS first-boot service asks the owner to choose a private PIN on tty1.
+# ZamarteOS first-boot service generates a private per-device PIN and stores it in the user home.
 arch-chroot "$ROOTDIR" useradd -m -G wheel,video,audio,input,feedbackd -s /bin/bash "$USER_NAME"
 arch-chroot "$ROOTDIR" passwd -l "$USER_NAME" >/dev/null
 arch-chroot "$ROOTDIR" passwd -l root >/dev/null
@@ -179,8 +178,8 @@ import sys
 path = Path(sys.argv[1])
 source = path.read_text()
 
-marker = "have /usr/lib/zamarteos/firstboot-pin"
-extra = """have /usr/lib/zamarteos/firstboot-pin
+marker = "# ZamarteOS Pure integration checks"
+extra = """have /usr/lib/systemd/system/zamarteos-firstboot-pin.service
 have /usr/lib/systemd/system/zamarteos-firstboot-pin.service
 have /usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf
 have /usr/lib/systemd/system/getty@tty1.service.d/10-zamarteos-firstboot.conf
@@ -209,7 +208,7 @@ else
 fi
 """
 if marker not in source:
-    raise SystemExit("Could not find the ZamarteOS shell verifier marker")
+    raise SystemExit("Could not find the ZamarteOS integration verifier marker")
 if extra not in source:
     source = source.replace(marker, marker + chr(10) + extra, 1)
 
