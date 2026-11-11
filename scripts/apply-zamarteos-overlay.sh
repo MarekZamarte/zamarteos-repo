@@ -217,7 +217,7 @@ fi
 if marker not in source:
     raise SystemExit("Could not find the ZamarteOS shell verifier marker")
 if extra not in source:
-    source = source.replace(marker, marker + extra, 1)
+    source = source.replace(marker, marker + chr(10) + extra, 1)
 
 cred_start = source.find("# A locked password is ! or *", source.find('sec "credentials -- what must NOT be here"'))
 if cred_start < 0:
