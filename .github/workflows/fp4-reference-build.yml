@@ -68,8 +68,8 @@ jobs:
           IMAGE_NAME="$(basename "$IMAGE")"
           (
             cd "$IMAGE"
-            sha256sum -c "$IMAGE_NAME.sha256" | tee ../reference-checksums.txt
-          )
+            sha256sum -c "$IMAGE_NAME.sha256"
+          ) | tee ../reference-checksums.txt
           test -s packages/.build-manifest
           cp packages/.build-manifest ../reference-build-manifest.txt
           test -s "images/${IMAGE_NAME}.packages"
