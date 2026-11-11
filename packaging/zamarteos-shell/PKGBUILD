@@ -1,43 +1,20 @@
 pkgname=zamarteos-shell
-pkgver=0.1.5
+pkgver=0.1.6
 pkgrel=1
-pkgdesc="ZamarteOS Pure mobile home shell for Fairphone 4"
+pkgdesc="ZamarteOS first-boot security integration for Fairphone 4"
 arch=('aarch64')
 url="https://github.com/MarekZamarte/zamarteos-repo"
 license=('unknown')
-depends=('quickshell' 'hyprland' 'pam')
-makedepends=('qt6-declarative')
+depends=('pam')
 source=(
-  'shell.qml'
-  'hyprland.conf'
-  'zamarteos-lock.pam'
   'zamarteos-firstboot-pin'
   'zamarteos-firstboot-pin.service'
   'moarchy-firstboot-pin.conf'
   'getty-firstboot-pin.conf'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
-  grep -q 'WlSessionLock' "$srcdir/shell.qml"
-  grep -q 'PamContext' "$srcdir/shell.qml"
-  grep -q 'zamarteos-lock' "$srcdir/shell.qml"
-  grep -q 'DesktopEntries.applications' "$srcdir/shell.qml"
-  grep -q 'function isVisibleApp(entry)' "$srcdir/shell.qml"
-  grep -q 'name.indexOf("moarchy")' "$srcdir/shell.qml"
-  grep -q 'name.indexOf("omarchy")' "$srcdir/shell.qml"
-  grep -q 'genericName.indexOf("moarchy")' "$srcdir/shell.qml"
-  grep -q 'genericName.indexOf("omarchy")' "$srcdir/shell.qml"
-  ! grep -q 'id.indexOf("moarchy")' "$srcdir/shell.qml"
-  ! grep -q 'id.indexOf("omarchy")' "$srcdir/shell.qml"
-  grep -q 'FileView' "$srcdir/shell.qml"
-  grep -q 'firstbootPin' "$srcdir/shell.qml"
-  grep -q 'clipboardText' "$srcdir/shell.qml"
-  grep -q 'Flickable.VerticalFlick' "$srcdir/shell.qml"
-  grep -q 'pressY' "$srcdir/shell.qml"
-  grep -q 'XF86AudioRaiseVolume' "$srcdir/hyprland.conf"
-  grep -q 'XF86AudioLowerVolume' "$srcdir/hyprland.conf"
-  grep -q 'wpctl set-volume' "$srcdir/hyprland.conf"
   bash -n "$srcdir/zamarteos-firstboot-pin"
   grep -q 'od -An -N4 -tu4 /dev/urandom' "$srcdir/zamarteos-firstboot-pin"
   grep -q 'PIERWSZE-URUCHOMIENIE.txt' "$srcdir/zamarteos-firstboot-pin"
@@ -45,14 +22,9 @@ check() {
   grep -q 'Before=moarchy-firstboot.service getty@tty1.service' "$srcdir/zamarteos-firstboot-pin.service"
   grep -q 'Requires=zamarteos-firstboot-pin.service' "$srcdir/moarchy-firstboot-pin.conf"
   grep -q 'Requires=moarchy-firstboot.service' "$srcdir/getty-firstboot-pin.conf"
-  test -x /usr/lib/qt6/bin/qmllint
-  /usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml "$srcdir/shell.qml"
 }
 
 package() {
-  install -Dm644 "$srcdir/shell.qml" "$pkgdir/usr/share/zamarteos-shell/shell.qml"
-  install -Dm644 "$srcdir/hyprland.conf" "$pkgdir/usr/share/zamarteos-shell/hyprland.conf"
-  install -Dm644 "$srcdir/zamarteos-lock.pam" "$pkgdir/etc/pam.d/zamarteos-lock"
   install -Dm755 "$srcdir/zamarteos-firstboot-pin" "$pkgdir/usr/lib/zamarteos/firstboot-pin"
   install -Dm644 "$srcdir/zamarteos-firstboot-pin.service" "$pkgdir/usr/lib/systemd/system/zamarteos-firstboot-pin.service"
   install -Dm644 "$srcdir/moarchy-firstboot-pin.conf" "$pkgdir/usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf"
