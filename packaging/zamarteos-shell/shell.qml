@@ -19,14 +19,12 @@ Scope {
     FileView {
         id: firstbootPinFile
         path: "/home/moarchy/PIERWSZE-URUCHOMIENIE.txt"
-        blockLoading: true
         printErrors: false
     }
 
     FileView {
         id: firstbootNoticeState
         path: "/home/moarchy/.zamarteos-firstboot-notice-dismissed"
-        blockLoading: true
         printErrors: false
     }
 
