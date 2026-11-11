@@ -10,6 +10,7 @@ Scope {
     property var now: new Date()
     property bool drawerOpen: false
     property bool controlOpen: false
+    property bool homeOpen: false
     property string searchText: ""
     property string notice: ""
     property string lockInput: ""
@@ -71,6 +72,7 @@ Scope {
                     entry.execute()
                     drawerOpen = false
                     controlOpen = false
+                    homeOpen = false
                     return true
                 }
             }
@@ -228,9 +230,9 @@ Scope {
 
     PanelWindow {
         anchors { top: true; bottom: true; left: true; right: true }
-        aboveWindows: root.drawerOpen || root.controlOpen
+        aboveWindows: root.drawerOpen || root.controlOpen || root.homeOpen
         exclusiveZone: 0
-        focusable: root.drawerOpen || root.controlOpen
+        focusable: root.drawerOpen || root.controlOpen || root.homeOpen
         color: "#0b111b"
 
         Rectangle {
@@ -484,7 +486,15 @@ Scope {
                                 horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
                             }
                         }
-                        MouseArea { anchors.fill: parent; onClicked: modelData.execute() }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                modelData.execute()
+                                root.drawerOpen = false
+                                root.controlOpen = false
+                                root.homeOpen = false
+                            }
+                        }
                     }
                 }
             }
@@ -627,10 +637,25 @@ Scope {
             Rectangle {
                 width: 42; height: 40; radius: 13
                 color: "#294157"
+                Text { anchors.centerIn: parent; text: "⌂"; color: "#e8f1f6"; font.pixelSize: 22 }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        root.drawerOpen = false
+                        root.controlOpen = false
+                        root.homeOpen = true
+                    }
+                }
+            }
+
+            Rectangle {
+                width: 42; height: 40; radius: 13
+                color: "#294157"
                 Text { anchors.centerIn: parent; text: "▦"; color: "#e8f1f6"; font.pixelSize: 19 }
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
+                        root.homeOpen = false
                         root.controlOpen = false
                         root.drawerOpen = !root.drawerOpen
                     }
@@ -644,6 +669,7 @@ Scope {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
+                        root.homeOpen = false
                         root.drawerOpen = false
                         root.controlOpen = !root.controlOpen
                     }
