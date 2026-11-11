@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Set a private, device-specific PIN before the normal tty1 session can start.
+set -euo pipefail
+
+USER_NAME="$(getent passwd 1000 | cut -d: -f1)"
+if [[ -z "$USER_NAME" ]]; then
+  printf 'ZamarteOS: nie znaleziono konta użytkownika UID 1000.\n' >&2
+  exit 1
+fi
+
+STATE_DIR="${ZAMARTEOS_STATE_DIR:-/var/lib/zamarteos}"
+STAMP="$STATE_DIR/firstboot-pin-done"
+[[ -e "$STAMP" ]] && exit 0
+
+HASH="$(getent shadow "$USER_NAME" | cut -d: -f2)"
+case "$HASH" in
+  ""|"!"*|"*"*) ;;
+  *)
+    install -d -m 700 "$STATE_DIR"
+    : > "$STAMP"
+    chmod 600 "$STAMP"
+    exit 0
+    ;;
+esac
+
+printf '\nZAMARTEOS — PIERWSZE URUCHOMIENIE\n'
+printf 'Ustaw własny PIN do odblokowania telefonu.\n'
+printf 'PIN musi mieć od 6 do 12 cyfr. Nie używaj krótkiego kodu.\n\n'
+
+while true; do
+  PIN=''
+  CONFIRM=''
+
+  if ! read -r -s -p "Nowy PIN: " PIN; then
+    printf '\nNie udało się odczytać PIN-u z ekranu telefonu.\n' >&2
+    exit 1
+  fi
+  printf '\n'
+
+  if [[ ! "$PIN" =~ ^[0-9]{6,12}$ ]]; then
+    printf 'PIN musi zawierać od 6 do 12 cyfr. Spróbuj ponownie.\n\n'
+    unset PIN
+    continue
+  fi
+
+  if ! read -r -s -p "Powtórz PIN: " CONFIRM; then
+    printf '\nNie udało się odczytać potwierdzenia PIN-u.\n' >&2
+    exit 1
+  fi
+  printf '\n'
+
+  if [[ "$PIN" != "$CONFIRM" ]]; then
+    printf 'Kody są różne. Spróbuj ponownie.\n\n'
+    unset PIN CONFIRM
+    continue
+  fi
+
+  if printf '%s:%s\n' "$USER_NAME" "$PIN" | chpasswd -c SHA512; then
+    install -d -m 700 "$STATE_DIR"
+    : > "$STAMP"
+    chmod 600 "$STAMP"
+    unset PIN CONFIRM
+    printf '\nPIN został ustawiony. Uruchamiam ZamarteOS...\n'
+    sleep 2
+    exit 0
+  fi
+
+  unset PIN CONFIRM
+  printf '\nNie udało się ustawić PIN-u. Spróbuj ponownie.\n\n'
+done
