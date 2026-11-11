@@ -70,7 +70,7 @@ jobs:
             VERIFY_STATUS=$?
             echo "Image verification failed (status $VERIFY_STATUS); continuing to collect the complete audit." >&2
           fi
-          printf '%s\\n' "$IMAGE" > ../reference-image-path.txt
+          printf '%s\n' "$IMAGE" > ../reference-image-path.txt
           IMAGE_NAME="$(basename "$IMAGE")"
           CHECKSUM_STATUS=0
           if (
@@ -88,11 +88,11 @@ jobs:
           cp "images/${IMAGE_NAME}.packages" ../reference-image-packages.txt
           test -s "images/${IMAGE_NAME}.build-info"
           cp "images/${IMAGE_NAME}.build-info" ../reference-image-build-info.txt
-          find "$IMAGE" -mindepth 1 -maxdepth 1 -type f -printf '%f\\t%s bytes\\n' | sort > ../reference-image-files.txt
+          find "$IMAGE" -mindepth 1 -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort > ../reference-image-files.txt
           {
-            printf 'zamarteos_repo_commit=%s\\n' "$GITHUB_SHA"
-            printf 'moarchy_overlay_commit=%s\\n' "$(git rev-parse HEAD)"
-            printf 'pinned_hardware_base_commit=%s\\n' "c78bcd1f43340c447e0016ab45a5fa99f186810c"
+            printf 'zamarteos_repo_commit=%s\n' "$GITHUB_SHA"
+            printf 'moarchy_overlay_commit=%s\n' "$(git rev-parse HEAD)"
+            printf 'pinned_hardware_base_commit=%s\n' "c78bcd1f43340c447e0016ab45a5fa99f186810c"
           } > ../reference-provenance.txt
           test -s ../reference-image-verification.txt
           test -s ../reference-checksums.txt
