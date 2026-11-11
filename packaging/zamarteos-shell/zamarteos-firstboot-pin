@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Generate a private per-device PIN before tty1 autologin. No keyboard is
-# required: the ZamarteOS shell displays the PIN on the first graphical start.
+# required: the PIN is stored in a private file in the user's home directory.
 set -euo pipefail
 
 USER_ENTRY="$(getent passwd moarchy || true)"
