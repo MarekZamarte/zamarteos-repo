@@ -1,4 +1,4 @@
-One-shot request to build the first integrated ZamarteOS Pure FP4 reference image.
+One-shot request to build the latest integrated ZamarteOS Pure FP4 reference image.
 The workflow applies the tracked ZamarteOS shell overlay and builds an image artifact.
 This file is a CI trigger only. It does not flash or modify any phone.
 
@@ -16,3 +16,5 @@ Rebuild request: build latest audited ZamarteOS Pure FP4 commit with compact pro
 Build request 2026-11-11: repeat FP4 reference build for current branch.
 
 Build after launcher branding filter 2026-11-11
+
+Build latest branch head after private per-device PIN and first-boot fixes 2026-11-11.
