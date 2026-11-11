@@ -7,7 +7,7 @@ USER_ENTRY="$(getent passwd moarchy || true)"
 USER_NAME="${USER_ENTRY%%:*}"
 USER_HOME="$(cut -d: -f6 <<< "$USER_ENTRY")"
 if [[ -z "$USER_NAME" || -z "$USER_HOME" || ! -d "$USER_HOME" ]]; then
-  printf 'ZamarteOS: nie znaleziono konta użytkownika UID 1000 lub katalogu domowego.\n' >&2
+  printf 'ZamarteOS: nie znaleziono konta użytkownika moarchy lub katalogu domowego.\n' >&2
   exit 1
 fi
 
