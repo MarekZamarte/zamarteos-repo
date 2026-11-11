@@ -90,6 +90,11 @@ jobs:
           grep -q 'no active passwordless sudo rules' moarchy-base/image/verify.sh
           grep -q 'od -An -N4 -tu4 /dev/urandom' moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
           grep -q 'FileView' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          ! grep -Fq 'id.indexOf' packaging/zamarteos-shell/shell.qml
+          grep -Fq 'name.indexOf' packaging/zamarteos-shell/shell.qml
+          grep -Fq 'genericName.indexOf' packaging/zamarteos-shell/shell.qml
+          grep -Fq 'omarchy-theme-browser' scripts/apply-zamarteos-overlay.sh
+          grep -q 'launcher hides vendor branding in labels without dropping apps' moarchy-base/image/verify.sh
           grep -q 'Requires=zamarteos-firstboot-pin.service' moarchy-base/pkgbuilds/zamarteos-shell/moarchy-firstboot-pin.conf
           grep -q 'Requires=moarchy-firstboot.service' moarchy-base/pkgbuilds/zamarteos-shell/getty-firstboot-pin.conf
           git -C moarchy-base diff --check

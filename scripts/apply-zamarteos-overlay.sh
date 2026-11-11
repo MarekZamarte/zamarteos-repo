@@ -100,6 +100,11 @@ needle = "have /usr/bin/quickshell\n"
 lines = [
     marker,
     "have /usr/share/zamarteos-shell/shell.qml",
+    "if grep -Fq 'name.indexOf' \"$R/usr/share/zamarteos-shell/shell.qml\" && grep -Fq 'genericName.indexOf' \"$R/usr/share/zamarteos-shell/shell.qml\" && ! grep -Fq 'id.indexOf' \"$R/usr/share/zamarteos-shell/shell.qml\"; then",
+    "  ok \"the launcher hides vendor branding in labels without dropping apps by internal desktop ID\"",
+    "else",
+    "  no \"the launcher filter hides apps by internal desktop ID or misses display-label filtering\"",
+    "fi",
     "have /etc/pam.d/zamarteos-lock",
     "if grep -Fxq 'auth include login' \"$R/etc/pam.d/zamarteos-lock\"; then",
     "  ok \"the ZamarteOS lock delegates authentication to the system login PAM stack\"",
@@ -161,8 +166,11 @@ ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin $USER_NAME %I \\
 EOF
 
 # Wheel membership is retained, but sudo always asks for the user's private PIN.
+# The pinned omarchy-config package also installs a command-scoped NOPASSWD
+# browser-theme helper rule. It is not required by the ZamarteOS phone shell.
+# Remove both upstream passwordless rules after pacstrap has installed packages.
 install -d "$ROOTDIR/etc/sudoers.d"
-rm -f "$ROOTDIR/etc/sudoers.d/10-moarchy"
+rm -f "$ROOTDIR/etc/sudoers.d/10-moarchy" "$ROOTDIR/etc/sudoers.d/omarchy-theme-browser"
 printf '%s\\n' '%wheel ALL=(ALL:ALL) ALL' > "$ROOTDIR/etc/sudoers.d/10-zamarteos-wheel"
 chmod 440 "$ROOTDIR/etc/sudoers.d/10-zamarteos-wheel"
 say "user $USER_NAME (locked until first-boot PIN setup; sudo requires password; root locked)"

@@ -50,11 +50,12 @@ Scope {
     // Hide only vendor-branded launcher entries. Keep hardware services,
     // drivers and their packages installed; this is a presentation-layer filter.
     function isVisibleApp(entry) {
-        const id = String(entry.id || "").toLowerCase()
+        // Desktop-file IDs are internal compatibility identifiers, not UI labels.
+        // Hide branded display text only; otherwise Phone, Messages and Files
+        // disappear even though their visible names are neutral.
         const name = String(entry.name || "").toLowerCase()
         const genericName = String(entry.genericName || "").toLowerCase()
-        return id.indexOf("moarchy") === -1 && id.indexOf("omarchy") === -1 &&
-               name.indexOf("moarchy") === -1 && name.indexOf("omarchy") === -1 &&
+        return name.indexOf("moarchy") === -1 && name.indexOf("omarchy") === -1 &&
                genericName.indexOf("moarchy") === -1 && genericName.indexOf("omarchy") === -1
     }
 

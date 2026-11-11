@@ -63,25 +63,46 @@ jobs:
           DEVICE=fp4 ./scripts/build-image.sh
           IMAGE="$(find images -mindepth 1 -maxdepth 1 -type d -name 'moarchy-fp4-*' | sort | tail -n 1)"
           test -n "$IMAGE"
-          ./scripts/verify-image.sh "$IMAGE" | tee ../reference-image-verification.txt
-          printf '%s\n' "$IMAGE" > ../reference-image-path.txt
+          VERIFY_STATUS=0
+          if ./scripts/verify-image.sh "$IMAGE" | tee ../reference-image-verification.txt; then
+            echo "Image verification passed."
+          else
+            VERIFY_STATUS=$?
+            echo "Image verification failed (status $VERIFY_STATUS); continuing to collect the complete audit." >&2
+          fi
+          printf '%s\\n' "$IMAGE" > ../reference-image-path.txt
           IMAGE_NAME="$(basename "$IMAGE")"
-          (
+          CHECKSUM_STATUS=0
+          if (
             cd "$IMAGE"
             sha256sum -c "$IMAGE_NAME.sha256"
-          ) | tee ../reference-checksums.txt
+          ) | tee ../reference-checksums.txt; then
+            echo "Image checksums passed."
+          else
+            CHECKSUM_STATUS=$?
+            echo "Image checksum verification failed (status $CHECKSUM_STATUS)." >&2
+          fi
           test -s packages/.build-manifest
           cp packages/.build-manifest ../reference-build-manifest.txt
           test -s "images/${IMAGE_NAME}.packages"
           cp "images/${IMAGE_NAME}.packages" ../reference-image-packages.txt
           test -s "images/${IMAGE_NAME}.build-info"
           cp "images/${IMAGE_NAME}.build-info" ../reference-image-build-info.txt
-          find "$IMAGE" -mindepth 1 -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort > ../reference-image-files.txt
+          find "$IMAGE" -mindepth 1 -maxdepth 1 -type f -printf '%f\\t%s bytes\\n' | sort > ../reference-image-files.txt
           {
-            printf 'zamarteos_repo_commit=%s\n' "$GITHUB_SHA"
-            printf 'moarchy_overlay_commit=%s\n' "$(git rev-parse HEAD)"
-            printf 'pinned_hardware_base_commit=%s\n' "c78bcd1f43340c447e0016ab45a5fa99f186810c"
+            printf 'zamarteos_repo_commit=%s\\n' "$GITHUB_SHA"
+            printf 'moarchy_overlay_commit=%s\\n' "$(git rev-parse HEAD)"
+            printf 'pinned_hardware_base_commit=%s\\n' "c78bcd1f43340c447e0016ab45a5fa99f186810c"
           } > ../reference-provenance.txt
+          test -s ../reference-image-verification.txt
+          test -s ../reference-checksums.txt
+          test -s ../reference-build-manifest.txt
+          test -s ../reference-image-packages.txt
+          test -s ../reference-image-build-info.txt
+          test -s ../reference-image-files.txt
+          test -s ../reference-provenance.txt
+          if [ "$VERIFY_STATUS" -ne 0 ]; then exit "$VERIFY_STATUS"; fi
+          if [ "$CHECKSUM_STATUS" -ne 0 ]; then exit "$CHECKSUM_STATUS"; fi
 
       - name: Upload reference artifact and logs
         if: always()
