@@ -18,3 +18,5 @@ Build request 2026-11-11: repeat FP4 reference build for current branch.
 Build after launcher branding filter 2026-11-11
 
 Build latest branch head after private per-device PIN and first-boot fixes 2026-11-11.
+
+Build after sudo hardening, launcher visibility fix and complete audit collection 2026-11-11
