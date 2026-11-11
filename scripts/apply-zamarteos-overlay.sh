@@ -285,7 +285,7 @@ if chroot "$R" env PATH=/tmp/zamarteos-verify-bin:/usr/bin:/bin ZAMARTEOS_STATE_
      [ -f "$R/var/lib/zamarteos-verify/firstboot-pin-done" ] &&
      grep -Fq 'Twój prywatny PIN: 74567890' "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt" &&
      [ "$(stat -c %a "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt")" = 600 ] &&
-     [ "$(stat -c %u "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt")" = 1000 ]; then
+     [ "$(stat -c %u "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt")" = "$(awk -F: '$1=="moarchy"{print $3}' "$R/etc/passwd")" ]; then
     ok "headless first boot creates a private 8-digit PIN, sets it, and stores a user-only note"
   else
     no "first-boot PIN setup did not set the password and create the private note"
