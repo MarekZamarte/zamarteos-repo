@@ -9,3 +9,5 @@ Rebuild request: include package manifest, image package list, provenance and ch
 Rebuild request: corrected verifier patch and complete manifest audit.
 
 Rebuild request: stage the added ZamarteOS rootfs verifier in the image overlay commit.
+
+Rebuild request: QML bound component context, scoped package ownership, and explicit PAM policy verification.
