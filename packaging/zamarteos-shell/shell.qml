@@ -143,6 +143,7 @@ Scope {
                         Repeater {
                             model: ["1","2","3","4","5","6","7","8","9","⌫","0","↵"]
                             delegate: Rectangle {
+                                id: digitDelegate
                                 required property string modelData
                                 width: 82
                                 height: 62
@@ -152,20 +153,20 @@ Scope {
                                 border.color: "#3a526b"
                                 Text {
                                     anchors.centerIn: parent
-                                    text: modelData
+                                    text: digitDelegate.modelData
                                     color: "#ffffff"
                                     font.pixelSize: 22
                                 }
                                 MouseArea {
                                     anchors.fill: parent
                                     onClicked: {
-                                        if (modelData === "⌫") {
+                                        if (digitDelegate.modelData === "⌫") {
                                             root.lockInput = root.lockInput.slice(0, -1)
                                             root.lockError = ""
-                                        } else if (modelData === "↵") {
+                                        } else if (digitDelegate.modelData === "↵") {
                                             root.authenticateLock()
                                         } else if (root.lockInput.length < 32) {
-                                            root.lockInput += modelData
+                                            root.lockInput += digitDelegate.modelData
                                             root.lockError = ""
                                         }
                                     }
@@ -311,22 +312,23 @@ Scope {
                             { title: "Pliki", subtitle: "Pamięć telefonu", symbol: "▤", words: ["files", "file manager", "pliki"] }
                         ]
                         delegate: Rectangle {
+                            id: appDelegate
                             required property var modelData
                             width: (homeColumn.width - 14) / 2
                             height: 126; radius: 22
                             color: "#18283a"; border.width: 1; border.color: "#2c435a"
                             Column {
                                 anchors.fill: parent; anchors.margins: 17; spacing: 7
-                                Text { text: modelData.symbol; color: "#a9d7c9"; font.pixelSize: 27 }
+                                Text { text: appDelegate.modelData.symbol; color: "#a9d7c9"; font.pixelSize: 27 }
                                 Text {
-                                    text: modelData.title; color: "#f0f4f8"
+                                    text: appDelegate.modelData.title; color: "#f0f4f8"
                                     font.pixelSize: 17; font.weight: Font.DemiBold
                                 }
-                                Text { text: modelData.subtitle; color: "#91a4ba"; font.pixelSize: 11 }
+                                Text { text: appDelegate.modelData.subtitle; color: "#91a4ba"; font.pixelSize: 11 }
                             }
                             MouseArea {
                                 anchors.fill: parent
-                                onClicked: root.launchByKeywords(modelData.words, modelData.title)
+                                onClicked: root.launchByKeywords(appDelegate.modelData.words, appDelegate.modelData.title)
                             }
                         }
                     }
