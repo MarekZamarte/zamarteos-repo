@@ -24,3 +24,5 @@ Build after sudo hardening, launcher visibility fix and complete audit collectio
 Build after shell package CI assertion correction 2026-11-11
 
 Build after touch home-navigation fix 2026-11-11.
+
+Build after fixing vertical touch scrolling and top-edge pull-down 2026-11-11.
