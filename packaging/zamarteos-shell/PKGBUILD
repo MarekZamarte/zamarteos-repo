@@ -1,5 +1,5 @@
 pkgname=zamarteos-shell
-pkgver=0.1.2
+pkgver=0.1.3
 pkgrel=1
 pkgdesc="ZamarteOS Pure mobile home shell for Fairphone 4"
 arch=('aarch64')
@@ -7,8 +7,8 @@ url="https://github.com/MarekZamarte/zamarteos-repo"
 license=('unknown')
 depends=('quickshell' 'hyprland' 'pam')
 makedepends=('qt6-declarative')
-source=('shell.qml' 'zamarteos-lock.pam')
-sha256sums=('SKIP' 'SKIP')
+source=('shell.qml' 'zamarteos-lock.pam' 'zamarteos-firstboot-pin' 'zamarteos-firstboot-pin.service' 'moarchy-firstboot-pin.conf' 'getty-firstboot-pin.conf')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
   grep -q 'WlSessionLock' "$srcdir/shell.qml"
@@ -18,6 +18,12 @@ check() {
   grep -q 'function isVisibleApp(entry)' "$srcdir/shell.qml"
   grep -q 'id.indexOf("moarchy")' "$srcdir/shell.qml"
   grep -q 'name.indexOf("omarchy")' "$srcdir/shell.qml"
+  bash -n "$srcdir/zamarteos-firstboot-pin"
+  grep -q '^[0-9].*{6,12}' "$srcdir/zamarteos-firstboot-pin"
+  grep -q 'chpasswd -c SHA512' "$srcdir/zamarteos-firstboot-pin"
+  grep -q 'StandardInput=tty' "$srcdir/zamarteos-firstboot-pin.service"
+  grep -q 'Requires=zamarteos-firstboot-pin.service' "$srcdir/moarchy-firstboot-pin.conf"
+  grep -q 'Requires=moarchy-firstboot.service' "$srcdir/getty-firstboot-pin.conf"
   test -x /usr/lib/qt6/bin/qmllint
   /usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml "$srcdir/shell.qml"
 }
@@ -25,4 +31,8 @@ check() {
 package() {
   install -Dm644 "$srcdir/shell.qml" "$pkgdir/usr/share/zamarteos-shell/shell.qml"
   install -Dm644 "$srcdir/zamarteos-lock.pam" "$pkgdir/etc/pam.d/zamarteos-lock"
+  install -Dm755 "$srcdir/zamarteos-firstboot-pin" "$pkgdir/usr/lib/zamarteos/firstboot-pin"
+  install -Dm644 "$srcdir/zamarteos-firstboot-pin.service" "$pkgdir/usr/lib/systemd/system/zamarteos-firstboot-pin.service"
+  install -Dm644 "$srcdir/moarchy-firstboot-pin.conf" "$pkgdir/usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf"
+  install -Dm644 "$srcdir/getty-firstboot-pin.conf" "$pkgdir/usr/lib/systemd/system/getty@tty1.service.d/10-zamarteos-firstboot.conf"
 }
