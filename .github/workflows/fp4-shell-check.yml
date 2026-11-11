@@ -84,8 +84,12 @@ jobs:
           ! grep -q 'DEFAULT_PIN=1337' moarchy-base/image/configure.sh
           bash -n moarchy-base/image/configure.sh
           bash -n moarchy-base/image/verify.sh
-          grep -q 'first boot rejects a short/mismatched PIN' moarchy-base/image/verify.sh
+          grep -q 'headless first boot creates a private 8-digit PIN' moarchy-base/image/verify.sh
+          grep -q 'graphical first-run panel displays the private per-device PIN' moarchy-base/image/verify.sh
+          grep -q 'no per-device PIN is baked into the published image' moarchy-base/image/verify.sh
           grep -q 'no active passwordless sudo rules' moarchy-base/image/verify.sh
+          grep -q 'od -An -N4 -tu4 /dev/urandom' moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
+          grep -q 'FileView' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -q 'Requires=zamarteos-firstboot-pin.service' moarchy-base/pkgbuilds/zamarteos-shell/moarchy-firstboot-pin.conf
           grep -q 'Requires=moarchy-firstboot.service' moarchy-base/pkgbuilds/zamarteos-shell/getty-firstboot-pin.conf
           git -C moarchy-base diff --check
