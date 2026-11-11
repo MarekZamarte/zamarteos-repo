@@ -130,4 +130,172 @@ if marker not in source:
     path.write_text(source)
 PY
 
+
+# Do not ship a shared PIN or passwordless sudo. The first-boot PIN service
+# sets a private credential on tty1 before the normal autologin session starts.
+python3 - "$ROOT/image/configure.sh" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+start = source.find("# --- the user (I8)")
+end = source.find("# sshd off by default", start)
+if start < 0 or end < 0:
+    raise SystemExit("Could not find the pinned base user/security section")
+
+user_setup = """# --- the user (I8) ---------------------------------------------------------
+# No credential is baked into the image. The account stays locked until the
+# ZamarteOS first-boot service asks the owner to choose a private PIN on tty1.
+arch-chroot "$ROOTDIR" useradd -m -G wheel,video,audio,input,feedbackd -s /bin/bash "$USER_NAME"
+arch-chroot "$ROOTDIR" passwd -l "$USER_NAME" >/dev/null
+arch-chroot "$ROOTDIR" passwd -l root >/dev/null
+
+# Autologin is safe only after the first-boot PIN service has completed. The
+# getty drop-in shipped by zamarteos-shell makes that ordering mandatory.
+install -d "$ROOTDIR/etc/systemd/system/getty@tty1.service.d"
+cat >"$ROOTDIR/etc/systemd/system/getty@tty1.service.d/autologin.conf" <<EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin $USER_NAME %I \\$TERM
+EOF
+
+# Wheel membership is retained, but sudo always asks for the user's private PIN.
+install -d "$ROOTDIR/etc/sudoers.d"
+rm -f "$ROOTDIR/etc/sudoers.d/10-moarchy"
+printf '%s\\n' '%wheel ALL=(ALL:ALL) ALL' > "$ROOTDIR/etc/sudoers.d/10-zamarteos-wheel"
+chmod 440 "$ROOTDIR/etc/sudoers.d/10-zamarteos-wheel"
+say "user $USER_NAME (locked until first-boot PIN setup; sudo requires password; root locked)"
+
+"""
+source = source[:start] + user_setup + source[end:]
+
+old_ssh = """# The image's only password is the public default PIN (above), so password auth
+# over ssh would be an open door until the user changes it. Keys only.
+"""
+new_ssh = """# The first-boot PIN is private to this device; SSH still accepts keys only.
+"""
+if old_ssh in source:
+    source = source.replace(old_ssh, new_ssh, 1)
+
+path.write_text(source)
+PY
+
+# Extend the offline image verifier for first-boot PIN setup and account security.
+python3 - "$ROOT/image/verify.sh" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+
+marker = "have /usr/share/zamarteos-shell/shell.qml\\n"
+extra = """have /usr/lib/zamarteos/firstboot-pin
+have /usr/lib/systemd/system/zamarteos-firstboot-pin.service
+have /usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf
+have /usr/lib/systemd/system/getty@tty1.service.d/10-zamarteos-firstboot.conf
+if bash -n "$R/usr/lib/zamarteos/firstboot-pin" 2>/dev/null; then
+  ok "the first-boot PIN setup script has valid Bash syntax"
+else
+  no "the first-boot PIN setup script has invalid Bash syntax"
+fi
+if grep -Fq 'StandardInput=tty' "$R/usr/lib/systemd/system/zamarteos-firstboot-pin.service" &&
+   grep -Fq 'TTYPath=/dev/tty1' "$R/usr/lib/systemd/system/zamarteos-firstboot-pin.service" &&
+   grep -Fq 'Before=moarchy-firstboot.service getty@tty1.service' "$R/usr/lib/systemd/system/zamarteos-firstboot-pin.service"; then
+  ok "the private PIN prompt runs on tty1 before autologin"
+else
+  no "the private PIN service is not ordered on tty1 before autologin"
+fi
+if grep -Fq 'Requires=zamarteos-firstboot-pin.service' "$R/usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf" &&
+   grep -Fq 'After=zamarteos-firstboot-pin.service' "$R/usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf" &&
+   grep -Fq 'Requires=moarchy-firstboot.service' "$R/usr/lib/systemd/system/getty@tty1.service.d/10-zamarteos-firstboot.conf"; then
+  ok "tty1 autologin is gated on successful first-boot setup"
+else
+  no "tty1 autologin is not gated on first-boot setup"
+fi
+"""
+if marker not in source:
+    raise SystemExit("Could not find the ZamarteOS shell verifier marker")
+if extra not in source:
+    source = source.replace(marker, marker + extra, 1)
+
+cred_start = source.find("# A locked password is ! or *", source.find('sec "credentials -- what must NOT be here"'))
+if cred_start < 0:
+    raise SystemExit("Could not find the credential checks in the pinned verifier")
+loop_start = source.find("for acct in moarchy root;", cred_start)
+loop_end = source.find("\\ndone\\n", loop_start)
+if loop_start < 0 or loop_end < 0:
+    raise SystemExit("Could not find the account credential loop")
+loop_end += len("\\ndone\\n")
+
+secure_credentials = """# A published image must contain no usable password hash. The owner chooses
+# a private PIN on first boot, before getty can start the autologin session.
+for acct in moarchy root; do
+  h=$(awk -F: -v a="$acct" '$1==a{print $2}' "$R/etc/shadow" 2>/dev/null)
+  case "$h" in
+    '!'*|'*'*|'!') ok "$acct password is locked in the image" ;;
+    '')            no "$acct has an EMPTY password" ;;
+    *)             no "$acct has a password hash in the published image" ;;
+  esac
+done
+if grep -RqsE '^[[:space:]]*[^#[:space:]].*NOPASSWD[[:space:]]*:' "$R/etc/sudoers" "$R/etc/sudoers.d" 2>/dev/null; then
+  no "an active passwordless sudo rule is present"
+else
+  ok "no active passwordless sudo rules"
+fi
+if grep -Eq '^%wheel ALL=\\(ALL:ALL\\) ALL
+ "$R/etc/sudoers.d/10-zamarteos-wheel" 2>/dev/null; then
+  ok "wheel sudo requires the user's password"
+else
+  no "wheel sudo is missing its password-required rule"
+fi
+"""
+source = source[:cred_start] + secure_credentials + source[loop_end:]
+
+test_marker = '[ -e "$R/etc/moarchy-debug-image" ] && no "this is a DEBUG image -- do not publish" \\n'
+test_block = """# Exercise the PIN prompt without changing the image's real shadow database.
+sec "behaviour: ZamarteOS first-boot PIN setup"
+TESTBIN="$R/tmp/zamarteos-verify-bin"
+mkdir -p "$TESTBIN"
+cat > "$TESTBIN/chpasswd" <<'EOF'
+#!/bin/sh
+[ "$#" -eq 2 ] && [ "$1" = "-c" ] && [ "$2" = "SHA512" ] || exit 2
+IFS= read -r value || exit 3
+[ "$value" = "moarchy:246810" ] || exit 4
+printf 'called\\n' > /tmp/zamarteos-verify-chpasswd-called
+EOF
+chmod 755 "$TESTBIN/chpasswd"
+rm -f "$R/tmp/zamarteos-verify-chpasswd-called"
+if chroot "$R" env PATH=/tmp/zamarteos-verify-bin:/usr/bin:/bin \\
+     ZAMARTEOS_STATE_DIR=/var/lib/zamarteos-verify \\
+     /usr/lib/zamarteos/firstboot-pin > "$WORK/zamarteos-pin.log" 2>&1 <<'EOF'
+2468
+246810
+000000
+246810
+246810
+EOF
+then
+  if [ -s "$R/tmp/zamarteos-verify-chpasswd-called" ] &&
+     [ -f "$R/var/lib/zamarteos-verify/firstboot-pin-done" ]; then
+    ok "first boot rejects a short/mismatched PIN and accepts a confirmed private PIN"
+  else
+    no "first-boot PIN setup did not call chpasswd or write its completion stamp"
+    sed 's/^/       /' "$WORK/zamarteos-pin.log"
+  fi
+else
+  no "first-boot PIN setup failed its interactive test"
+  sed 's/^/       /' "$WORK/zamarteos-pin.log"
+fi
+rm -rf "$TESTBIN" "$R/tmp/zamarteos-verify-chpasswd-called" "$R/var/lib/zamarteos-verify"
+
+"""
+if test_marker not in source:
+    raise SystemExit("Could not find the debug-image verifier marker")
+if test_block not in source:
+    source = source.replace(test_marker, test_block + test_marker, 1)
+
+path.write_text(source)
+PY
+
 echo "ZamarteOS overlay applied to $ROOT"
