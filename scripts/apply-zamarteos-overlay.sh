@@ -26,33 +26,10 @@ fi
 sed -i 's/^pkgrel=2$/pkgrel=3/' "$META"
 sed -i 's/^pkgrel=18$/pkgrel=19/' "$ROOT/pkgbuilds/moarchy/PKGBUILD"
 
-# Moarchy's session startup already calls omarchy-launch-shell, which delegates
-# to moarchy-restart-shell. Keep that startup contract but point it at our own
-# QML config. Do not replace the compositor, modem, audio, or kernel packages.
-cat > "$ROOT/bin/moarchy-restart-shell" <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-: "${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
-export XDG_RUNTIME_DIR
-[[ -n "${WAYLAND_DISPLAY:-}" ]] || {
-  echo "ZamarteOS shell: WAYLAND_DISPLAY is not set" >&2
-  exit 1
-}
-
-export PATH="$HOME/.local/bin:$(dirname "$(readlink -f "$0")"):$PATH"
-STATE="${XDG_STATE_HOME:-$HOME/.local/state}/zamarteos/shell-off"
-LOG="${XDG_STATE_HOME:-$HOME/.local/state}/zamarteos/shell.log"
-pkill -x quickshell 2>/dev/null || true
-for _ in $(seq 40); do
-  pgrep -x quickshell >/dev/null 2>&1 || break
-  sleep 0.25
-done
-[[ -f "$STATE" ]] && exit 0
-mkdir -p "$(dirname "$LOG")"
-QS_NO_RELOAD_POPUP=1 setsid qs -n -p /usr/share/zamarteos-shell >"$LOG" 2>&1 &
-EOF
-chmod +x "$ROOT/bin/moarchy-restart-shell"
+# Keep the upstream session launcher intact. It starts the complete Quickshell
+# host, plugin registry, app drawer, control center and Settings. Replacing it
+# with a standalone QML file removes Phone/Messages/Settings plugins and the
+# volume panel even though their packages are present.
 
 # Polish system locale. Keep en_US generated as a fallback, but make
 # Polish the active locale so dates and system messages match the shell.
@@ -76,50 +53,55 @@ source = source.replace(old_locale, new_locale, 1).replace(old_lang, new_lang, 1
 path.write_text(source)
 PY
 
-# Keep the existing power/idle path (moarchy-screen -> moarchy-lock), but
-# direct the actual lock request to our PAM-backed Quickshell session lock.
-cat > "$ROOT/bin/moarchy-lock" <<'EOF'
-#!/usr/bin/env bash
-set -uo pipefail
-exec timeout 3 qs ipc call zamarteos-lock lock >/dev/null 2>&1
-EOF
-chmod +x "$ROOT/bin/moarchy-lock"
+# Keep the upstream lock helper and PAM service. They target the lock plugin
+# in the full Moarchy shell; the standalone ZamarteOS shell IPC target is not
+# present once the native plugin host is restored.
 
  
 
-# Extend the pinned base verifier so a green image check also proves that the
-# ZamarteOS shell package and its session/lock wiring are actually in rootfs.
+# Extend the pinned base verifier: a green image must contain the native
+# phone apps, settings, volume plugin and the Hyprland hardware-key bindings.
 python3 - "$ROOT/image/verify.sh" <<'PY'
 from pathlib import Path
 import sys
 
 path = Path(sys.argv[1])
 source = path.read_text()
-marker = "# ZamarteOS Pure overlay checks"
-needle = "have /usr/bin/quickshell\n"
+needle = "have /usr/bin/quickshell\\n"
 lines = [
-    marker,
-    "have /usr/share/zamarteos-shell/shell.qml",
-    "if grep -Fq 'name.indexOf' \"$R/usr/share/zamarteos-shell/shell.qml\" && grep -Fq 'genericName.indexOf' \"$R/usr/share/zamarteos-shell/shell.qml\" && ! grep -Fq 'id.indexOf' \"$R/usr/share/zamarteos-shell/shell.qml\"; then",
-    "  ok \"the launcher hides vendor branding in labels without dropping apps by internal desktop ID\"",
+    "# ZamarteOS Pure integration checks",
+    "have /usr/lib/zamarteos/firstboot-pin",
+    "have /usr/lib/systemd/system/zamarteos-firstboot-pin.service",
+    "have /usr/share/moarchy/plugins/moarchy.phone/manifest.json",
+    "have /usr/share/moarchy/plugins/moarchy.messages/manifest.json",
+    "have /usr/share/moarchy/plugins/moarchy.settings/manifest.json",
+    "have /usr/share/moarchy/plugins/moarchy.volume/manifest.json",
+    "have /usr/lib/moarchy/bin/moarchy-volume",
+    "have /usr/share/moarchy/config/hypr/bindings.lua",
+    "if grep -Fq 'moarchy-volume up' \"$R/usr/share/moarchy/config/hypr/bindings.lua\" && grep -Fq 'moarchy-volume down' \"$R/usr/share/moarchy/config/hypr/bindings.lua\" && grep -Fq 'XF86AudioRaiseVolume' \"$R/usr/share/moarchy/config/hypr/bindings.lua\" && grep -Fq 'XF86AudioLowerVolume' \"$R/usr/share/moarchy/config/hypr/bindings.lua\"; then",
+    "  ok \"the physical volume keys are bound in the active Hyprland Lua configuration\"",
     "else",
-    "  no \"the launcher filter hides apps by internal desktop ID or misses display-label filtering\"",
+    "  no \"the physical volume key bindings are missing from the active Hyprland Lua configuration\"",
     "fi",
-    "have /etc/pam.d/zamarteos-lock",
-    "if grep -Fxq 'auth include login' \"$R/etc/pam.d/zamarteos-lock\"; then",
-    "  ok \"the ZamarteOS lock delegates authentication to the system login PAM stack\"",
+    "if grep -Fq 'wpctl set-volume' \"$R/usr/lib/moarchy/bin/moarchy-volume\" && grep -Fq 'wpctl set-mute' \"$R/usr/lib/moarchy/bin/moarchy-volume\"; then",
+    "  ok \"the hardware volume helper controls the existing PipeWire sink\"",
     "else",
-    "  no \"the ZamarteOS lock PAM policy does not include the system login stack\"",
+    "  no \"the hardware volume helper is missing PipeWire controls\"",
     "fi",
-    "if grep -Fq 'qs -n -p /usr/share/zamarteos-shell' \"$R/usr/lib/moarchy/bin/moarchy-restart-shell\"; then",
-    "  ok \"the session launcher starts the ZamarteOS Quickshell\"",
+    "if grep -Fq 'auth include login' \"$R/etc/pam.d/omarchy-lock-password\"; then",
+    "  ok \"the native session lock uses the system login PAM stack\"",
     "else",
-    "  no \"the session launcher does not start /usr/share/zamarteos-shell\"",
+    "  no \"the native session lock PAM service is missing or misconfigured\"",
     "fi",
-    "if grep -Fq 'qs ipc call zamarteos-lock lock' \"$R/usr/lib/moarchy/bin/moarchy-lock\"; then",
-    "  ok \"the screen-lock command reaches the ZamarteOS PAM lock\"",
+    "if grep -Fq 'qs -p \"$OMARCHY_PATH/shell\" ipc call lock lock' \"$R/usr/lib/moarchy/bin/moarchy-lock\"; then",
+    "  ok \"the lock helper targets the native Quickshell session\"",
     "else",
-    "  no \"the screen-lock command is not wired to zamarteos-lock\"",
+    "  no \"the lock helper does not target the native Quickshell session\"",
+    "fi",
+    "if grep -Fq 'quickshell -n -p \"$OMARCHY_PATH/shell\"' \"$R/usr/lib/moarchy/bin/moarchy-restart-shell\"; then",
+    "  ok \"the session launcher starts the native plugin host\"",
+    "else",
+    "  no \"the session launcher has been replaced or does not start the plugin host\"",
     "fi",
     "if grep -q '^LANG=pl_PL.UTF-8$' \"$R/etc/locale.conf\"; then",
     "  ok \"Polish is the active system locale\"",
@@ -127,8 +109,8 @@ lines = [
     "  no \"the active system locale is not pl_PL.UTF-8\"",
     "fi",
 ]
-checks = "\n".join(lines) + "\n"
-if "have /usr/share/zamarteos-shell/shell.qml" not in source:
+checks = "\\n".join(lines) + "\\n"
+if "# ZamarteOS Pure integration checks" not in source:
     if needle not in source:
         raise SystemExit("Could not find the Quickshell check in the pinned image verifier")
     source = source.replace(needle, needle + checks, 1)
@@ -137,7 +119,7 @@ PY
 
 
 # Do not ship a shared PIN or passwordless sudo. The first-boot PIN service
-# sets a private credential on tty1 before the normal autologin session starts.
+# sets a private credential before the native session lock and tty1 autologin.
 python3 - "$ROOT/image/configure.sh" <<'PY'
 from pathlib import Path
 import sys
@@ -197,7 +179,7 @@ import sys
 path = Path(sys.argv[1])
 source = path.read_text()
 
-marker = "have /usr/share/zamarteos-shell/shell.qml"
+marker = "have /usr/lib/zamarteos/firstboot-pin"
 extra = """have /usr/lib/zamarteos/firstboot-pin
 have /usr/lib/systemd/system/zamarteos-firstboot-pin.service
 have /usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf
@@ -212,13 +194,6 @@ if grep -Fq 'Before=moarchy-firstboot.service getty@tty1.service' "$R/usr/lib/sy
   ok "the per-device PIN is generated before tty1 autologin without console input"
 else
   no "the per-device PIN service is not ordered before tty1 autologin"
-fi
-if grep -Fq 'FileView' "$R/usr/share/zamarteos-shell/shell.qml" &&
-   grep -Fq 'PIERWSZE-URUCHOMIENIE.txt' "$R/usr/share/zamarteos-shell/shell.qml" &&
-   grep -Fq 'firstbootPin' "$R/usr/share/zamarteos-shell/shell.qml"; then
-  ok "the graphical first-run panel displays the private per-device PIN"
-else
-  no "the graphical first-run PIN panel is missing"
 fi
 if [ -e "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt" ]; then
   no "a per-device PIN note is baked into the published image"
