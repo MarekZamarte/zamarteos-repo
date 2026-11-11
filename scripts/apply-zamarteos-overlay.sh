@@ -199,12 +199,23 @@ if bash -n "$R/usr/lib/zamarteos/firstboot-pin" 2>/dev/null; then
 else
   no "the first-boot PIN setup script has invalid Bash syntax"
 fi
-if grep -Fq 'StandardInput=tty' "$R/usr/lib/systemd/system/zamarteos-firstboot-pin.service" &&
-   grep -Fq 'TTYPath=/dev/tty1' "$R/usr/lib/systemd/system/zamarteos-firstboot-pin.service" &&
-   grep -Fq 'Before=moarchy-firstboot.service getty@tty1.service' "$R/usr/lib/systemd/system/zamarteos-firstboot-pin.service"; then
-  ok "the private PIN prompt runs on tty1 before autologin"
+if grep -Fq 'Before=moarchy-firstboot.service getty@tty1.service' "$R/usr/lib/systemd/system/zamarteos-firstboot-pin.service" &&
+   grep -Fq 'TimeoutStartSec=0' "$R/usr/lib/systemd/system/zamarteos-firstboot-pin.service"; then
+  ok "the per-device PIN is generated before tty1 autologin without console input"
 else
-  no "the private PIN service is not ordered on tty1 before autologin"
+  no "the per-device PIN service is not ordered before tty1 autologin"
+fi
+if grep -Fq 'FileView' "$R/usr/share/zamarteos-shell/shell.qml" &&
+   grep -Fq 'PIERWSZE-URUCHOMIENIE.txt' "$R/usr/share/zamarteos-shell/shell.qml" &&
+   grep -Fq 'firstbootPin' "$R/usr/share/zamarteos-shell/shell.qml"; then
+  ok "the graphical first-run panel displays the private per-device PIN"
+else
+  no "the graphical first-run PIN panel is missing"
+fi
+if [ -e "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt" ]; then
+  no "a per-device PIN note is baked into the published image"
+else
+  ok "no per-device PIN is baked into the published image"
 fi
 if grep -Fq 'Requires=zamarteos-firstboot-pin.service' "$R/usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf" &&
    grep -Fq 'After=zamarteos-firstboot-pin.service' "$R/usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf" &&
@@ -252,41 +263,39 @@ fi
 source = source[:cred_start] + secure_credentials + source[loop_end:]
 
 test_marker = '[ -e "$R/etc/moarchy-debug-image" ]'
-test_block = """# Exercise the PIN prompt without changing the image's real shadow database.
+test_block = """# Exercise the headless first-boot PIN generator without changing the image shadow database.
 sec "behaviour: ZamarteOS first-boot PIN setup"
 TESTBIN="$R/tmp/zamarteos-verify-bin"
 mkdir -p "$TESTBIN"
+cat > "$TESTBIN/od" <<'EOF'
+#!/bin/sh
+printf '1234567890\\n'
+EOF
 cat > "$TESTBIN/chpasswd" <<'EOF'
 #!/bin/sh
 [ "$#" -eq 2 ] && [ "$1" = "-c" ] && [ "$2" = "SHA512" ] || exit 2
 IFS= read -r value || exit 3
-[ "$value" = "moarchy:246810" ] || exit 4
+[ "$value" = "moarchy:74567890" ] || exit 4
 printf 'called\\n' > /tmp/zamarteos-verify-chpasswd-called
 EOF
-chmod 755 "$TESTBIN/chpasswd"
-rm -f "$R/tmp/zamarteos-verify-chpasswd-called"
-if chroot "$R" env PATH=/tmp/zamarteos-verify-bin:/usr/bin:/bin \\
-     ZAMARTEOS_STATE_DIR=/var/lib/zamarteos-verify \\
-     /usr/lib/zamarteos/firstboot-pin > "$WORK/zamarteos-pin.log" 2>&1 <<'EOF'
-2468
-246810
-000000
-246810
-246810
-EOF
-then
+chmod 755 "$TESTBIN/od" "$TESTBIN/chpasswd"
+rm -f "$R/tmp/zamarteos-verify-chpasswd-called" "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt"
+if chroot "$R" env PATH=/tmp/zamarteos-verify-bin:/usr/bin:/bin ZAMARTEOS_STATE_DIR=/var/lib/zamarteos-verify /usr/lib/zamarteos/firstboot-pin > "$WORK/zamarteos-pin.log" 2>&1; then
   if [ -s "$R/tmp/zamarteos-verify-chpasswd-called" ] &&
-     [ -f "$R/var/lib/zamarteos-verify/firstboot-pin-done" ]; then
-    ok "first boot rejects a short/mismatched PIN and accepts a confirmed private PIN"
+     [ -f "$R/var/lib/zamarteos-verify/firstboot-pin-done" ] &&
+     grep -Fq 'Twój prywatny PIN: 74567890' "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt" &&
+     [ "$(stat -c %a "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt")" = 600 ] &&
+     [ "$(stat -c %u "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt")" = 1000 ]; then
+    ok "headless first boot creates a private 8-digit PIN, sets it, and stores a user-only note"
   else
-    no "first-boot PIN setup did not call chpasswd or write its completion stamp"
+    no "first-boot PIN setup did not set the password and create the private note"
     sed 's/^/       /' "$WORK/zamarteos-pin.log"
   fi
 else
-  no "first-boot PIN setup failed its interactive test"
+  no "first-boot PIN setup failed its headless test"
   sed 's/^/       /' "$WORK/zamarteos-pin.log"
 fi
-rm -rf "$TESTBIN" "$R/tmp/zamarteos-verify-chpasswd-called" "$R/var/lib/zamarteos-verify"
+rm -rf "$TESTBIN" "$R/tmp/zamarteos-verify-chpasswd-called" "$R/var/lib/zamarteos-verify" "$R/home/moarchy/PIERWSZE-URUCHOMIENIE.txt"
 
 """
 if test_marker not in source:
