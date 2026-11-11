@@ -108,7 +108,7 @@ lines = [
     "  no \"the active system locale is not pl_PL.UTF-8\"",
     "fi",
 ]
-checks = "\\n".join(lines) + "\\n"
+checks = "\n".join(lines) + "\n"
 if "# ZamarteOS Pure integration checks" not in source:
     if needle not in source:
         raise SystemExit("Could not find the Quickshell check in the pinned image verifier")
@@ -180,7 +180,6 @@ source = path.read_text()
 
 marker = "# ZamarteOS Pure integration checks"
 extra = """have /usr/lib/systemd/system/zamarteos-firstboot-pin.service
-have /usr/lib/systemd/system/zamarteos-firstboot-pin.service
 have /usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf
 have /usr/lib/systemd/system/getty@tty1.service.d/10-zamarteos-firstboot.conf
 if bash -n "$R/usr/lib/zamarteos/firstboot-pin" 2>/dev/null; then
