@@ -42,7 +42,7 @@ jobs:
               # QEMU runner kernel lacks Landlock; disable pacman download sandbox only inside this disposable CI container.
               sed -i "/^\\[options\\]$/a DisableSandbox" /etc/pacman.conf
               printf "%b" "\\n[danctnix]\\nSigLevel = Never\\nServer = https://archmobile.mirror.danctnix.org/\$repo/\$arch/\\n" >> /etc/pacman.conf
-              pacman -Syu --noconfirm base-devel quickshell hyprland qt6-declarative pam
+              pacman -Syu --noconfirm base-devel pam
               useradd -m builder
               echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
               chown -R builder:builder /repo/packaging/zamarteos-shell
@@ -70,12 +70,20 @@ jobs:
           bash -n moarchy-base/bin/moarchy-restart-shell
           grep -q "'zamarteos-shell'" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
           grep -q "^pkgrel=3$" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
-          grep -q "^pkgrel=19$" moarchy-base/pkgbuilds/moarchy/PKGBUILD
-          grep -q "qs ipc call zamarteos-lock lock" moarchy-base/bin/moarchy-lock
-          grep -q "qs -n -p /usr/share/zamarteos-shell" moarchy-base/bin/moarchy-restart-shell
+          ! grep -q "^pkgrel=19$" moarchy-base/pkgbuilds/moarchy/PKGBUILD
+          grep -Fq 'quickshell -n -p "$OMARCHY_PATH/shell"' moarchy-base/bin/moarchy-restart-shell
+          grep -Fq 'qs -p "$OMARCHY_PATH/shell" ipc call lock lock' moarchy-base/bin/moarchy-lock
+          grep -Fq 'moarchy-volume up' moarchy-base/config/hypr/bindings.lua
+          grep -Fq 'XF86AudioRaiseVolume' moarchy-base/config/hypr/bindings.lua
+          grep -Fq 'XF86AudioLowerVolume' moarchy-base/config/hypr/bindings.lua
+          grep -Fq 'wpctl set-volume' moarchy-base/bin/moarchy-volume
+          for plugin in phone messages settings volume; do
+            test -f "moarchy-base/default/omarchy/plugins/moarchy.$plugin/manifest.json"
+          done
           grep -q "pl_PL.UTF-8" moarchy-base/image/configure.sh
-          test -f moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
-          test -f moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-lock.pam
+          grep -q "'zamarteos-firstboot-pin'" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          ! grep -q "shell.qml" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          ! grep -q "hyprland.conf" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
           test -f moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
           bash -n moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
           grep -q 'passwd -l "$USER_NAME"' moarchy-base/image/configure.sh
@@ -85,16 +93,14 @@ jobs:
           bash -n moarchy-base/image/configure.sh
           bash -n moarchy-base/image/verify.sh
           grep -q 'headless first boot creates a private 8-digit PIN' moarchy-base/image/verify.sh
-          grep -q 'graphical first-run panel displays the private per-device PIN' moarchy-base/image/verify.sh
           grep -q 'no per-device PIN is baked into the published image' moarchy-base/image/verify.sh
           grep -q 'no active passwordless sudo rules' moarchy-base/image/verify.sh
           grep -q 'od -An -N4 -tu4 /dev/urandom' moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
-          grep -q 'FileView' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
-          ! grep -Fq 'id.indexOf' packaging/zamarteos-shell/shell.qml
-          grep -Fq 'name.indexOf' packaging/zamarteos-shell/shell.qml
-          grep -Fq 'genericName.indexOf' packaging/zamarteos-shell/shell.qml
-          grep -Fq 'omarchy-theme-browser' scripts/apply-zamarteos-overlay.sh
-          grep -q 'launcher hides vendor branding in labels without dropping apps' moarchy-base/image/verify.sh
+          grep -q 'moarchy.phone/manifest.json' moarchy-base/image/verify.sh
+          grep -q 'moarchy.messages/manifest.json' moarchy-base/image/verify.sh
+          grep -q 'XF86AudioRaiseVolume' moarchy-base/image/verify.sh
+          grep -q 'moarchy-volume up' moarchy-base/image/verify.sh
+          grep -q 'omarchy-theme-browser' scripts/apply-zamarteos-overlay.sh
           grep -q 'Requires=zamarteos-firstboot-pin.service' moarchy-base/pkgbuilds/zamarteos-shell/moarchy-firstboot-pin.conf
           grep -q 'Requires=moarchy-firstboot.service' moarchy-base/pkgbuilds/zamarteos-shell/getty-firstboot-pin.conf
           git -C moarchy-base diff --check
