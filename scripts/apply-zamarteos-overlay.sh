@@ -123,7 +123,7 @@ lines = [
     "fi",
 ]
 checks = "\n".join(lines) + "\n"
-if marker not in source:
+if "have /usr/share/zamarteos-shell/shell.qml" not in source:
     if needle not in source:
         raise SystemExit("Could not find the Quickshell check in the pinned image verifier")
     source = source.replace(needle, needle + checks, 1)
@@ -189,7 +189,7 @@ import sys
 path = Path(sys.argv[1])
 source = path.read_text()
 
-marker = "have /usr/share/zamarteos-shell/shell.qml\\n"
+marker = "have /usr/share/zamarteos-shell/shell.qml"
 extra = """have /usr/lib/zamarteos/firstboot-pin
 have /usr/lib/systemd/system/zamarteos-firstboot-pin.service
 have /usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf
