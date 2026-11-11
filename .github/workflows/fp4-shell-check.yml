@@ -81,6 +81,11 @@ jobs:
           grep -q 'passwd -l "$USER_NAME"' moarchy-base/image/configure.sh
           grep -q '10-zamarteos-wheel' moarchy-base/image/configure.sh
           ! grep -q 'NOPASSWD' moarchy-base/image/configure.sh
+          ! grep -q 'DEFAULT_PIN=1337' moarchy-base/image/configure.sh
+          bash -n moarchy-base/image/configure.sh
+          bash -n moarchy-base/image/verify.sh
+          grep -q 'first boot rejects a short/mismatched PIN' moarchy-base/image/verify.sh
+          grep -q 'no active passwordless sudo rules' moarchy-base/image/verify.sh
           grep -q 'Requires=zamarteos-firstboot-pin.service' moarchy-base/pkgbuilds/zamarteos-shell/moarchy-firstboot-pin.conf
           grep -q 'Requires=moarchy-firstboot.service' moarchy-base/pkgbuilds/zamarteos-shell/getty-firstboot-pin.conf
           git -C moarchy-base diff --check
