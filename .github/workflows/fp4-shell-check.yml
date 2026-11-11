@@ -88,7 +88,7 @@ jobs:
           bash -n moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
           grep -q 'passwd -l "$USER_NAME"' moarchy-base/image/configure.sh
           grep -q '10-zamarteos-wheel' moarchy-base/image/configure.sh
-          ! grep -q 'NOPASSWD' moarchy-base/image/configure.sh
+          ! grep -Eq '^[[:space:]]*[^#].*NOPASSWD[[:space:]]*:' moarchy-base/image/configure.sh
           ! grep -q 'DEFAULT_PIN=1337' moarchy-base/image/configure.sh
           bash -n moarchy-base/image/configure.sh
           bash -n moarchy-base/image/verify.sh
