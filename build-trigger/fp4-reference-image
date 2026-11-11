@@ -22,3 +22,5 @@ Build latest branch head after private per-device PIN and first-boot fixes 2026-
 Build after sudo hardening, launcher visibility fix and complete audit collection 2026-11-11
 
 Build after shell package CI assertion correction 2026-11-11
+
+Build after touch home-navigation fix 2026-11-11.
