@@ -77,7 +77,11 @@ Scope {
                 }
             }
         }
-        showNotice(label + ": nie znaleziono zainstalowanej aplikacji.")
+        console.warn("ZamarteOS: brak dopasowania dla", label,
+                     "Dostępne wpisy:", entries.map(function(entry) {
+                         return String(entry.name || "") + " [" + String(entry.id || "") + "]"
+                     }).join("; "))
+        showNotice(label + ": brak pasującego wpisu aplikacji.")
         return false
     }
 
@@ -254,6 +258,9 @@ Scope {
             clip: true
             contentWidth: width
             contentHeight: homeColumn.implicitHeight
+            interactive: true
+            flickableDirection: Flickable.VerticalFlick
+            boundsBehavior: Flickable.StopAtBounds
 
             Column {
                 id: homeColumn
@@ -455,7 +462,10 @@ Scope {
                 GridView {
                     id: appGrid
                     width: parent.width; height: parent.height - 142
-                    clip: true; cellWidth: width / 3; cellHeight: 126
+                    clip: true; interactive: true
+                    flickableDirection: Flickable.VerticalFlick
+                    boundsBehavior: Flickable.StopAtBounds
+                    cellWidth: width / 3; cellHeight: 126
                     model: DesktopEntries.applications.values.filter(function(entry) {
                         if (!root.isVisibleApp(entry))
                             return false
@@ -506,8 +516,19 @@ Scope {
             visible: root.controlOpen
             color: "#0d1622"
             z: 21
-            Column {
-                anchors.fill: parent; anchors.margins: 30; spacing: 20
+            Flickable {
+                anchors.fill: parent
+                anchors.margins: 30
+                clip: true
+                contentWidth: width
+                contentHeight: controlColumn.implicitHeight
+                interactive: true
+                flickableDirection: Flickable.VerticalFlick
+                boundsBehavior: Flickable.StopAtBounds
+                Column {
+                    id: controlColumn
+                    width: parent.width
+                    spacing: 20
                 Row {
                     width: parent.width; height: 54
                     Text {
@@ -584,6 +605,7 @@ Scope {
                     color: "#8095a9"; font.pixelSize: 11
                 }
             }
+            }
         }
 
         Rectangle {
@@ -608,6 +630,20 @@ Scope {
         exclusiveZone: 0
         focusable: false
         color: "#101b29"
+
+        MouseArea {
+            anchors.fill: parent
+            z: 0
+            property real pressY: 0
+            onPressed: pressY = mouse.y
+            onReleased: {
+                if (mouse.y - pressY > 18) {
+                    root.drawerOpen = false
+                    root.homeOpen = false
+                    root.controlOpen = true
+                }
+            }
+        }
 
         Text {
             anchors.left: parent.left
