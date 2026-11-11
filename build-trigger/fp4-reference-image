@@ -28,3 +28,5 @@ Build after touch home-navigation fix 2026-11-11.
 Build after fixing vertical touch scrolling and top-edge pull-down 2026-11-11.
 
 Build after mapping FP4 hardware volume keys to PipeWire mixer 2026-11-11.
+
+Build 2026-11-11: restore the native FP4 Quickshell plugin host, Phone, Messages, Settings, and the upstream-tested Hyprland/PipeWire volume rocker; retain the private first-boot PIN and Polish locale; audit the image before download.
