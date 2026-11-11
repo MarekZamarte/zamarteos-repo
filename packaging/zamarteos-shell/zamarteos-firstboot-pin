@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
-# Set a private, device-specific PIN before the normal tty1 session can start.
+# Generate a private per-device PIN before tty1 autologin. No keyboard is
+# required: the ZamarteOS shell displays the PIN on the first graphical start.
 set -euo pipefail
 
-USER_NAME="$(getent passwd 1000 | cut -d: -f1)"
-if [[ -z "$USER_NAME" ]]; then
-  printf 'ZamarteOS: nie znaleziono konta użytkownika UID 1000.\n' >&2
+USER_ENTRY="$(getent passwd 1000 || true)"
+USER_NAME="${USER_ENTRY%%:*}"
+USER_HOME="$(cut -d: -f6 <<< "$USER_ENTRY")"
+if [[ -z "$USER_NAME" || -z "$USER_HOME" || ! -d "$USER_HOME" ]]; then
+  printf 'ZamarteOS: nie znaleziono konta użytkownika UID 1000 lub katalogu domowego.\n' >&2
   exit 1
 fi
 
 STATE_DIR="${ZAMARTEOS_STATE_DIR:-/var/lib/zamarteos}"
 STAMP="$STATE_DIR/firstboot-pin-done"
+PIN_FILE="$USER_HOME/PIERWSZE-URUCHOMIENIE.txt"
 [[ -e "$STAMP" ]] && exit 0
 
 HASH="$(getent shadow "$USER_NAME" | cut -d: -f2)"
@@ -23,48 +27,43 @@ case "$HASH" in
     ;;
 esac
 
-printf '\nZAMARTEOS — PIERWSZE URUCHOMIENIE\n'
-printf 'Ustaw własny PIN do odblokowania telefonu.\n'
-printf 'PIN musi mieć od 6 do 12 cyfr. Nie używaj krótkiego kodu.\n\n'
-
 while true; do
-  PIN=''
-  CONFIRM=''
-
-  if ! read -r -s -p "Nowy PIN: " PIN; then
-    printf '\nNie udało się odczytać PIN-u z ekranu telefonu.\n' >&2
+  RAW="$(od -An -N4 -tu4 /dev/urandom | tr -d '[:space:]')"
+  if [[ ! "$RAW" =~ ^[0-9]+$ ]]; then
+    printf 'ZamarteOS: nie udało się wygenerować losowego PIN-u.\n' >&2
     exit 1
   fi
-  printf '\n'
-
-  if [[ ! "$PIN" =~ ^[0-9]{6,12}$ ]]; then
-    printf 'PIN musi zawierać od 6 do 12 cyfr. Spróbuj ponownie.\n\n'
-    unset PIN
-    continue
-  fi
-
-  if ! read -r -s -p "Powtórz PIN: " CONFIRM; then
-    printf '\nNie udało się odczytać potwierdzenia PIN-u.\n' >&2
-    exit 1
-  fi
-  printf '\n'
-
-  if [[ "$PIN" != "$CONFIRM" ]]; then
-    printf 'Kody są różne. Spróbuj ponownie.\n\n'
-    unset PIN CONFIRM
-    continue
-  fi
-
-  if printf '%s:%s\n' "$USER_NAME" "$PIN" | chpasswd -c SHA512; then
-    install -d -m 700 "$STATE_DIR"
-    : > "$STAMP"
-    chmod 600 "$STAMP"
-    unset PIN CONFIRM
-    printf '\nPIN został ustawiony. Uruchamiam ZamarteOS...\n'
-    sleep 2
-    exit 0
-  fi
-
-  unset PIN CONFIRM
-  printf '\nNie udało się ustawić PIN-u. Spróbuj ponownie.\n\n'
+  PIN="$(printf '%08d' "$((RAW % 90000000 + 10000000))")"
+  case "$PIN" in
+    12345678|87654321) continue ;;
+  esac
+  break
 done
+
+install -d -m 700 "$STATE_DIR"
+TMP_PIN_FILE="$PIN_FILE.tmp.$$"
+umask 077
+cat > "$TMP_PIN_FILE" <<EOF
+ZAMARTEOS — PIERWSZE URUCHOMIENIE
+
+Twój prywatny PIN: $PIN
+
+Zapisz go w bezpiecznym miejscu.
+Aby zmienić PIN później, otwórz terminal i wpisz: passwd
+Po zmianie PIN-u usuń ten plik.
+EOF
+chown "$USER_NAME" "$TMP_PIN_FILE"
+chmod 600 "$TMP_PIN_FILE"
+mv -f "$TMP_PIN_FILE" "$PIN_FILE"
+
+if printf '%s:%s\n' "$USER_NAME" "$PIN" | chpasswd -c SHA512; then
+  : > "$STAMP"
+  chmod 600 "$STAMP"
+  unset PIN RAW
+  exit 0
+fi
+
+rm -f "$PIN_FILE"
+unset PIN RAW
+printf 'ZamarteOS: nie udało się ustawić początkowego PIN-u.\n' >&2
+exit 1
