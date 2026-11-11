@@ -45,7 +45,7 @@ jobs:
               pacman -Syu --noconfirm base-devel quickshell hyprland qt6-declarative pam
               useradd -m builder
               echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
-              chown -R builder:builder /repo
+              chown -R builder:builder /repo/packaging/zamarteos-shell
               runuser -u builder -- makepkg --noconfirm --cleanbuild
               ls -lh *.pkg.tar.*
             '
