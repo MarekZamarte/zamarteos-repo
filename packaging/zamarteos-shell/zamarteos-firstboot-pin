@@ -3,7 +3,7 @@
 # required: the ZamarteOS shell displays the PIN on the first graphical start.
 set -euo pipefail
 
-USER_ENTRY="$(getent passwd 1000 || true)"
+USER_ENTRY="$(getent passwd moarchy || true)"
 USER_NAME="${USER_ENTRY%%:*}"
 USER_HOME="$(cut -d: -f6 <<< "$USER_ENTRY")"
 if [[ -z "$USER_NAME" || -z "$USER_HOME" || ! -d "$USER_HOME" ]]; then
