@@ -28,10 +28,23 @@ Scope {
             lockError = "Nie można uruchomić uwierzytelniania"
     }
 
+    // Hide only vendor-branded launcher entries. Keep hardware services,
+    // drivers and their packages installed; this is a presentation-layer filter.
+    function isVisibleApp(entry) {
+        const id = String(entry.id || "").toLowerCase()
+        const name = String(entry.name || "").toLowerCase()
+        const genericName = String(entry.genericName || "").toLowerCase()
+        return id.indexOf("moarchy") === -1 && id.indexOf("omarchy") === -1 &&
+               name.indexOf("moarchy") === -1 && name.indexOf("omarchy") === -1 &&
+               genericName.indexOf("moarchy") === -1 && genericName.indexOf("omarchy") === -1
+    }
+
     function launchByKeywords(keywords, label) {
         const entries = DesktopEntries.applications.values
         for (let i = 0; i < entries.length; ++i) {
             const entry = entries[i]
+            if (!isVisibleApp(entry))
+                continue
             const haystack = ((entry.name || "") + " " + (entry.genericName || "") + " " + (entry.id || "")).toLowerCase()
             for (let j = 0; j < keywords.length; ++j) {
                 if (haystack.indexOf(keywords[j]) !== -1) {
@@ -422,6 +435,8 @@ Scope {
                     width: parent.width; height: parent.height - 142
                     clip: true; cellWidth: width / 3; cellHeight: 126
                     model: DesktopEntries.applications.values.filter(function(entry) {
+                        if (!root.isVisibleApp(entry))
+                            return false
                         const q = root.searchText.toLowerCase()
                         return q.length === 0 ||
                             (entry.name || "").toLowerCase().indexOf(q) !== -1 ||
