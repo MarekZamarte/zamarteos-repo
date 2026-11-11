@@ -63,12 +63,12 @@ jobs:
           DEVICE=fp4 ./scripts/build-image.sh
           IMAGE="$(find images -mindepth 1 -maxdepth 1 -type d -name 'moarchy-fp4-*' | sort | tail -n 1)"
           test -n "$IMAGE"
-          ./scripts/verify-image.sh "$IMAGE"
+          ./scripts/verify-image.sh "$IMAGE" | tee ../reference-image-verification.txt
           printf '%s\n' "$IMAGE" > ../reference-image-path.txt
           IMAGE_NAME="$(basename "$IMAGE")"
           (
             cd "$IMAGE"
-            sha256sum -c "$IMAGE_NAME.sha256"
+            sha256sum -c "$IMAGE_NAME.sha256" | tee ../reference-checksums.txt
           )
           test -s packages/.build-manifest
           cp packages/.build-manifest ../reference-build-manifest.txt
@@ -76,6 +76,7 @@ jobs:
           cp "images/${IMAGE_NAME}.packages" ../reference-image-packages.txt
           test -s "images/${IMAGE_NAME}.build-info"
           cp "images/${IMAGE_NAME}.build-info" ../reference-image-build-info.txt
+          find "$IMAGE" -mindepth 1 -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort > ../reference-image-files.txt
           {
             printf 'zamarteos_repo_commit=%s\n' "$GITHUB_SHA"
             printf 'moarchy_overlay_commit=%s\n' "$(git rev-parse HEAD)"
@@ -97,6 +98,29 @@ jobs:
             reference-image-packages.txt
             reference-image-build-info.txt
             reference-provenance.txt
+            reference-image-verification.txt
+            reference-checksums.txt
+            reference-image-files.txt
+          if-no-files-found: warn
+          retention-days: 14
+          include-hidden-files: true
+
+      - name: Upload compact reference audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-fp4-audit-${{ github.run_number }}
+          path: |
+            moarchy-base/packages/.build-manifest
+            moarchy-base/images/moarchy-fp4-*/*.sha256
+            reference-image-path.txt
+            reference-build-manifest.txt
+            reference-image-packages.txt
+            reference-image-build-info.txt
+            reference-provenance.txt
+            reference-image-verification.txt
+            reference-checksums.txt
+            reference-image-files.txt
           if-no-files-found: warn
           retention-days: 14
           include-hidden-files: true
