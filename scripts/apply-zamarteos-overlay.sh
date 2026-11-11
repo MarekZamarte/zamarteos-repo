@@ -247,7 +247,8 @@ if grep -Fqx '%wheel ALL=(ALL:ALL) ALL' "$R/etc/sudoers.d/10-zamarteos-wheel" 2>
   ok "wheel sudo requires the user's password"
 else
   no "wheel sudo is missing its password-required rule"
-fi"""
+fi
+"""
 source = source[:cred_start] + secure_credentials + source[loop_end:]
 
 test_marker = '[ -e "$R/etc/moarchy-debug-image" ]'
