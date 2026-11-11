@@ -1,5 +1,5 @@
 pkgname=zamarteos-shell
-pkgver=0.1.4
+pkgver=0.1.5
 pkgrel=1
 pkgdesc="ZamarteOS Pure mobile home shell for Fairphone 4"
 arch=('aarch64')
@@ -9,13 +9,14 @@ depends=('quickshell' 'hyprland' 'pam')
 makedepends=('qt6-declarative')
 source=(
   'shell.qml'
+  'hyprland.conf'
   'zamarteos-lock.pam'
   'zamarteos-firstboot-pin'
   'zamarteos-firstboot-pin.service'
   'moarchy-firstboot-pin.conf'
   'getty-firstboot-pin.conf'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
   grep -q 'WlSessionLock' "$srcdir/shell.qml"
@@ -34,6 +35,9 @@ check() {
   grep -q 'clipboardText' "$srcdir/shell.qml"
   grep -q 'Flickable.VerticalFlick' "$srcdir/shell.qml"
   grep -q 'pressY' "$srcdir/shell.qml"
+  grep -q 'XF86AudioRaiseVolume' "$srcdir/hyprland.conf"
+  grep -q 'XF86AudioLowerVolume' "$srcdir/hyprland.conf"
+  grep -q 'wpctl set-volume' "$srcdir/hyprland.conf"
   bash -n "$srcdir/zamarteos-firstboot-pin"
   grep -q 'od -An -N4 -tu4 /dev/urandom' "$srcdir/zamarteos-firstboot-pin"
   grep -q 'PIERWSZE-URUCHOMIENIE.txt' "$srcdir/zamarteos-firstboot-pin"
@@ -47,6 +51,7 @@ check() {
 
 package() {
   install -Dm644 "$srcdir/shell.qml" "$pkgdir/usr/share/zamarteos-shell/shell.qml"
+  install -Dm644 "$srcdir/hyprland.conf" "$pkgdir/usr/share/zamarteos-shell/hyprland.conf"
   install -Dm644 "$srcdir/zamarteos-lock.pam" "$pkgdir/etc/pam.d/zamarteos-lock"
   install -Dm755 "$srcdir/zamarteos-firstboot-pin" "$pkgdir/usr/lib/zamarteos/firstboot-pin"
   install -Dm644 "$srcdir/zamarteos-firstboot-pin.service" "$pkgdir/usr/lib/systemd/system/zamarteos-firstboot-pin.service"
