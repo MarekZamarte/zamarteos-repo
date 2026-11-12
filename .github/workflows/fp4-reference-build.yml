@@ -10,7 +10,7 @@ on:
 
 concurrency:
   group: zamarteos-fp4-reference-image
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
