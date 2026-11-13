@@ -9,6 +9,7 @@ on:
       - "hybrid/**"
       - "docs/HYBRID-PLAN-PL.md"
       - "scripts/audit-fp4-halium-source.sh"
+      - "scripts/resolve-fp4-kernel-source.py"
       - ".github/workflows/fp4-hybrid-source-audit.yml"
 
 permissions:
@@ -35,7 +36,6 @@ jobs:
           grep -Fx 'halium_version: "11"' hybrid/manifest.yml
           grep -Fx 'target_userspace: ZamarteOS Linux' hybrid/manifest.yml
           grep -Fx 'flash_automatically: false' hybrid/manifest.yml
-          grep -Fx 'upstream_kernel_branch: halium-11.0' hybrid/manifest.yml
           bash -n scripts/audit-fp4-halium-source.sh
 
       - name: Fetch FP4 Halium 11 device port
