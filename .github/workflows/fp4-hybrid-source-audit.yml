@@ -131,7 +131,12 @@ jobs:
           export CC=clang-14
           export LLVM=1
           export LLVM_IAS=1
-          export CROSS_COMPILE=aarch64-linux-gnu-
+          # This vendor kernel invokes gcc-wrapper.py with the compiler selected
+          # through CROSS_COMPILE. Use an absolute prefix so the wrapper can
+          # resolve the cross compiler even in the runner's sanitized make env.
+          test -x /usr/bin/aarch64-linux-gnu-gcc
+          /usr/bin/aarch64-linux-gnu-gcc -dumpversion
+          export CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
           make O=out "${configs[@]}" 2>&1 | tee ../hybrid-kernel-config.log
           make -j"$(nproc)" O=out Image.gz dtbs modules 2>&1 | tee ../hybrid-kernel-build.log
           test -s out/arch/arm64/boot/Image.gz
