@@ -46,3 +46,18 @@ referencyjnego, a blokada nie przejdzie testu na urządzeniu.
 
 To nadal prototyp. Nie jest wydaniem ZamarteOS i nie jest obecnie obrazem
 gotowym do flashowania.
+
+## Klawiatura ekranowa — polskie znaki
+
+Obraz zachowuje natywną klawiaturę ekranową Quickshell/Wayland z bazy FP4,
+a pakiet ZamarteOS dostarcza polski układ dla nowego konta użytkownika.
+Znaki ą ć ę ł ń ó ś ź ż oraz wielkie Ą Ć Ę Ł Ń Ó Ś Ź Ż są dostępne
+po przytrzymaniu odpowiednich klawiszy literowych. Układ jest instalowany
+do `/etc/skel/.config/moarchy-keyboard/layouts/letters.json`, więc trafia
+do katalogu domowego podczas tworzenia konta w obrazie.
+
+Test akceptacyjny na telefonie: otworzyć pole tekstowe w Wiadomościach,
+przytrzymać kolejno a, c, e, l, n, o, s i z, wybrać polskie warianty,
+wpisać „Zażółć gęślą jaźń” oraz wersję z wielkimi literami, a następnie
+sprawdzić, czy tekst trafia poprawnie do aplikacji. To nie jest jeszcze
+potwierdzony test sprzętowy — CI sprawdza obecność i poprawność pliku układu.
