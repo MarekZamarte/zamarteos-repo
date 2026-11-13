@@ -45,7 +45,7 @@ jobs:
           bash scripts/apply-zamarteos-overlay.sh moarchy-base
           git -C moarchy-base config user.name "ZamarteOS Build"
           git -C moarchy-base config user.email "build@zamarteos.invalid"
-          git -C moarchy-base add bin/moarchy-lock bin/moarchy-restart-shell default/etc/profile.d/zz-moarchy.sh docker/build-packages.sh zamarteos-keyboard-predictor image/configure.sh image/verify.sh pkgbuilds/moarchy/PKGBUILD pkgbuilds/moarchy-meta/PKGBUILD pkgbuilds/zamarteos-shell
+          git -C moarchy-base add bin/moarchy-lock bin/moarchy-restart-shell default/etc/profile.d/zz-moarchy.sh manifest.toml docker/build-packages.sh zamarteos-keyboard-predictor image/configure.sh image/verify.sh pkgbuilds/moarchy/PKGBUILD pkgbuilds/moarchy-meta/PKGBUILD pkgbuilds/zamarteos-shell
           git -C moarchy-base commit -m "Apply ZamarteOS Pure shell integration"
           git -C moarchy-base status --short
           test -z "$(git -C moarchy-base status --porcelain)"
