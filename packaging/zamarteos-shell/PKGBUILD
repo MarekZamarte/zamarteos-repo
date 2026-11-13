@@ -17,6 +17,12 @@ sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
   bash -n "$srcdir/zamarteos-firstboot-pin"
+  bash -n "$srcdir/zamarteos-session"
+  bash -n "$srcdir/zamarteos-shell"
+  grep -q 'exec Hyprland --config /usr/share/zamarteos-shell/hyprland.conf' "$srcdir/zamarteos-session"
+  grep -q 'exec qs -n -p /usr/share/zamarteos-shell' "$srcdir/zamarteos-shell"
+  grep -q 'IpcHandler' "$srcdir/shell.qml"
+  grep -q 'target: "zamarteos-lock"' "$srcdir/shell.qml"
   grep -q 'od -An -N4 -tu4 /dev/urandom' "$srcdir/zamarteos-firstboot-pin"
   grep -q 'PIERWSZE-URUCHOMIENIE.txt' "$srcdir/zamarteos-firstboot-pin"
   grep -q 'chpasswd -c SHA512' "$srcdir/zamarteos-firstboot-pin"
@@ -30,6 +36,12 @@ check() {
 }
 
 package() {
+  install -Dm644 "$srcdir/shell.qml" "$pkgdir/usr/share/zamarteos-shell/shell.qml"
+  install -Dm644 "$srcdir/hyprland.conf" "$pkgdir/usr/share/zamarteos-shell/hyprland.conf"
+  install -Dm755 "$srcdir/zamarteos-session" "$pkgdir/usr/bin/zamarteos-session"
+  install -Dm755 "$srcdir/zamarteos-shell" "$pkgdir/usr/bin/zamarteos-shell"
+  install -Dm644 "$srcdir/zamarteos.desktop" "$pkgdir/usr/share/wayland-sessions/zamarteos.desktop"
+  install -Dm644 "$srcdir/zamarteos-lock.pam" "$pkgdir/etc/pam.d/zamarteos-lock"
   install -Dm755 "$srcdir/zamarteos-firstboot-pin" "$pkgdir/usr/lib/zamarteos/firstboot-pin"
   install -Dm644 "$srcdir/zamarteos-firstboot-pin.service" "$pkgdir/usr/lib/systemd/system/zamarteos-firstboot-pin.service"
   install -Dm644 "$srcdir/moarchy-firstboot-pin.conf" "$pkgdir/usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf"
