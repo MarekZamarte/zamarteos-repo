@@ -362,4 +362,65 @@ if test_block not in source:
 path.write_text(source)
 PY
 
+# Make call-audio support a hard image-build acceptance check. A media-only
+# PipeWire setup is not enough: FP4 needs the Q6Voice kernel modules, the
+# VoiceMMode1 PCM owner, the measured PCM selection, and the call mixer routes.
+python3 - "$ROOT/image/verify.sh" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+marker = "# ZamarteOS FP4 call-audio acceptance checks"
+block = r"""# ZamarteOS FP4 call-audio acceptance checks
+have /usr/bin/q6voiced
+have /usr/lib/systemd/system/q6voiced.service
+have /usr/share/q6voiced/q6voiced.conf
+have /usr/share/alsa/ucm2/Fairphone/fp4/fp4.conf
+have /usr/share/alsa/ucm2/Fairphone/fp4/HiFi.conf
+have /usr/share/wireplumber/wireplumber.conf.d/52-fairphone-fp4.conf
+have /usr/share/wireplumber/wireplumber.conf.d/53-fp4-ucm.conf
+have /usr/lib/moarchy/bin/fp4-audio-route
+have /usr/lib/systemd/user/moarchy-fp4-mic-route.service
+if grep -qx 'q6voice_card=0' "$R/usr/share/q6voiced/q6voiced.conf" &&
+   grep -qx 'q6voice_device=3' "$R/usr/share/q6voiced/q6voiced.conf"; then
+  ok "q6voiced targets the measured FP4 VoiceMMode1 PCM (card 0, device 3)"
+else
+  no "q6voiced is not configured for the measured FP4 VoiceMMode1 PCM"
+fi
+for module in q6voice q6voice-dai q6mvm q6cvs q6cvp; do
+  if find "$R/usr/lib/modules" -type f \( -name "$module.ko" -o -name "$module.ko.*" \) -print -quit 2>/dev/null | grep -q .; then
+    ok "kernel module $module is installed"
+  else
+    no "kernel module $module is missing -- cellular call audio cannot start"
+  fi
+done
+if grep -Fq 'VoiceMMode1 Capture Mixer TX_CODEC_DMA_TX_3|1' "$R/usr/lib/moarchy/bin/fp4-audio-route" &&
+   grep -Fq 'QUIN_MI2S_RX Voice Mixer VoiceMMode1|1' "$R/usr/lib/moarchy/bin/fp4-audio-route" &&
+   grep -Fq 'VoiceMMode1 TX Topology|69488' "$R/usr/lib/moarchy/bin/fp4-audio-route"; then
+  ok "FP4 call uplink, downlink and uncalibrated-DSP topology routes are present"
+else
+  no "FP4 call mixer routes are incomplete"
+fi
+if grep -Fq '/usr/share/q6voiced/q6voiced.conf' "$R/usr/lib/systemd/system/q6voiced.service" &&
+   grep -Fq 'DEVICE_SERVICES="q6voiced.service"' "$R/usr/share/moarchy/device/device.conf"; then
+  ok "the Q6Voice daemon is wired to the FP4 device configuration"
+else
+  no "q6voiced is not wired to the FP4 device configuration"
+fi
+if grep -Fq 'q6voice_device=3' "$R/usr/share/q6voiced/q6voiced.conf" &&
+   grep -Fq 'VoiceMMode1' "$R/usr/lib/moarchy/bin/fp4-audio-route"; then
+  ok "call-audio userspace agrees on VoiceMMode1"
+else
+  no "call-audio userspace PCM selection is inconsistent"
+fi
+"""
+if marker not in source:
+    needle = "have /usr/bin/quickshell\n"
+    if source.count(needle) != 1:
+        raise SystemExit("Could not find the unique rootfs verifier insertion point")
+    source = source.replace(needle, needle + "\n" + block + "\n", 1)
+    path.write_text(source)
+PY
+
 echo "ZamarteOS overlay applied to $ROOT"
