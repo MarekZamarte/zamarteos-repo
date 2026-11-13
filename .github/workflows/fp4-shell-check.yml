@@ -101,11 +101,7 @@ jobs:
           grep -q 'have /usr/share/zamarteos-shell/shell.qml' moarchy-base/image/verify.sh
           grep -q 'have /usr/share/zamarteos-shell/hyprland.conf' moarchy-base/image/verify.sh
           grep -q 'ZamarteOS FP4 call-audio acceptance checks' moarchy-base/image/verify.sh
-          grep -q 'kernel module q6voice is installed' moarchy-base/image/verify.sh
-          grep -q 'kernel module q6voice-dai is installed' moarchy-base/image/verify.sh
-          grep -q 'kernel module q6mvm is installed' moarchy-base/image/verify.sh
-          grep -q 'kernel module q6cvs is installed' moarchy-base/image/verify.sh
-          grep -q 'kernel module q6cvp is installed' moarchy-base/image/verify.sh
+          grep -q 'for module in q6voice q6voice-dai q6mvm q6cvs q6cvp; do' moarchy-base/image/verify.sh
           grep -q 'q6voiced targets the measured FP4 VoiceMMode1 PCM' moarchy-base/image/verify.sh
           grep -q 'FP4 call uplink, downlink and uncalibrated-DSP topology routes are present' moarchy-base/image/verify.sh
           grep -q 'q6voiced is wired to the FP4 device configuration' moarchy-base/image/verify.sh
