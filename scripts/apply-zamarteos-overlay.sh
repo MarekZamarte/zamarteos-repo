@@ -54,10 +54,40 @@ fi
 # This makes the change visible to pacman on already-installed development images.
 sed -i 's/^pkgrel=2$/pkgrel=3/' "$META"
 
-# Keep the upstream session launcher intact. It starts the complete Quickshell
-# host, plugin registry, app drawer, control center and Settings. Replacing it
-# with a standalone QML file removes Phone/Messages/Settings plugins and the
-# volume panel even though their packages are present.
+# Start the actual ZamarteOS session on tty1. The upstream session launcher
+# must not start its own Moarchy/Omarchy shell: our package owns the user-facing
+# Wayland session, while the pinned base continues to provide hardware services.
+python3 - "$ROOT/default/etc/profile.d/zz-moarchy.sh" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+s = p.read_text()
+old = "exec Hyprland -c /usr/share/moarchy/config/hypr/hyprland.lua"
+new = "exec /usr/bin/zamarteos-session"
+if old not in s:
+    raise SystemExit("Could not find the pinned base's tty1 Hyprland launch")
+p.write_text(s.replace(old, new, 1))
+PY
+
+# Route system lock requests to the ZamarteOS shell's own PAM-backed IPC target.
+python3 - "$ROOT/bin/moarchy-lock" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+s = p.read_text()
+old = 'exec timeout 3 qs -p "$OMARCHY_PATH/shell" ipc call lock lock >/dev/null 2>&1'
+new = 'exec timeout 3 qs -p /usr/share/zamarteos-shell ipc call zamarteos-lock lock >/dev/null 2>&1'
+if old not in s:
+    raise SystemExit("Could not find the pinned base lock IPC command")
+p.write_text(s.replace(old, new, 1))
+PY
+
+# Restart requests must relaunch ZamarteOS, never the upstream desktop shell.
+cat > "$ROOT/bin/moarchy-restart-shell" <<'SH'
+#!/bin/sh
+exec /usr/bin/zamarteos-shell
+SH
+chmod 755 "$ROOT/bin/moarchy-restart-shell"
 
 # Polish system locale. Keep en_US generated as a fallback, but make
 # Polish the active locale so dates and system messages match the shell.
@@ -81,14 +111,8 @@ source = source.replace(old_locale, new_locale, 1).replace(old_lang, new_lang, 1
 path.write_text(source)
 PY
 
-# Keep the upstream lock helper and PAM service. They target the lock plugin
-# in the full Moarchy shell; the standalone ZamarteOS shell IPC target is not
-# present once the native plugin host is restored.
-
- 
-
-# Extend the pinned base verifier: a green image must contain the native
-# phone apps, settings, volume plugin and the Hyprland hardware-key bindings.
+# Extend the pinned base verifier: a green image must contain the real ZamarteOS
+# QML shell, its own session launchers, lock service and physical volume bindings.
 python3 - "$ROOT/image/verify.sh" <<'PY'
 from pathlib import Path
 import sys
@@ -100,36 +124,41 @@ lines = [
     "# ZamarteOS Pure integration checks",
     "have /usr/lib/zamarteos/firstboot-pin",
     "have /usr/lib/systemd/system/zamarteos-firstboot-pin.service",
-    "have /usr/share/moarchy/plugins/moarchy.phone/manifest.json",
-    "have /usr/share/moarchy/plugins/moarchy.messages/manifest.json",
-    "have /usr/share/moarchy/plugins/moarchy.settings/manifest.json",
-    "have /usr/share/moarchy/plugins/moarchy.volume/manifest.json",
-    "have /usr/lib/moarchy/bin/moarchy-volume",
-    "have /usr/share/moarchy/config/hypr/bindings.lua",
-    "if grep -Fq 'moarchy-volume up' \"$R/usr/share/moarchy/config/hypr/bindings.lua\" && grep -Fq 'moarchy-volume down' \"$R/usr/share/moarchy/config/hypr/bindings.lua\" && grep -Fq 'XF86AudioRaiseVolume' \"$R/usr/share/moarchy/config/hypr/bindings.lua\" && grep -Fq 'XF86AudioLowerVolume' \"$R/usr/share/moarchy/config/hypr/bindings.lua\"; then",
+    "have /usr/share/zamarteos-shell/shell.qml",
+    "have /usr/share/zamarteos-shell/hyprland.conf",
+    "have /usr/bin/zamarteos-session",
+    "have /usr/bin/zamarteos-shell",
+    "have /etc/pam.d/zamarteos-lock",
+    "have /usr/share/wayland-sessions/zamarteos.desktop",
+    "if grep -Fq 'XF86AudioRaiseVolume' \"$R/usr/share/zamarteos-shell/hyprland.conf\" && grep -Fq 'XF86AudioLowerVolume' \"$R/usr/share/zamarteos-shell/hyprland.conf\"; then",
     "  ok \"the physical volume keys are bound in the active Hyprland Lua configuration\"",
     "else",
     "  no \"the physical volume key bindings are missing from the active Hyprland Lua configuration\"",
     "fi",
-    "if grep -Fq 'wpctl set-volume' \"$R/usr/lib/moarchy/bin/moarchy-volume\" && grep -Fq 'wpctl set-mute' \"$R/usr/lib/moarchy/bin/moarchy-volume\"; then",
+    "if grep -Fq 'wpctl set-volume' \"$R/usr/share/zamarteos-shell/hyprland.conf\" && grep -Fq 'wpctl set-mute' \"$R/usr/share/zamarteos-shell/hyprland.conf\"; then",
     "  ok \"the hardware volume helper controls the existing PipeWire sink\"",
     "else",
     "  no \"the hardware volume helper is missing PipeWire controls\"",
     "fi",
-    "if grep -Fq 'auth include login' \"$R/etc/pam.d/omarchy-lock-password\"; then",
+    "if grep -Fq 'auth include login' \"$R/etc/pam.d/zamarteos-lock\"; then",
     "  ok \"the native session lock uses the system login PAM stack\"",
     "else",
     "  no \"the native session lock PAM service is missing or misconfigured\"",
     "fi",
-    "if grep -Fq 'qs -p \"$OMARCHY_PATH/shell\" ipc call lock lock' \"$R/usr/lib/moarchy/bin/moarchy-lock\"; then",
+    "if grep -Fq 'ipc call zamarteos-lock lock' \"$R/usr/lib/moarchy/bin/moarchy-lock\"; then",
     "  ok \"the lock helper targets the native Quickshell session\"",
     "else",
     "  no \"the lock helper does not target the native Quickshell session\"",
     "fi",
-    "if grep -Fq 'quickshell -n -p \"$OMARCHY_PATH/shell\"' \"$R/usr/lib/moarchy/bin/moarchy-restart-shell\"; then",
+    "if grep -Fq 'zamarteos-shell' \"$R/usr/lib/moarchy/bin/moarchy-restart-shell\"; then",
     "  ok \"the session launcher starts the native plugin host\"",
     "else",
     "  no \"the session launcher has been replaced or does not start the plugin host\"",
+    "fi",
+    "if grep -Fq 'exec /usr/bin/zamarteos-session' \"$R/etc/profile.d/zz-moarchy.sh\"; then",
+    "  ok \"tty1 starts the ZamarteOS Wayland session\"",
+    "else",
+    "  no \"tty1 still starts the upstream desktop shell\"",
     "fi",
     "if grep -q '^LANG=pl_PL.UTF-8$' \"$R/etc/locale.conf\"; then",
     "  ok \"Polish is the active system locale\"",
