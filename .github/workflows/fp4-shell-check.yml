@@ -97,10 +97,12 @@ jobs:
           grep -q 'no per-device PIN is baked into the published image' moarchy-base/image/verify.sh
           grep -q 'no active passwordless sudo rules' moarchy-base/image/verify.sh
           grep -q 'od -An -N4 -tu4 /dev/urandom' moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
-          grep -q 'moarchy.phone/manifest.json' moarchy-base/image/verify.sh
-          grep -q 'moarchy.messages/manifest.json' moarchy-base/image/verify.sh
+          grep -q 'have /usr/share/zamarteos-shell/shell.qml' moarchy-base/image/verify.sh
+          grep -q 'have /usr/share/zamarteos-shell/hyprland.conf' moarchy-base/image/verify.sh
+          grep -q 'have /usr/bin/zamarteos-session' moarchy-base/image/verify.sh
+          grep -q 'tty1 starts the ZamarteOS Wayland session' moarchy-base/image/verify.sh
+          grep -q 'ipc call zamarteos-lock lock' moarchy-base/image/verify.sh
           grep -q 'XF86AudioRaiseVolume' moarchy-base/image/verify.sh
-          grep -q 'moarchy-volume up' moarchy-base/image/verify.sh
           grep -q 'omarchy-theme-browser' scripts/apply-zamarteos-overlay.sh
           grep -q 'Requires=zamarteos-firstboot-pin.service' moarchy-base/pkgbuilds/zamarteos-shell/moarchy-firstboot-pin.conf
           grep -q 'Requires=moarchy-firstboot.service' moarchy-base/pkgbuilds/zamarteos-shell/getty-firstboot-pin.conf
