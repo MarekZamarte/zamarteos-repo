@@ -15,7 +15,7 @@ To NIE jest wariant Pure. Nie wolno przenosić zmian z tej gałęzi do Pure bez 
 - Warstwa zgodności: Halium 11 / Android 11.
 - Źródło statusu: https://devices.ubuntu-touch.io/device/fp4/
 
-Karta urządzenia UBports opisuje działające podstawowe funkcje telefonu, rozmowy, dźwięk słuchawki, głośnik i mikrofon. VoLTE jest opisane jako eksperymentalne i zależne od operatora. To dowód istnienia dojrzałej bazy sprzętowej, ale NIE dowód, że ZamarteOS Hybrid już działa.
+Repozytorium portu urządzenia i osobne repozytorium kernela są publiczne. Jednak bieżąca strona deweloperska UBports oznacza FP4 jako urządzenie, które nie ma kompletnego portu w tym kanale. Dlatego traktujemy te źródła jako materiał do audytu, a nie jako potwierdzony, gotowy stos telefoniczny. Nie zakładamy, że rozmowy, audio ani VoLTE zadziałają bez własnego builda i testów.
 
 ## Docelowa architektura
 
@@ -29,8 +29,9 @@ Karta urządzenia UBports opisuje działające podstawowe funkcje telefonu, rozm
 
 - [x] Utworzyć niezależną gałąź rozwojową Hybrid.
 - [x] Wskazać istniejący port FP4 Halium 11 jako źródło do audytu.
-- [ ] Sklonować i zarchiwizować źródła portu oraz deviceinfo w GitHub Actions.
-- [ ] Audytować manifest, kernel, vendor blobs, firmware, partycje i wymagania wersji bazowego firmware.
+- [x] Dodać workflow pobierający źródła portu urządzenia oraz kandydujące źródła kernela.
+- [ ] Zakończyć audyt deviceinfo i ustalić dokładne rewizje zgodnego kernela.
+- [ ] Audytować vendor blobs, firmware, partycje i wymagania wersji bazowego firmware.
 - [ ] Zbudować artefakty warstwy sprzętowej dla FP4 z przypiętych źródeł.
 - [ ] Przygotować rootfs ZamarteOS i integrację usług Halium.
 - [ ] Zintegrować własną sesję ZamarteOS.
@@ -41,6 +42,6 @@ Karta urządzenia UBports opisuje działające podstawowe funkcje telefonu, rozm
 
 ## Ważne ograniczenia
 
-Pierwszy workflow w tej gałęzi jest audytem źródeł, a nie pełnym buildem obrazu. Nie wolno nazywać artefaktu audytu gotowym systemem. Pełny build wymaga potwierdzenia manifestu Halium, zależności urządzenia, źródeł kernela i vendor blobs. Nie wolno zgadywać repozytoriów ani rewizji.
+Pierwszy workflow w tej gałęzi jest audytem źródeł, a nie pełnym buildem obrazu. Repozytorium kernela jest pobierane z domyślnej gałęzi wyłącznie jako kandydat do audytu; nie uznajemy go za zgodne, dopóki deviceinfo lub manifest nie wskaże dokładnej rewizji. Nie wolno nazywać artefaktu audytu gotowym systemem. Pełny build wymaga potwierdzenia manifestu Halium, zależności urządzenia, zgodnych źródeł kernela i vendor blobs. Nie wolno zgadywać repozytoriów ani rewizji.
 
 Żaden workflow tej gałęzi nie może uruchamiać fastboot, ADB flash ani modyfikować telefonu. Obraz testowy będzie publikowany dopiero po pełnym buildzie i audycie.
