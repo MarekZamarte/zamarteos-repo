@@ -13,7 +13,7 @@ source=(
   'getty-firstboot-pin.conf'
   'polish-letters.json'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
   bash -n "$srcdir/zamarteos-firstboot-pin"
@@ -23,7 +23,7 @@ check() {
   grep -q 'Before=moarchy-firstboot.service getty@tty1.service' "$srcdir/zamarteos-firstboot-pin.service"
   grep -q 'Requires=zamarteos-firstboot-pin.service' "$srcdir/moarchy-firstboot-pin.conf"
   grep -q 'Requires=moarchy-firstboot.service' "$srcdir/getty-firstboot-pin.conf"
-  python -m json.tool "$srcdir/polish-letters.json" >/dev/null
+  python3 -m json.tool "$srcdir/polish-letters.json" >/dev/null
   for char in ą ć ę ł ń ó ś ź ż Ą Ć Ę Ł Ń Ó Ś Ź Ż; do
     grep -Fq "$char" "$srcdir/polish-letters.json"
   done
