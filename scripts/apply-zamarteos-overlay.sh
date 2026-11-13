@@ -55,7 +55,7 @@ from pathlib import Path
 import re, sys
 p = Path(sys.argv[1])
 s = p.read_text()
-pattern = r"(?ms)^\\[aur\\.spot-client\\]\\n.*?(?=^\\[|\\Z)"
+pattern = r"(?ms)^\[aur\.spot-client\]\n.*?(?=^\[|\Z)"
 updated, count = re.subn(pattern, "", s)
 if count != 1:
     raise SystemExit(f"Expected exactly one optional spot-client manifest section, found {count}")
