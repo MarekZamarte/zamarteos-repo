@@ -69,6 +69,7 @@ jobs:
           bash -n moarchy-base/bin/moarchy-lock
           bash -n moarchy-base/bin/moarchy-restart-shell
           grep -q "'zamarteos-shell'" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
+          ! grep -q '^\\[aur\\.spot-client\\]' moarchy-base/manifest.toml
           grep -q "^pkgrel=3$" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
           ! grep -q "^pkgrel=19$" moarchy-base/pkgbuilds/moarchy/PKGBUILD
           grep -Fq 'exec /usr/bin/zamarteos-session' moarchy-base/default/etc/profile.d/zz-moarchy.sh
