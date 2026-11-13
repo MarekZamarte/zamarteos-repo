@@ -73,6 +73,10 @@ jobs:
         run: |
           set -euxo pipefail
           test -s upstream-fp4-kernel/scripts/gcc-wrapper.py
+          # Ubuntu 24.04's minimal Python installation may omit the deprecated
+          # lib2to3 stdlib module; install its split package explicitly.
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3-lib2to3
           python3 -m lib2to3 -w -n upstream-fp4-kernel/scripts/gcc-wrapper.py
           python3 -m py_compile upstream-fp4-kernel/scripts/gcc-wrapper.py
 
