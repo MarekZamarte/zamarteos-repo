@@ -3,33 +3,19 @@ The workflow applies the tracked ZamarteOS shell overlay and builds an image art
 This file is a CI trigger only. It does not flash or modify any phone.
 
 Rebuild request: latest ZamarteOS branch head, 2026-11-10.
-
 Rebuild request: include package manifest, image package list, provenance and checksum verification.
-
 Rebuild request: corrected verifier patch and complete manifest audit.
-
 Rebuild request: stage the added ZamarteOS rootfs verifier in the image overlay commit.
-
 Rebuild request: QML bound component context, scoped package ownership, and explicit PAM policy verification.
-
 Rebuild request: build latest audited ZamarteOS Pure FP4 commit with compact provenance and checksum artifact, 2026-11-11.
-
 Build request 2026-11-11: repeat FP4 reference build for current branch.
-
-Build after launcher branding filter 2026-11-11
-
+Build after launcher branding filter 2026-11-11.
 Build latest branch head after private per-device PIN and first-boot fixes 2026-11-11.
-
-Build after sudo hardening, launcher visibility fix and complete audit collection 2026-11-11
-
-Build after shell package CI assertion correction 2026-11-11
-
+Build after sudo hardening, launcher visibility fix and complete audit collection 2026-11-11.
+Build after shell package CI assertion correction 2026-11-11.
 Build after touch home-navigation fix 2026-11-11.
-
 Build after fixing vertical touch scrolling and top-edge pull-down 2026-11-11.
-
 Build after mapping FP4 hardware volume keys to PipeWire mixer 2026-11-11.
-
-Build 2026-11-11: restore the native FP4 Quickshell plugin host, Phone, Messages, Settings, and the upstream-tested Hyprland/PipeWire volume rocker; retain the private first-boot PIN and Polish locale; audit the image before download.
-
+Build 2026-11-11: restore native FP4 Quickshell plugin host, Phone, Messages, Settings, and upstream-tested Hyprland/PipeWire volume rocker; retain private first-boot PIN and Polish locale; audit image before download.
 Build request 2026-11-12: build latest zamarteos-pure-fp4-dev branch head for verification; no flashing.
+Build request 2026-11-13: rebuild latest branch head and verify complete FP4 image, Q6Voice config, checksums and package manifest; never flash automatically.
