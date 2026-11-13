@@ -69,6 +69,13 @@ jobs:
           test -s upstream-fp4-kernel/Makefile
           test -d upstream-fp4-kernel/drivers
 
+      - name: Convert legacy Python 2 kernel helper for Python 3 runner
+        run: |
+          set -euxo pipefail
+          test -s upstream-fp4-kernel/scripts/gcc-wrapper.py
+          python3 -m lib2to3 -w -n upstream-fp4-kernel/scripts/gcc-wrapper.py
+          python3 -m py_compile upstream-fp4-kernel/scripts/gcc-wrapper.py
+
       - name: Audit kernel configuration against deviceinfo
         run: |
           set -euxo pipefail
