@@ -32,6 +32,7 @@ Repozytorium portu urządzenia i osobne repozytorium kernela są publiczne. Jedn
 - [x] Dodać workflow pobierający źródła portu urządzenia oraz kandydujące źródła kernela.
 - [ ] Zakończyć audyt deviceinfo i ustalić dokładne rewizje zgodnego kernela.
 - [ ] Audytować vendor blobs, firmware, partycje i wymagania wersji bazowego firmware.
+- [ ] Uzyskać udany wynik kompilacji kernela Halium 11 w GitHub Actions (workflow został przygotowany, wynik niepotwierdzony).
 - [ ] Zbudować artefakty warstwy sprzętowej dla FP4 z przypiętych źródeł.
 - [ ] Przygotować rootfs ZamarteOS i integrację usług Halium.
 - [ ] Zintegrować własną sesję ZamarteOS.
@@ -42,6 +43,6 @@ Repozytorium portu urządzenia i osobne repozytorium kernela są publiczne. Jedn
 
 ## Ważne ograniczenia
 
-Pierwszy workflow w tej gałęzi jest audytem źródeł, a nie pełnym buildem obrazu. Repozytorium i gałąź kernela są odczytywane z `deviceinfo` portu FP4, zgodnie z metodą UBports. Workflow nie zakłada nazwy repozytorium ani gałęzi na sztywno; sprawdza też, czy wskazane pliki defconfig istnieją w pobranym drzewie. Dokładny SHA źródła jest zapisywany w raporcie. Nie wolno nazywać artefaktu audytu gotowym systemem. Pełny build wymaga potwierdzenia manifestu Halium, zależności urządzenia, zgodnych źródeł kernela i vendor blobs. Nie wolno zgadywać repozytoriów ani rewizji.
+Workflow pobiera źródła urządzenia, odczytuje z deviceinfo dokładny kernel/branch/defconfig, weryfikuje pliki konfiguracji i próbuje skompilować kernel ARM64 (Image.gz, DTB i moduły). To nadal nie jest pełny build Halium ani obraz instalacyjny. Repozytorium i gałąź kernela są odczytywane z `deviceinfo` portu FP4, zgodnie z metodą UBports. Workflow nie zakłada nazwy repozytorium ani gałęzi na sztywno; sprawdza też, czy wskazane pliki defconfig istnieją w pobranym drzewie. Dokładny SHA źródła jest zapisywany w raporcie. Nie wolno nazywać artefaktu audytu gotowym systemem. Pełny build wymaga potwierdzenia manifestu Halium, zależności urządzenia, zgodnych źródeł kernela i vendor blobs. Nie wolno zgadywać repozytoriów ani rewizji.
 
 Żaden workflow tej gałęzi nie może uruchamiać fastboot, ADB flash ani modyfikować telefonu. Obraz testowy będzie publikowany dopiero po pełnym buildzie i audycie.
