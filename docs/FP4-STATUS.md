@@ -19,7 +19,8 @@ The FP4 q6voiced configuration selects card 0, device 3 (VoiceMMode1).
 The pinned hardware base used by the Pure FP4 builder includes
 `0009-call-audio-q6voice.patch` in `linux-moarchy-sm6350` (pkgrel 13),
 the Q6Voice kernel modules, FP4 voice DAIs, `q6voiced`, and the measured
-`VoiceMMode1` selection (card 0, device 3). It also carries the FP4 UCM,
+`VoiceMMode1` selection (card 0, device 3). It also builds and enables the
+`81voltd` IMS data service for VoLTE-only networks, and carries the FP4 UCM,
 WirePlumber settings, and mixer-route helper for the call uplink/downlink.
 
 The ZamarteOS image verifier now treats these as required image contents:
