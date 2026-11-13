@@ -55,7 +55,7 @@ jobs:
       - name: Fetch candidate FP4 kernel source
         run: |
           set -euxo pipefail
-          git clone --depth 1 \
+          git clone --depth 1 --branch halium-11.0 \
             https://gitlab.com/ubports/porting/reference-device-ports/android11/fairphone-4/kernel-fairphone-sm7225.git \
             upstream-fp4-kernel
           git -C upstream-fp4-kernel rev-parse HEAD | tee upstream-kernel-commit.txt
