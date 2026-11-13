@@ -62,14 +62,19 @@ if count != 1:
 p.write_text(updated)
 PY
 
-# Pull the shell package into the rootfs transaction.
+# Pull the shell and the IMS data daemon into the rootfs transaction.
+# q6voiced holds the FP4 VoiceMMode1 PCM; 81voltd provides the IMS PDN
+# requested by the modem on VoLTE-only networks (no circuit-switched fallback).
 META="$ROOT/pkgbuilds/moarchy-meta/PKGBUILD"
 if ! grep -q "'zamarteos-shell'" "$META"; then
   sed -i "/^  'moarchy-device'$/a\\  'zamarteos-shell'" "$META"
 fi
-# Bump the meta package because its dependency set now includes the PIN service.
-# This makes the change visible to pacman on already-installed development images.
-sed -i 's/^pkgrel=2$/pkgrel=3/' "$META"
+if ! grep -q "'81voltd'" "$META"; then
+  sed -i "/^  'callaudiod'$/a\\  '81voltd'" "$META"
+fi
+# pkgrel 4 includes both the ZamarteOS shell and mandatory IMS support.
+# A dependency-set change must be visible to pacman on development images.
+sed -i 's/^pkgrel=2$/pkgrel=4/' "$META"
 
 # Start the actual ZamarteOS session on tty1. The upstream session launcher
 # must not start its own Moarchy/Omarchy shell: our package owns the user-facing
