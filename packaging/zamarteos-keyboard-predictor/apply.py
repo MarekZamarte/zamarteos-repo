@@ -46,6 +46,14 @@ replace("CMakeLists.txt",
   ${HUNSPELL_LIBRARY}
 ''', "Hunspell link")
 
+replace("CMakeLists.txt",
+'''target_include_directories(moarchy-keyboard PRIVATE
+  "${GENERATED_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/src")
+''',
+'''target_include_directories(moarchy-keyboard PRIVATE
+  "${GENERATED_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/src" "${HUNSPELL_INCLUDE_DIR}")
+''', "Hunspell include directory")
+
 # Register the main-owned singleton before QML loads.
 replace("src/main.cpp",
 '''#include "waylandconnection.h"
