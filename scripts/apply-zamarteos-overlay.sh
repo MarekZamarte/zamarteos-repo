@@ -76,6 +76,54 @@ fi
 # A dependency-set change must be visible to pacman on development images.
 sed -i 's/^pkgrel=2$/pkgrel=4/' "$META"
 
+# 81voltd is required on VoLTE-only networks. The upstream source package
+# builds the daemon but its Arch recipe does not guarantee a systemd unit;
+# ship and enable the service explicitly rather than relying on build-host
+# Meson autodetection or a first-boot script.
+VOLTE="$ROOT/pkgbuilds/81voltd"
+cat > "$VOLTE/81voltd.service" <<'UNIT'
+[Unit]
+Description=QMI IMS Data service for VoLTE
+After=ModemManager.service
+Wants=ModemManager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/81voltd
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+python3 - "$VOLTE/PKGBUILD" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+old_source = 'source=("$pkgname-$_ver.tar.gz::$_url/-/archive/v$_ver/$pkgname-v$_ver.tar.gz")'
+new_source = 'source=("$pkgname-$_ver.tar.gz::$_url/-/archive/v$_ver/$pkgname-v$_ver.tar.gz" "81voltd.service")'
+old_sums = "sha256sums=('bb0e9774463fb4964067bf70f10cc316afc1c8ed163ff7969b3fd3ae3dc2e937')"
+new_sums = "sha256sums=('bb0e9774463fb4964067bf70f10cc316afc1c8ed163ff7969b3fd3ae3dc2e937' 'SKIP')"
+if old_source not in source or old_sums not in source:
+    raise SystemExit("81voltd PKGBUILD source/checksum pins changed; refusing an unsafe patch")
+source = source.replace(old_source, new_source, 1).replace(old_sums, new_sums, 1)
+source = source.replace("pkgrel=1\n", "pkgrel=2\n", 1)
+needle = '  DESTDIR="$pkgdir" ninja -C build install\n'
+addition = '''  DESTDIR="$pkgdir" ninja -C build install
+
+  install -Dm644 "$srcdir/81voltd.service" "$pkgdir/usr/lib/systemd/system/81voltd.service"
+  install -d "$pkgdir/usr/lib/systemd/system/multi-user.target.wants"
+  ln -s ../81voltd.service "$pkgdir/usr/lib/systemd/system/multi-user.target.wants/81voltd.service"
+  [ -x "$pkgdir/usr/bin/81voltd" ] || { echo "!! 81voltd daemon was not installed"; return 1; }
+'''
+if needle not in source:
+    raise SystemExit("81voltd package() install anchor missing")
+source = source.replace(needle, addition, 1)
+path.write_text(source)
+PY
+
 # Start the actual ZamarteOS session on tty1. The upstream session launcher
 # must not start its own Moarchy/Omarchy shell: our package owns the user-facing
 # Wayland session, while the pinned base continues to provide hardware services.
