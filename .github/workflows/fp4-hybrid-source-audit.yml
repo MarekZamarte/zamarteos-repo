@@ -53,32 +53,52 @@ jobs:
           bash scripts/audit-fp4-halium-source.sh upstream-fairphone-fp4 hybrid-device-audit.txt
           cat hybrid-device-audit.txt
 
-      - name: Fetch candidate FP4 kernel source
+      - name: Resolve kernel source from deviceinfo
+        id: kernel
         run: |
           set -euxo pipefail
-          git clone --depth 1 --branch halium-11.0 \
-            https://gitlab.com/ubports/porting/reference-device-ports/android11/fairphone-4/kernel-fairphone-sm7225.git \
-            upstream-fp4-kernel
+          python3 scripts/resolve-fp4-kernel-source.py upstream-fairphone-fp4/deviceinfo
+
+      - name: Fetch exact kernel source declared by deviceinfo
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --branch "${{ steps.kernel.outputs.kernel_branch }}" \
+            "${{ steps.kernel.outputs.kernel_source }}" upstream-fp4-kernel
           git -C upstream-fp4-kernel rev-parse HEAD | tee upstream-kernel-commit.txt
           test -s upstream-fp4-kernel/Makefile
           test -d upstream-fp4-kernel/drivers
 
-      - name: Audit kernel candidate (not yet declared compatible)
+      - name: Audit kernel configuration against deviceinfo
         run: |
           set -euxo pipefail
-          {
-            echo "Candidate kernel repository: kernel-fairphone-sm7225"
-            echo "This default-branch snapshot is an audit candidate only."
-            echo "Compatibility with deviceinfo must be established before building."
-            git -C upstream-fp4-kernel remote -v
-            git -C upstream-fp4-kernel log -1 --format=fuller
-            echo
-            echo "Kernel version:"
-            head -n 5 upstream-fp4-kernel/Makefile
-            echo
-            echo "Relevant FP4/Qualcomm/audio paths:"
-            find upstream-fp4-kernel -maxdepth 4 -type d \( -iname '*qcom*' -o -iname '*audio*' -o -iname '*sound*' -o -iname '*sm7225*' \) -print | sort | head -n 250
-          } | tee hybrid-kernel-audit.txt
+          python3 - upstream-fairphone-fp4/deviceinfo upstream-fp4-kernel hybrid-kernel-audit.txt <<'PY'
+          from pathlib import Path
+          import re, sys
+          deviceinfo, kernel, output = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+          text = deviceinfo.read_text()
+          def val(name):
+              m = re.search(r"^" + re.escape(name) + r"=['\\"](.*?)['\\"]\\s*$", text, re.M)
+              if not m: raise SystemExit(f"Missing {name} in deviceinfo")
+              return m.group(1)
+          configs = val("deviceinfo_kernel_defconfig").split()
+          config_dirs = [kernel / "arch/arm64/configs", kernel / "arch/arm/configs"]
+          lines = ["ZamarteOS Hybrid FP4 kernel audit", f"kernel_commit={__import__('subprocess').check_output(['git','-C',str(kernel),'rev-parse','HEAD'],text=True).strip()}", f"kernel_defconfig={ ' '.join(configs) }"]
+          missing=[]
+          for name in configs:
+              found=[str(d/name) for d in config_dirs if (d/name).is_file()]
+              lines.append(f"config {name}: " + (", ".join(found) if found else "MISSING"))
+              if not found: missing.append(name)
+          lines.append("kernel_makefile_version:")
+          lines.extend(kernel.joinpath("Makefile").read_text(errors="replace").splitlines()[:5])
+          lines.append("relevant_audio_and_qcom_directories:")
+          for p in sorted(kernel.rglob("*")):
+              if p.is_dir() and any(k in p.name.lower() for k in ("qcom","audio","sound","sm7225")):
+                  rel=p.relative_to(kernel)
+                  if len(rel.parts)<=5: lines.append(str(rel))
+          output.write_text("\\n".join(lines)+"\\n")
+          print(output.read_text())
+          if missing: raise SystemExit("Kernel defconfig(s) from deviceinfo not found: " + ", ".join(missing))
+          PY
 
       - name: Upload source audit (not flashable)
         if: always()
