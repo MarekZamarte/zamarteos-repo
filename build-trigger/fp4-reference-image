@@ -25,3 +25,4 @@ Build request 2026-11-13: integrate offline Polish Hunspell spelling suggestions
 Build request 2026-11-13: install and launch the real ZamarteOS Quickshell session on tty1; replace upstream Moarchy shell startup and route lock/restart IPC to ZamarteOS; verify the image contains the actual ZamarteOS QML and Hyprland session.
 Build request 2026-11-13: supersede queued build from the earlier shell prototype; build current ZamarteOS QML session integration and retain the verified artifact, package manifest, image checksums and provenance.
 Build request 2026-11-13: retry reference image after staging the tty1 ZamarteOS session profile override in the base integration commit.
+Build request 2026-11-13: skip the nonessential spot-client AUR build that is incompatible with the runner's OpenSSL 4.1; rebuild the ZamarteOS Pure FP4 image with all required phone packages.
