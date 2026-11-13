@@ -49,12 +49,18 @@ gotowym do flashowania.
 
 ## Klawiatura ekranowa — polskie znaki
 
-Obraz zachowuje natywną klawiaturę ekranową Quickshell/Wayland z bazy FP4,
-a pakiet ZamarteOS dostarcza polski układ dla nowego konta użytkownika.
+Obraz używa osobnego klienta klawiatury ekranowej Wayland (moarchy-keyboard),
+który ZamarteOS rozszerza o polski układ i lokalne sugestie pisowni.
 Znaki ą ć ę ł ń ó ś ź ż oraz wielkie Ą Ć Ę Ł Ń Ó Ś Ź Ż są dostępne
 po przytrzymaniu odpowiednich klawiszy literowych. Układ jest instalowany
 do `/etc/skel/.config/moarchy-keyboard/layouts/letters.json`, więc trafia
 do katalogu domowego podczas tworzenia konta w obrazie.
+
+Podczas wpisywania błędnego słowa klawiatura może pokazać do trzech propozycji
+korekty z lokalnego słownika Hunspell. Nie zastępuje tekstu automatycznie.
+Pasek nie pokazuje się w polach haseł/PIN-u, terminalu ani polach numerycznych.
+To pierwsza wersja korekty pisowni; przewidywanie następnego słowa na podstawie
+kontekstu rozmowy nie jest jeszcze zaimplementowane.
 
 Test akceptacyjny na telefonie: otworzyć pole tekstowe w Wiadomościach,
 przytrzymać kolejno a, c, e, l, n, o, s i z, wybrać polskie warianty,
