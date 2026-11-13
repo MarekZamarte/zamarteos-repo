@@ -18,6 +18,12 @@ The Android boot-image container is a bootloader format, not the OS.
 
 ## Milestone 1 — reproduce the hardware base
 
+The pinned base build omits the optional `spot-client` AUR package for now:
+its pinned `openssl-sys 0.9.104` rejects the OpenSSL 4.1 version in the
+current ARM64 build environment. It is not a dependency of the phone image,
+so an optional music client must not block the OS build. Re-enable only after
+updating that package to a compatible OpenSSL binding.
+
 Build the pinned FP4 development tree in CI. This is a reference build only.
 It must not be flashed. Save the complete build log and image artifact.
 
