@@ -94,6 +94,7 @@ jobs:
           test -s device/fairphone/FP4/prebuilt/dtb
           grep -q 'TARGET_RECOVERY_FSTAB' device/fairphone/FP4/BoardConfig.mk
           grep -q 'PRODUCT_USE_DYNAMIC_PARTITIONS := true' device/fairphone/FP4/twrp_FP4.mk
+          mkdir -p "$GITHUB_WORKSPACE/recovery"
           git -C device/fairphone/FP4 rev-parse HEAD | tee "$GITHUB_WORKSPACE/recovery/device-tree-commit.txt"
 
       - name: Build recovery image
