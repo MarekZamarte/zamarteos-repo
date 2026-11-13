@@ -86,10 +86,10 @@ jobs:
           path = Path(sys.argv[1])
           source = path.read_text()
           needle = "def interpret_warning(line):"
-          patch = needle + '\\n    if isinstance(line, bytes):\\n        line = line.decode("utf-8", errors="replace")'
           if needle not in source:
               raise SystemExit("Could not find the legacy warning parser")
-          if "line = line.decode(\\"utf-8\\" , errors=\\"replace\\")" not in source:
+          if 'line = line.decode("utf-8", errors="replace")' not in source:
+              patch = needle + '\n    if isinstance(line, bytes):\n        line = line.decode("utf-8", errors="replace")'
               source = source.replace(needle, patch, 1)
               path.write_text(source)
           PY
