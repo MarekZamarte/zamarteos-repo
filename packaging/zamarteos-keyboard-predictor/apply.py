@@ -63,7 +63,7 @@ replace("src/main.cpp",
 replace("qml/Keyboard.qml",
 '''    readonly property real rowHeight: rows.length > 0 ? height / rows.length : height
 ''',
-'''    readonly property real suggestionHeight: 34
+'''    readonly property real suggestionHeight: wordSuggestions.length > 0 ? 34 : 0
     readonly property real rowHeight:
         rows.length > 0 ? (height - suggestionHeight) / rows.length : height
     property string composingWord: ""
