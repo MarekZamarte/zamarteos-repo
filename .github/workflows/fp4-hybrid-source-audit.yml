@@ -131,14 +131,18 @@ jobs:
           export CC=clang-14
           export LLVM=1
           export LLVM_IAS=1
-          # This vendor kernel invokes gcc-wrapper.py with the compiler selected
-          # through CROSS_COMPILE. Use an absolute prefix so the wrapper can
-          # resolve the cross compiler even in the runner's sanitized make env.
+          # This kernel's optional gcc-wrapper.py is a legacy GCC warning
+          # wrapper. Disable it for the Clang build: it interferes with Kbuild's
+          # compiler-version probe and is not needed when CC is Clang.
+          test -x /usr/bin/clang-14
+          /usr/bin/clang-14 --version
           test -x /usr/bin/aarch64-linux-gnu-gcc
           /usr/bin/aarch64-linux-gnu-gcc -dumpversion
-          export CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
-          make O=out "${configs[@]}" 2>&1 | tee ../hybrid-kernel-config.log
-          make -j"$(nproc)" O=out Image.gz dtbs modules 2>&1 | tee ../hybrid-kernel-build.log
+          # Keep CROSS_COMPILE as a tool prefix (not an absolute path), because
+          # Kbuild also derives Clang's target triple and binutils from it.
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          make O=out REAL_CC=clang-14 DISABLE_WRAPPER=1 "${configs[@]}" 2>&1 | tee ../hybrid-kernel-config.log
+          make -j"$(nproc)" O=out REAL_CC=clang-14 DISABLE_WRAPPER=1 Image.gz dtbs modules 2>&1 | tee ../hybrid-kernel-build.log
           test -s out/arch/arm64/boot/Image.gz
           find out/arch/arm64/boot -type f \( -name '*.dtb' -o -name 'Image.gz' \) -print | sort | tee ../hybrid-kernel-artifacts.txt
 
