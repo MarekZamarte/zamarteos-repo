@@ -122,14 +122,14 @@ jobs:
             dwarves python3
           # Ubuntu installs versioned LLVM binaries only. This legacy kernel
           # calls unversioned names, so expose the LLVM 14 tools explicitly.
-          test -x /usr/bin/ld.lld-14
-          test -x /usr/bin/llvm-objdump-14
-          sudo ln -sf /usr/bin/ld.lld-14 /usr/local/bin/ld.lld
-          sudo ln -sf /usr/bin/llvm-objdump-14 /usr/local/bin/llvm-objdump
-          command -v ld.lld
-          command -v llvm-objdump
-          ld.lld --version
-          llvm-objdump --version
+          # The legacy Kbuild scripts call unversioned LLVM tool names.
+          # Expose the full LLVM 14 binutils set, not only the linker/objdump.
+          for tool in ld.lld llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-ranlib llvm-strip llvm-readelf llvm-size llvm-strings llvm-addr2line; do
+            test -x "/usr/bin/${tool}-14"
+            sudo ln -sf "/usr/bin/${tool}-14" "/usr/local/bin/${tool}"
+            command -v "${tool}"
+            "${tool}" --version | head -n 1
+          done
 
       - name: Build FP4 Halium kernel (no flashing)
         run: |
