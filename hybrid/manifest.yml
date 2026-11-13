@@ -10,5 +10,5 @@ upstream_branch: focal
 kernel_source_of_truth: upstream_deviceinfo
 target_userspace: ZamarteOS Linux
 target_ui: ZamarteOS
-build_state: source-audit-only
+build_state: kernel-build-ci-pending
 flash_automatically: false
