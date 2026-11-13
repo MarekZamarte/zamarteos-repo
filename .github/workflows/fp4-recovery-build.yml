@@ -100,9 +100,13 @@ jobs:
       - name: Build recovery image
         working-directory: .build/twrp-fp4
         run: |
-          set -euxo pipefail
+          set -exo pipefail
           export ALLOW_MISSING_DEPENDENCIES=true
+          # AOSP's envsetup.sh references ZSH_VERSION without guarding it;
+          # source it without nounset, then restore strict unset-variable checks.
+          set +u
           source build/envsetup.sh
+          set -u
           lunch twrp_FP4-eng
           mka recoveryimage
 
