@@ -13,28 +13,32 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: zamarteos-imsd-fp4-build
+  cancel-in-progress: true
+
 jobs:
-  build-imsd-arm64:
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 90
+  build-imsd:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
     steps:
       - name: Checkout ZamarteOS experiment
         uses: actions/checkout@v4
 
-      - name: Install Flatpak
+      - name: Install Flatpak and Crafter.Build
         run: |
           set -euxo pipefail
           sudo apt-get update
           sudo apt-get install -y flatpak
-          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak remote-add --user --if-not-exists catcrafts https://flatpak.catcrafts.net/catcrafts.flatpakrepo
-          flatpak install --user -y catcrafts net.catcrafts.CrafterBuild//stable
+          sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak remote-add --if-not-exists catcrafts https://flatpak.catcrafts.net/catcrafts.flatpakrepo
+          sudo flatpak install -y catcrafts net.catcrafts.CrafterBuild//stable
 
       - name: Install crafter-build wrapper
         run: |
           set -euxo pipefail
           mkdir -p "$HOME/.local/bin"
-          printf '#!/bin/sh\nexec flatpak run --user net.catcrafts.CrafterBuild//stable "$@"\n' > "$HOME/.local/bin/crafter-build"
+          printf '#!/bin/sh\nexec flatpak run --die-with-parent net.catcrafts.CrafterBuild//stable "$@"\n' > "$HOME/.local/bin/crafter-build"
           chmod +x "$HOME/.local/bin/crafter-build"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
@@ -44,16 +48,30 @@ jobs:
           git clone --depth 1 https://forgejo.catcrafts.net/Catcrafts/imsd.git imsd-src
           git -C imsd-src rev-parse HEAD | tee imsd-upstream-commit.txt
 
-      - name: Build ARM64 imsd products
+      - name: Build and test native reference
         working-directory: imsd-src
         run: |
           set -euxo pipefail
-          test "$(uname -m)" = aarch64
           crafter-build
           crafter-build -- --product=media
           crafter-build -- --product=ofonod
           crafter-build -- --product=pcscf
           crafter-build test
+
+      - name: Prepare ARM64 cross sysroot
+        working-directory: imsd-src
+        run: |
+          set -euxo pipefail
+          bash packaging/make-sysroot.sh
+
+      - name: Cross-build ARM64 candidate for FP4 CPU
+        working-directory: imsd-src
+        run: |
+          set -euxo pipefail
+          crafter-build -- --target=aarch64-alpine-linux-musl --sysroot="$HOME/.cache/imsd/sysroot-aarch64-alpine" --march=armv8.2-a+crypto+dotprod+fp16 --mtune=cortex-a76
+          crafter-build -- --product=media --target=aarch64-alpine-linux-musl --sysroot="$HOME/.cache/imsd/sysroot-aarch64-alpine" --march=armv8.2-a+crypto+dotprod+fp16 --mtune=cortex-a76
+          crafter-build -- --product=ofonod --target=aarch64-alpine-linux-musl --sysroot="$HOME/.cache/imsd/sysroot-aarch64-alpine" --march=armv8.2-a+crypto+dotprod+fp16 --mtune=cortex-a76
+          crafter-build -- --product=pcscf --target=aarch64-alpine-linux-musl --sysroot="$HOME/.cache/imsd/sysroot-aarch64-alpine" --march=armv8.2-a+crypto+dotprod+fp16 --mtune=cortex-a76
 
       - name: Collect build audit
         if: always()
@@ -62,18 +80,19 @@ jobs:
           {
             echo "runner_arch=$(uname -m)"
             echo "imsd_upstream_commit=$(cat imsd-upstream-commit.txt 2>/dev/null || echo unavailable)"
-            echo "result=see preceding build and test steps"
+            echo "target=armv8.2-a+crypto+dotprod+fp16 / cortex-a76"
+            echo "note=Alpine musl cross-build is a compile candidate, not an Arch Linux package or a tested FP4 image"
           } > imsd-arm64-build-audit.txt
           if [ -d imsd-src/bin ]; then
             find imsd-src/bin -type f -printf '%P\t%s bytes\n' | sort > imsd-arm64-products.txt
             tar -czf imsd-arm64-binaries.tar.gz -C imsd-src/bin .
           fi
 
-      - name: Upload experimental ARM64 build
+      - name: Upload experimental build and audit
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zamarteos-imsd-fp4-arm64-${{ github.run_number }}
+          name: zamarteos-imsd-fp4-build-${{ github.run_number }}
           path: |
             imsd-arm64-build-audit.txt
             imsd-arm64-products.txt
