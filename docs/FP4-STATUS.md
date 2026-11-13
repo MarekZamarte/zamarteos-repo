@@ -14,6 +14,24 @@ The tested voice PCM list was:
 
 The FP4 q6voiced configuration selects card 0, device 3 (VoiceMMode1).
 
+## Call-audio acceptance in the ZamarteOS image
+
+The pinned hardware base used by the Pure FP4 builder includes
+`0009-call-audio-q6voice.patch` in `linux-moarchy-sm6350` (pkgrel 13),
+the Q6Voice kernel modules, FP4 voice DAIs, `q6voiced`, and the measured
+`VoiceMMode1` selection (card 0, device 3). It also carries the FP4 UCM,
+WirePlumber settings, and mixer-route helper for the call uplink/downlink.
+
+The ZamarteOS image verifier now treats these as required image contents:
+missing Q6Voice modules, daemon/config, UCM files, or call mixer routes fail
+the image audit. This is a packaging gate, not an acoustic test.
+
+**Release gate still outstanding:** on the actual FP4, place and receive calls
+and confirm two-way audio through the earpiece and loudspeaker, microphone
+uplink, and call-progress/ringback tone. The upstream hand-built kernel report
+is evidence that this path can work on FP4; it does not prove that this exact
+CI image works. No modem configuration is changed as part of this audio work.
+
 ## Remaining risks
 - an audio-related boot race;
 - Wi-Fi latency/stability work;
