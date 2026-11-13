@@ -1,24 +1,30 @@
 pkgname=zamarteos-shell
-pkgver=0.1.6
+pkgver=0.2.0
 pkgrel=1
-pkgdesc="ZamarteOS first-boot security integration for Fairphone 4"
+pkgdesc="ZamarteOS touch-first Wayland shell and Fairphone 4 session"
 arch=('aarch64')
 url="https://github.com/MarekZamarte/zamarteos-repo"
-license=('unknown')
-depends=('pam')
+license=('custom')
+depends=('hyprland' 'quickshell' 'pam')
 source=(
+  'shell.qml'
+  'hyprland.conf'
+  'zamarteos-session'
+  'zamarteos-shell'
+  'zamarteos.desktop'
+  'zamarteos-lock.pam'
   'zamarteos-firstboot-pin'
   'zamarteos-firstboot-pin.service'
   'moarchy-firstboot-pin.conf'
   'getty-firstboot-pin.conf'
   'polish-letters.json'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
-  bash -n "$srcdir/zamarteos-firstboot-pin"
   bash -n "$srcdir/zamarteos-session"
   bash -n "$srcdir/zamarteos-shell"
+  bash -n "$srcdir/zamarteos-firstboot-pin"
   grep -q 'exec Hyprland --config /usr/share/zamarteos-shell/hyprland.conf' "$srcdir/zamarteos-session"
   grep -q 'exec qs -n -p /usr/share/zamarteos-shell' "$srcdir/zamarteos-shell"
   grep -q 'IpcHandler' "$srcdir/shell.qml"
