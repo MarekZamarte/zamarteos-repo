@@ -101,6 +101,30 @@ jobs:
           if missing: raise SystemExit("Kernel defconfig(s) from deviceinfo not found: " + ", ".join(missing))
           PY
 
+      - name: Install ARM64 kernel build dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential clang-14 lld-14 llvm-14 \
+            flex gcc-aarch64-linux-gnu libelf-dev libssl-dev libncurses-dev \
+            dwarves python3
+
+      - name: Build FP4 Halium kernel (no flashing)
+        run: |
+          set -euxo pipefail
+          cd upstream-fp4-kernel
+          read -r -a configs <<< "${{ steps.kernel.outputs.kernel_defconfig }}"
+          test "${#configs[@]}" -gt 0
+          export ARCH=arm64
+          export CC=clang-14
+          export LLVM=1
+          export LLVM_IAS=1
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          make O=out "${configs[@]}" 2>&1 | tee ../hybrid-kernel-config.log
+          make -j"$(nproc)" O=out Image.gz dtbs modules 2>&1 | tee ../hybrid-kernel-build.log
+          test -s out/arch/arm64/boot/Image.gz
+          find out/arch/arm64/boot -type f \( -name '*.dtb' -o -name 'Image.gz' \) -print | sort | tee ../hybrid-kernel-artifacts.txt
+
       - name: Upload source audit (not flashable)
         if: always()
         uses: actions/upload-artifact@v4
@@ -111,5 +135,10 @@ jobs:
             hybrid-kernel-audit.txt
             upstream-device-port-commit.txt
             upstream-kernel-commit.txt
+            hybrid-kernel-config.log
+            hybrid-kernel-build.log
+            hybrid-kernel-artifacts.txt
+            upstream-fp4-kernel/out/arch/arm64/boot/Image.gz
+            upstream-fp4-kernel/out/arch/arm64/boot/dts/**/*.dtb
           if-no-files-found: warn
           retention-days: 30
