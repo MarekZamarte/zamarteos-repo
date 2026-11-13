@@ -16,6 +16,35 @@ done
 rm -rf "$ROOT/pkgbuilds/zamarteos-shell"
 cp -a "$HERE/packaging/zamarteos-shell" "$ROOT/pkgbuilds/zamarteos-shell"
 
+# Patch the pinned standalone Wayland keyboard after it is cloned by the
+# upstream package builder. The patch is kept in this repository and applied
+# only to the exact keyboard commit pinned by the base manifest.
+PREDICTOR="$HERE/packaging/zamarteos-keyboard-predictor"
+[[ -f "$PREDICTOR/apply.py" ]] || { echo "Missing ZamarteOS keyboard predictor patch" >&2; exit 1; }
+rm -rf "$ROOT/zamarteos-keyboard-predictor"
+cp -a "$PREDICTOR" "$ROOT/zamarteos-keyboard-predictor"
+python3 - "$ROOT/docker/build-packages.sh" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+s = p.read_text()
+anchor = '''     as_builder_dir "/home/builder/$component"; then
+    if already_built "/home/builder/$component/$c_dir"; then
+'''
+insert = '''     as_builder_dir "/home/builder/$component"; then
+    if [[ "$component" == "moarchy-keyboard" ]]; then
+      python3 /repo/zamarteos-keyboard-predictor/apply.py "/home/builder/$component"
+      chown -R builder:builder "/home/builder/$component"
+    fi
+    if already_built "/home/builder/$component/$c_dir"; then
+'''
+if insert not in s:
+    if anchor not in s:
+        raise SystemExit("Could not find the pinned component build hook")
+    s = s.replace(anchor, insert, 1)
+    p.write_text(s)
+PY
+
 # Pull the shell package into the rootfs transaction.
 META="$ROOT/pkgbuilds/moarchy-meta/PKGBUILD"
 if ! grep -q "'zamarteos-shell'" "$META"; then
