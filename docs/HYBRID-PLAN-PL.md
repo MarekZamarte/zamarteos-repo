@@ -42,6 +42,6 @@ Repozytorium portu urządzenia i osobne repozytorium kernela są publiczne. Jedn
 
 ## Ważne ograniczenia
 
-Pierwszy workflow w tej gałęzi jest audytem źródeł, a nie pełnym buildem obrazu. Repozytorium kernela jest pobierane z domyślnej gałęzi wyłącznie jako kandydat do audytu; nie uznajemy go za zgodne, dopóki deviceinfo lub manifest nie wskaże dokładnej rewizji. Nie wolno nazywać artefaktu audytu gotowym systemem. Pełny build wymaga potwierdzenia manifestu Halium, zależności urządzenia, zgodnych źródeł kernela i vendor blobs. Nie wolno zgadywać repozytoriów ani rewizji.
+Pierwszy workflow w tej gałęzi jest audytem źródeł, a nie pełnym buildem obrazu. Repozytorium kernela jest pobierane z gałęzi `halium-11.0`, która jest gałęzią projektu UBports dla Halium 11. Nadal traktujemy je jako kandydata do audytu; przed kompilacją trzeba potwierdzić zgodność z parametrami deviceinfo i zapisać dokładny SHA. Nie wolno nazywać artefaktu audytu gotowym systemem. Pełny build wymaga potwierdzenia manifestu Halium, zależności urządzenia, zgodnych źródeł kernela i vendor blobs. Nie wolno zgadywać repozytoriów ani rewizji.
 
 Żaden workflow tej gałęzi nie może uruchamiać fastboot, ADB flash ani modyfikować telefonu. Obraz testowy będzie publikowany dopiero po pełnym buildzie i audycie.
