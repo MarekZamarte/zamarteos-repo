@@ -1,0 +1,64 @@
+name: ZamarteOS Hybrid FP4 — source audit (not an image)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - zamarteos-hybrid-fp4-dev
+    paths:
+      - "hybrid/**"
+      - "docs/HYBRID-PLAN-PL.md"
+      - "scripts/audit-fp4-halium-source.sh"
+      - ".github/workflows/fp4-hybrid-source-audit.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zamarteos-hybrid-fp4-source-audit
+  cancel-in-progress: false
+
+jobs:
+  audit-upstream-device-port:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout ZamarteOS Hybrid manifest
+        uses: actions/checkout@v4
+
+      - name: Validate Hybrid manifest
+        run: |
+          set -euxo pipefail
+          grep -Fx 'device: fairphone-fp4' hybrid/manifest.yml
+          grep -Fx 'codename: FP4' hybrid/manifest.yml
+          grep -Fx 'compatibility_layer: Halium' hybrid/manifest.yml
+          grep -Fx 'halium_version: "11"' hybrid/manifest.yml
+          grep -Fx 'target_userspace: ZamarteOS Linux' hybrid/manifest.yml
+          grep -Fx 'flash_automatically: false' hybrid/manifest.yml
+          bash -n scripts/audit-fp4-halium-source.sh
+
+      - name: Fetch pinned-branch upstream FP4 device port
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --branch focal \
+            https://gitlab.com/ubports/porting/reference-device-ports/android11/fairphone-4/fairphone-fp4.git \
+            upstream-fairphone-fp4
+          git -C upstream-fairphone-fp4 rev-parse HEAD | tee upstream-device-port-commit.txt
+          test -n "$(git -C upstream-fairphone-fp4 rev-parse HEAD)"
+
+      - name: Audit device source metadata
+        run: |
+          set -euxo pipefail
+          bash scripts/audit-fp4-halium-source.sh upstream-fairphone-fp4 hybrid-source-audit.txt
+          cat hybrid-source-audit.txt
+
+      - name: Upload source audit (not flashable)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-hybrid-fp4-source-audit-${{ github.run_number }}
+          path: |
+            hybrid-source-audit.txt
+            upstream-device-port-commit.txt
+          if-no-files-found: warn
+          retention-days: 30
