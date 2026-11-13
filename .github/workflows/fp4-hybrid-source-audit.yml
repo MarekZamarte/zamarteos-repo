@@ -77,9 +77,10 @@ jobs:
           deviceinfo, kernel, output = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
           text = deviceinfo.read_text()
           def val(name):
-              m = re.search(r"^" + re.escape(name) + r"=['\\"](.*?)['\\"]\\s*$", text, re.M)
-              if not m: raise SystemExit(f"Missing {name} in deviceinfo")
-              return m.group(1)
+              for line in text.splitlines():
+                  if line.startswith(name + "="):
+                      return line.split("=", 1)[1].strip().strip("'\\\"")
+              raise SystemExit(f"Missing {name} in deviceinfo")
           configs = val("deviceinfo_kernel_defconfig").split()
           config_dirs = [kernel / "arch/arm64/configs", kernel / "arch/arm/configs"]
           lines = ["ZamarteOS Hybrid FP4 kernel audit", f"kernel_commit={__import__('subprocess').check_output(['git','-C',str(kernel),'rev-parse','HEAD'],text=True).strip()}", f"kernel_defconfig={ ' '.join(configs) }"]
