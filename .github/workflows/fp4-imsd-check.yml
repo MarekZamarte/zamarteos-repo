@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p "$HOME/.local/bin"
-          printf '#!/bin/sh\\nexec flatpak run --user net.catcrafts.CrafterBuild//stable "$@"\\n' > "$HOME/.local/bin/crafter-build"
+          printf '#!/bin/sh\nexec flatpak run --user net.catcrafts.CrafterBuild//stable "$@"\n' > "$HOME/.local/bin/crafter-build"
           chmod +x "$HOME/.local/bin/crafter-build"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
@@ -65,7 +65,7 @@ jobs:
             echo "result=see preceding build and test steps"
           } > imsd-arm64-build-audit.txt
           if [ -d imsd-src/bin ]; then
-            find imsd-src/bin -type f -printf '%P\\t%s bytes\\n' | sort > imsd-arm64-products.txt
+            find imsd-src/bin -type f -printf '%P\t%s bytes\n' | sort > imsd-arm64-products.txt
             tar -czf imsd-arm64-binaries.tar.gz -C imsd-src/bin .
           fi
 
