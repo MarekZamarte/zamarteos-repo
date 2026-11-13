@@ -6,7 +6,7 @@ Osobny wariant ZamarteOS dla Fairphone 4 (FP4, SM7225), w którym własny interf
 
 To NIE jest wariant Pure. Nie wolno przenosić zmian z tej gałęzi do Pure bez osobnej decyzji.
 
-## Zweryfikowana baza sprzętowa
+## Punkt wyjścia do audytu
 
 - Urządzenie: Fairphone 4, kod urządzenia `FP4`.
 - Istniejący port: UBports Reference Device Port `fairphone-fp4`.
