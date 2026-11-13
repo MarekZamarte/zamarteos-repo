@@ -7,8 +7,7 @@ halium_version: "11"
 android_vendor_base: "11"
 upstream_device_project: "https://gitlab.com/ubports/porting/reference-device-ports/android11/fairphone-4/fairphone-fp4"
 upstream_branch: focal
-upstream_kernel_project: "https://gitlab.com/ubports/porting/reference-device-ports/android11/fairphone-4/kernel-fairphone-sm7225"
-upstream_kernel_branch: halium-11.0
+kernel_source_of_truth: upstream_deviceinfo
 target_userspace: ZamarteOS Linux
 target_ui: ZamarteOS
 build_state: source-audit-only
