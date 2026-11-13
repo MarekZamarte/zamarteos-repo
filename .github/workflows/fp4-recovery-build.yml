@@ -71,7 +71,13 @@ jobs:
           cd "$BUILD_DIR"
           repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-11 --depth=1
           mkdir -p .repo/local_manifests
-          cp "$GITHUB_WORKSPACE/recovery/roomservice.xml" .repo/local_manifests/roomservice.xml
+          cat > .repo/local_manifests/roomservice.xml <<'XML'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <manifest>
+            <project name="z3ntu/android_device_fairphone_FP4" path="device/fairphone/FP4" remote="github" revision="android-11" />
+          </manifest>
+          XML
+          test -s .repo/local_manifests/roomservice.xml
 
       - name: Sync TWRP and Fairphone 4 device sources
         working-directory: .build/twrp-fp4
