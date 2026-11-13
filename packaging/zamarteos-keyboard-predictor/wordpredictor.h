@@ -14,6 +14,7 @@ class WordPredictor : public QObject, public MainOwnedSingleton<WordPredictor>
     Q_OBJECT
     QML_NAMED_ELEMENT(WordPredictor)
     QML_SINGLETON
+    Q_PROPERTY(bool available READ available CONSTANT)
 
 public:
     explicit WordPredictor(const QString &affPath, const QString &dicPath,
