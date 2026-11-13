@@ -106,6 +106,19 @@ jobs:
           grep -q 'FP4 call uplink, downlink and uncalibrated-DSP topology routes are present' moarchy-base/image/verify.sh
           grep -q 'the Q6Voice daemon is wired to the FP4 device configuration' moarchy-base/image/verify.sh
           grep -q "'81voltd'" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
+          grep -q '^pkgrel=2          grep -q 'have /usr/bin/zamarteos-session' moarchy-base/image/verify.sh
+          grep -q 'tty1 starts the ZamarteOS Wayland session' moarchy-base/image/verify.sh
+          grep -q 'ipc call zamarteos-lock lock' moarchy-base/image/verify.sh
+          grep -q 'XF86AudioRaiseVolume' moarchy-base/image/verify.sh
+          grep -q 'omarchy-theme-browser' scripts/apply-zamarteos-overlay.sh
+          grep -q 'Requires=zamarteos-firstboot-pin.service' moarchy-base/pkgbuilds/zamarteos-shell/moarchy-firstboot-pin.conf
+          grep -q 'Requires=moarchy-firstboot.service' moarchy-base/pkgbuilds/zamarteos-shell/getty-firstboot-pin.conf
+          git -C moarchy-base diff --check
+ moarchy-base/pkgbuilds/81voltd/PKGBUILD
+          grep -q '81voltd.service' moarchy-base/pkgbuilds/81voltd/PKGBUILD
+          grep -q 'ExecStart=/usr/bin/81voltd' moarchy-base/pkgbuilds/81voltd/81voltd.service
+          grep -q '81voltd IMS service is enabled at boot' moarchy-base/image/verify.sh
+          grep -q 'have /usr/lib/systemd/system/81voltd.service' moarchy-base/image/verify.sh
           grep -q 'have /usr/bin/zamarteos-session' moarchy-base/image/verify.sh
           grep -q 'tty1 starts the ZamarteOS Wayland session' moarchy-base/image/verify.sh
           grep -q 'ipc call zamarteos-lock lock' moarchy-base/image/verify.sh
