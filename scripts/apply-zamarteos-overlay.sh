@@ -102,7 +102,7 @@ import sys
 
 path = Path(sys.argv[1])
 source = path.read_text()
-old_source = 'source=("$pkgname-$_ver.tar.gz::$_url/-/archive/v$_ver/$pkgname-v$_ver.tar.gz")'
+old_source = 'source=("$pkgname-$_ver.tar.gz::$url/-/archive/v$_ver/$pkgname-v$_ver.tar.gz")'
 new_source = 'source=("$pkgname-$_ver.tar.gz::$_url/-/archive/v$_ver/$pkgname-v$_ver.tar.gz" "81voltd.service")'
 old_sums = "sha256sums=('bb0e9774463fb4964067bf70f10cc316afc1c8ed163ff7969b3fd3ae3dc2e937')"
 new_sums = "sha256sums=('bb0e9774463fb4964067bf70f10cc316afc1c8ed163ff7969b3fd3ae3dc2e937' 'SKIP')"
