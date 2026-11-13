@@ -45,6 +45,23 @@ if insert not in s:
     p.write_text(s)
 PY
 
+# Skip one optional AUR application that currently prevents the ARM64 package
+# batch from completing: spot-client 0.5.0 pins openssl-sys 0.9.104, which
+# rejects the OpenSSL 4.1 shipped by the current Arch Linux ARM build image.
+# It is not a moarchy-meta dependency or a phone hardware service. Do not let
+# this optional Spotify client block the operating-system image.
+python3 - "$ROOT/manifest.toml" <<'PY'
+from pathlib import Path
+import re, sys
+p = Path(sys.argv[1])
+s = p.read_text()
+pattern = r"(?ms)^\\[aur\\.spot-client\\]\\n.*?(?=^\\[|\\Z)"
+updated, count = re.subn(pattern, "", s)
+if count != 1:
+    raise SystemExit(f"Expected exactly one optional spot-client manifest section, found {count}")
+p.write_text(updated)
+PY
+
 # Pull the shell package into the rootfs transaction.
 META="$ROOT/pkgbuilds/moarchy-meta/PKGBUILD"
 if ! grep -q "'zamarteos-shell'" "$META"; then
