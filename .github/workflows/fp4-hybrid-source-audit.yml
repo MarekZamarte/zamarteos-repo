@@ -76,7 +76,7 @@ jobs:
             head -n 5 upstream-fp4-kernel/Makefile
             echo
             echo "Relevant FP4/Qualcomm/audio paths:"
-            find upstream-fp4-kernel -maxdepth 4 -type d \\( -iname '*qcom*' -o -iname '*audio*' -o -iname '*sound*' -o -iname '*sm7225*' \\) -print | sort | head -n 250
+            find upstream-fp4-kernel -maxdepth 4 -type d \( -iname '*qcom*' -o -iname '*audio*' -o -iname '*sound*' -o -iname '*sm7225*' \) -print | sort | head -n 250
           } | tee hybrid-kernel-audit.txt
 
       - name: Upload source audit (not flashable)
