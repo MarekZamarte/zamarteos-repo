@@ -25,6 +25,23 @@ jobs:
       - name: Checkout ZamarteOS recovery configuration
         uses: actions/checkout@v4
 
+      # Install packages BEFORE expanding the workspace LV: the disk-space action
+      # moves the large build volume onto GITHUB_WORKSPACE and leaves little root
+      # filesystem space for apt indexes and package caches.
+      - name: Install build dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bc bison build-essential ccache curl flex g++-multilib gcc-multilib \
+            git git-lfs gnupg gperf imagemagick lib32ncurses-dev lib32readline-dev \
+            lib32z1-dev liblz4-tool libncurses5-dev libssl-dev libxml2 libxml2-utils \
+            lzop openjdk-11-jdk pngcrush rsync schedtool squashfs-tools xsltproc \
+            zip zlib1g-dev python3 python-is-python3
+          git lfs install
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+
       - name: Expand runner disk space
         uses: easimon/maximize-build-space@v10
         with:
@@ -34,16 +51,10 @@ jobs:
           remove-haskell: "true"
           remove-codeql: "true"
 
-      - name: Install build dependencies
+      - name: Show build storage
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            bc bison build-essential ccache curl flex g++-multilib gcc-multilib \
-            git git-lfs gnupg gperf imagemagick lib32ncurses-dev lib32readline-dev \
-            lib32z1-dev liblz4-tool libncurses5-dev libssl-dev libxml2 libxml2-utils \
-            lzop openjdk-11-jdk pngcrush rsync schedtool squashfs-tools xsltproc \
-            zip zlib1g-dev python3 python-is-python3
-          git lfs install
+          df -h
+          free -h
 
       - name: Install repo tool
         run: |
@@ -53,21 +64,22 @@ jobs:
           echo "$HOME/bin" >> "$GITHUB_PATH"
 
       - name: Initialize TWRP 11 source tree
-        working-directory: ${{ runner.temp }}
         run: |
-          mkdir -p twrp-fp4
-          cd twrp-fp4
+          set -euxo pipefail
+          BUILD_DIR="$GITHUB_WORKSPACE/.build/twrp-fp4"
+          mkdir -p "$BUILD_DIR"
+          cd "$BUILD_DIR"
           repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-11 --depth=1
           mkdir -p .repo/local_manifests
           cp "$GITHUB_WORKSPACE/recovery/roomservice.xml" .repo/local_manifests/roomservice.xml
 
       - name: Sync TWRP and Fairphone 4 device sources
-        working-directory: ${{ runner.temp }}/twrp-fp4
+        working-directory: .build/twrp-fp4
         run: |
           repo sync -c --no-clone-bundle --no-tags -j2
 
       - name: Verify FP4 recovery configuration
-        working-directory: ${{ runner.temp }}/twrp-fp4
+        working-directory: .build/twrp-fp4
         run: |
           set -euxo pipefail
           test -s device/fairphone/FP4/BoardConfig.mk
@@ -79,7 +91,7 @@ jobs:
           git -C device/fairphone/FP4 rev-parse HEAD | tee "$GITHUB_WORKSPACE/recovery/device-tree-commit.txt"
 
       - name: Build recovery image
-        working-directory: ${{ runner.temp }}/twrp-fp4
+        working-directory: .build/twrp-fp4
         run: |
           set -euxo pipefail
           export ALLOW_MISSING_DEPENDENCIES=true
@@ -88,7 +100,7 @@ jobs:
           mka recoveryimage
 
       - name: Validate and checksum recovery image
-        working-directory: ${{ runner.temp }}/twrp-fp4
+        working-directory: .build/twrp-fp4
         run: |
           set -euxo pipefail
           IMAGE="out/target/product/FP4/recovery.img"
