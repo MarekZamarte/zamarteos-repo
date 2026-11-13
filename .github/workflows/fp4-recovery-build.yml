@@ -1,0 +1,116 @@
+name: ZamarteOS Recovery FP4 — build only
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - zamarteos-fp4-recovery-dev
+    paths:
+      - ".github/workflows/fp4-recovery-build.yml"
+      - "recovery/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fp4-recovery-build
+  cancel-in-progress: false
+
+jobs:
+  build-twrp-recovery:
+    name: Build FP4 recovery image (no flash)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    steps:
+      - name: Checkout ZamarteOS recovery configuration
+        uses: actions/checkout@v4
+
+      - name: Expand runner disk space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 10240
+          swap-size-mb: 8192
+          remove-dotnet: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bc bison build-essential ccache curl flex g++-multilib gcc-multilib \
+            git git-lfs gnupg gperf imagemagick lib32ncurses-dev lib32readline-dev \
+            lib32z1-dev liblz4-tool libncurses5-dev libssl-dev libxml2 libxml2-utils \
+            lzop openjdk-11-jdk pngcrush rsync schedtool squashfs-tools xsltproc \
+            zip zlib1g-dev python3 python-is-python3
+          git lfs install
+
+      - name: Install repo tool
+        run: |
+          mkdir -p "$HOME/bin"
+          curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo -o "$HOME/bin/repo"
+          chmod a+x "$HOME/bin/repo"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Initialize TWRP 11 source tree
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir -p twrp-fp4
+          cd twrp-fp4
+          repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-11 --depth=1
+          mkdir -p .repo/local_manifests
+          cp "$GITHUB_WORKSPACE/recovery/roomservice.xml" .repo/local_manifests/roomservice.xml
+
+      - name: Sync TWRP and Fairphone 4 device sources
+        working-directory: ${{ runner.temp }}/twrp-fp4
+        run: |
+          repo sync -c --no-clone-bundle --no-tags -j2
+
+      - name: Verify FP4 recovery configuration
+        working-directory: ${{ runner.temp }}/twrp-fp4
+        run: |
+          set -euxo pipefail
+          test -s device/fairphone/FP4/BoardConfig.mk
+          test -s device/fairphone/FP4/recovery.fstab
+          test -s device/fairphone/FP4/prebuilt/kernel
+          test -s device/fairphone/FP4/prebuilt/dtb
+          grep -q 'TARGET_RECOVERY_FSTAB' device/fairphone/FP4/BoardConfig.mk
+          grep -q 'PRODUCT_USE_DYNAMIC_PARTITIONS := true' device/fairphone/FP4/twrp_FP4.mk
+          git -C device/fairphone/FP4 rev-parse HEAD | tee "$GITHUB_WORKSPACE/recovery/device-tree-commit.txt"
+
+      - name: Build recovery image
+        working-directory: ${{ runner.temp }}/twrp-fp4
+        run: |
+          set -euxo pipefail
+          export ALLOW_MISSING_DEPENDENCIES=true
+          source build/envsetup.sh
+          lunch twrp_FP4-eng
+          mka recoveryimage
+
+      - name: Validate and checksum recovery image
+        working-directory: ${{ runner.temp }}/twrp-fp4
+        run: |
+          set -euxo pipefail
+          IMAGE="out/target/product/FP4/recovery.img"
+          test -s "$IMAGE"
+          SIZE="$(stat -c '%s' "$IMAGE")"
+          echo "recovery_image_bytes=$SIZE" | tee "$GITHUB_WORKSPACE/recovery/build-result.txt"
+          if [ "$SIZE" -gt 100663296 ]; then
+            echo "Recovery image exceeds the documented 96 MiB recovery partition." | tee -a "$GITHUB_WORKSPACE/recovery/build-result.txt"
+            exit 1
+          fi
+          sha256sum "$IMAGE" | tee "$GITHUB_WORKSPACE/recovery/SHA256SUMS"
+          cp "$IMAGE" "$GITHUB_WORKSPACE/recovery/recovery.img"
+
+      - name: Upload recovery build artifact (not auto-flashed)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-fp4-recovery-${{ github.run_number }}
+          path: |
+            recovery/recovery.img
+            recovery/SHA256SUMS
+            recovery/build-result.txt
+            recovery/device-tree-commit.txt
+          if-no-files-found: warn
+          retention-days: 30
