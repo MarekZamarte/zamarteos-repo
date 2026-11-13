@@ -1,0 +1,13 @@
+device: fairphone-fp4
+codename: FP4
+soc: Qualcomm SM7225
+architecture: arm64
+compatibility_layer: Halium
+halium_version: "11"
+android_vendor_base: "11"
+upstream_device_project: "https://gitlab.com/ubports/porting/reference-device-ports/android11/fairphone-4/fairphone-fp4"
+upstream_branch: focal
+target_userspace: ZamarteOS Linux
+target_ui: ZamarteOS
+build_state: source-audit-only
+flash_automatically: false
