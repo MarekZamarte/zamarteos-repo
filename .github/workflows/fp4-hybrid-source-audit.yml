@@ -78,6 +78,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends python3-lib2to3
           python3 -m lib2to3 -w -n upstream-fp4-kernel/scripts/gcc-wrapper.py
+          # Python 3 subprocess pipes yield bytes. Decode each compiler line
+          # before the legacy warning parser performs string operations.
+          python3 - upstream-fp4-kernel/scripts/gcc-wrapper.py <<'PY'
+          from pathlib import Path
+          import sys
+          path = Path(sys.argv[1])
+          source = path.read_text()
+          needle = "def interpret_warning(line):"
+          patch = needle + '\\n    if isinstance(line, bytes):\\n        line = line.decode("utf-8", errors="replace")'
+          if needle not in source:
+              raise SystemExit("Could not find the legacy warning parser")
+          if "line = line.decode(\\"utf-8\\" , errors=\\"replace\\")" not in source:
+              source = source.replace(needle, patch, 1)
+              path.write_text(source)
+          PY
+          grep -Fq 'line = line.decode("utf-8", errors="replace")' upstream-fp4-kernel/scripts/gcc-wrapper.py
           python3 -m py_compile upstream-fp4-kernel/scripts/gcc-wrapper.py
 
       - name: Audit kernel configuration against deviceinfo
