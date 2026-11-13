@@ -42,7 +42,7 @@ jobs:
               # QEMU runner kernel lacks Landlock; disable pacman download sandbox only inside this disposable CI container.
               sed -i "/^\\[options\\]$/a DisableSandbox" /etc/pacman.conf
               printf "%b" "\\n[danctnix]\\nSigLevel = Never\\nServer = https://archmobile.mirror.danctnix.org/\$repo/\$arch/\\n" >> /etc/pacman.conf
-              pacman -Syu --noconfirm base-devel pam
+              pacman -Syu --noconfirm base-devel pam hyprland quickshell
               useradd -m builder
               echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
               chown -R builder:builder /repo/packaging/zamarteos-shell
@@ -71,19 +71,20 @@ jobs:
           grep -q "'zamarteos-shell'" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
           grep -q "^pkgrel=3$" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
           ! grep -q "^pkgrel=19$" moarchy-base/pkgbuilds/moarchy/PKGBUILD
-          grep -Fq 'quickshell -n -p "$OMARCHY_PATH/shell"' moarchy-base/bin/moarchy-restart-shell
-          grep -Fq 'qs -p "$OMARCHY_PATH/shell" ipc call lock lock' moarchy-base/bin/moarchy-lock
-          grep -Fq 'moarchy-volume up' moarchy-base/config/hypr/bindings.lua
-          grep -Fq 'XF86AudioRaiseVolume' moarchy-base/config/hypr/bindings.lua
-          grep -Fq 'XF86AudioLowerVolume' moarchy-base/config/hypr/bindings.lua
-          grep -Fq 'wpctl set-volume' moarchy-base/bin/moarchy-volume
-          for plugin in phone messages settings volume; do
-            test -f "moarchy-base/default/omarchy/plugins/moarchy.$plugin/manifest.json"
-          done
+          grep -Fq 'exec /usr/bin/zamarteos-session' moarchy-base/default/etc/profile.d/zz-moarchy.sh
+          grep -Fq 'exec /usr/bin/zamarteos-shell' moarchy-base/bin/moarchy-restart-shell
+          grep -Fq 'ipc call zamarteos-lock lock' moarchy-base/bin/moarchy-lock
+          test -s moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          test -s moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
+          grep -Fq 'usr/share/zamarteos-shell/shell.qml' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          grep -Fq 'usr/share/zamarteos-shell/hyprland.conf' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          grep -q 'exec-once = zamarteos-shell' moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
+          grep -q 'moarchy-session.target' moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
+          grep -q 'XF86AudioRaiseVolume' moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
+          grep -q 'XF86AudioLowerVolume' moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
+          grep -q 'target: "zamarteos-lock"' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -q "pl_PL.UTF-8" moarchy-base/image/configure.sh
           grep -q "'zamarteos-firstboot-pin'" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
-          ! grep -q "shell.qml" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
-          ! grep -q "hyprland.conf" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
           test -f moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
           bash -n moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
           grep -q 'passwd -l "$USER_NAME"' moarchy-base/image/configure.sh
