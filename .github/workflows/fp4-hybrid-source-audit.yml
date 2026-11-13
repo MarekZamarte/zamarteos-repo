@@ -129,7 +129,9 @@ jobs:
           test "${#configs[@]}" -gt 0
           export ARCH=arm64
           export CC=clang-14
-          export LLVM=1
+          # Ubuntu 24.04 packages version-suffixed LLVM binaries (e.g.
+          # ld.lld-14 and llvm-objdump-14); tell Kbuild to use those names.
+          export LLVM=-14
           export LLVM_IAS=1
           # This kernel's optional gcc-wrapper.py is a legacy GCC warning
           # wrapper. Disable it for the Clang build: it interferes with Kbuild's
