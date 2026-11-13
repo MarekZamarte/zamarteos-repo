@@ -11,6 +11,7 @@ source=(
   'zamarteos-firstboot-pin.service'
   'moarchy-firstboot-pin.conf'
   'getty-firstboot-pin.conf'
+  'polish-letters.json'
 )
 sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
 
@@ -22,6 +23,10 @@ check() {
   grep -q 'Before=moarchy-firstboot.service getty@tty1.service' "$srcdir/zamarteos-firstboot-pin.service"
   grep -q 'Requires=zamarteos-firstboot-pin.service' "$srcdir/moarchy-firstboot-pin.conf"
   grep -q 'Requires=moarchy-firstboot.service' "$srcdir/getty-firstboot-pin.conf"
+  python -m json.tool "$srcdir/polish-letters.json" >/dev/null
+  for char in ą ć ę ł ń ó ś ź ż Ą Ć Ę Ł Ń Ó Ś Ź Ż; do
+    grep -Fq "$char" "$srcdir/polish-letters.json"
+  done
 }
 
 package() {
@@ -29,4 +34,6 @@ package() {
   install -Dm644 "$srcdir/zamarteos-firstboot-pin.service" "$pkgdir/usr/lib/systemd/system/zamarteos-firstboot-pin.service"
   install -Dm644 "$srcdir/moarchy-firstboot-pin.conf" "$pkgdir/usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf"
   install -Dm644 "$srcdir/getty-firstboot-pin.conf" "$pkgdir/usr/lib/systemd/system/getty@tty1.service.d/10-zamarteos-firstboot.conf"
+  # useradd copies /etc/skel into the new phone account during image creation.
+  install -Dm644 "$srcdir/polish-letters.json" "$pkgdir/etc/skel/.config/moarchy-keyboard/layouts/letters.json"
 }
