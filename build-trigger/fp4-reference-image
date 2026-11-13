@@ -21,3 +21,5 @@ Build request 2026-11-12: build latest zamarteos-pure-fp4-dev branch head for ve
 Build request 2026-11-13: rebuild latest branch head and verify complete FP4 image, Q6Voice config, checksums and package manifest; never flash automatically.
 Build request 2026-11-13: include Polish long-press keyboard layout for lowercase and uppercase diacritics; verify package and rootfs; do not flash.
 Build request 2026-11-13: integrate offline Polish Hunspell spelling suggestions into the pinned Wayland on-screen keyboard; build and audit FP4 image only; never flash device.
+
+Build request 2026-11-13: install and launch the real ZamarteOS Quickshell session on tty1; replace upstream Moarchy shell startup and route lock/restart IPC to ZamarteOS; verify the image contains the actual ZamarteOS QML and Hyprland session.
