@@ -4,6 +4,14 @@ from pathlib import Path
 import sys
 
 root = Path(sys.argv[1]).resolve()
+patch_dir = Path(__file__).resolve().parent
+
+# These files are compiled into the upstream keyboard, not shipped as a
+# disconnected helper package.
+for name in ("wordpredictor.h", "wordpredictor.cpp"):
+    (root / "src" / name).write_text(
+        (patch_dir / name).read_text(encoding="utf-8"), encoding="utf-8"
+    )
 
 def replace(path, old, new, label):
     p = root / path
@@ -19,7 +27,8 @@ replace("CMakeLists.txt",
 '''pkg_check_modules(XkbCommon REQUIRED IMPORTED_TARGET xkbcommon)
 ''',
 '''pkg_check_modules(XkbCommon REQUIRED IMPORTED_TARGET xkbcommon)
-pkg_check_modules(Hunspell REQUIRED IMPORTED_TARGET hunspell)
+find_path(HUNSPELL_INCLUDE_DIR hunspell/hunspell.h REQUIRED)
+find_library(HUNSPELL_LIBRARY NAMES hunspell REQUIRED)
 ''', "Hunspell pkg-config dependency")
 replace("CMakeLists.txt",
 '''  src/keyrouter.cpp
@@ -34,7 +43,7 @@ replace("CMakeLists.txt",
 '''  PkgConfig::XkbCommon
 ''',
 '''  PkgConfig::XkbCommon
-  PkgConfig::Hunspell
+  ${HUNSPELL_LIBRARY}
 ''', "Hunspell link")
 
 # Register the main-owned singleton before QML loads.
