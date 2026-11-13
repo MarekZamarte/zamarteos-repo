@@ -1,0 +1,83 @@
+name: FP4 experimental imsd build and tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - zamarteos-imsd-fp4-dev
+    paths:
+      - "docs/IMS-ALTERNATIVE-FP4.md"
+      - ".github/workflows/fp4-imsd-check.yml"
+      - "build-trigger/imsd-fp4"
+
+permissions:
+  contents: read
+
+jobs:
+  build-imsd-arm64:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+    steps:
+      - name: Checkout ZamarteOS experiment
+        uses: actions/checkout@v4
+
+      - name: Install Flatpak
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y flatpak
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak remote-add --user --if-not-exists catcrafts https://flatpak.catcrafts.net/catcrafts.flatpakrepo
+          flatpak install --user -y catcrafts net.catcrafts.CrafterBuild//stable
+
+      - name: Install crafter-build wrapper
+        run: |
+          set -euxo pipefail
+          mkdir -p "$HOME/.local/bin"
+          printf '#!/bin/sh\\nexec flatpak run --user net.catcrafts.CrafterBuild//stable "$@"\\n' > "$HOME/.local/bin/crafter-build"
+          chmod +x "$HOME/.local/bin/crafter-build"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch imsd source
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 https://forgejo.catcrafts.net/Catcrafts/imsd.git imsd-src
+          git -C imsd-src rev-parse HEAD | tee imsd-upstream-commit.txt
+
+      - name: Build ARM64 imsd products
+        working-directory: imsd-src
+        run: |
+          set -euxo pipefail
+          test "$(uname -m)" = aarch64
+          crafter-build
+          crafter-build -- --product=media
+          crafter-build -- --product=ofonod
+          crafter-build -- --product=pcscf
+          crafter-build test
+
+      - name: Collect build audit
+        if: always()
+        run: |
+          set -euxo pipefail
+          {
+            echo "runner_arch=$(uname -m)"
+            echo "imsd_upstream_commit=$(cat imsd-upstream-commit.txt 2>/dev/null || echo unavailable)"
+            echo "result=see preceding build and test steps"
+          } > imsd-arm64-build-audit.txt
+          if [ -d imsd-src/bin ]; then
+            find imsd-src/bin -type f -printf '%P\\t%s bytes\\n' | sort > imsd-arm64-products.txt
+            tar -czf imsd-arm64-binaries.tar.gz -C imsd-src/bin .
+          fi
+
+      - name: Upload experimental ARM64 build
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-imsd-fp4-arm64-${{ github.run_number }}
+          path: |
+            imsd-arm64-build-audit.txt
+            imsd-arm64-products.txt
+            imsd-arm64-binaries.tar.gz
+            imsd-upstream-commit.txt
+          if-no-files-found: warn
+          retention-days: 14
