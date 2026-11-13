@@ -427,6 +427,13 @@ source = path.read_text()
 marker = "# ZamarteOS FP4 call-audio acceptance checks"
 block = r"""# ZamarteOS FP4 call-audio acceptance checks
 have /usr/bin/q6voiced
+have /usr/bin/81voltd
+have /usr/lib/systemd/system/81voltd.service
+if [ -L "$R/usr/lib/systemd/system/multi-user.target.wants/81voltd.service" ]; then
+  ok "81voltd IMS service is enabled at boot"
+else
+  no "81voltd IMS service is not enabled at boot"
+fi
 have /usr/lib/systemd/system/q6voiced.service
 have /usr/share/q6voiced/q6voiced.conf
 have /usr/share/alsa/ucm2/Fairphone/fp4/fp4.conf
