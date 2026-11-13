@@ -1,7 +1,7 @@
 # Powłoka ZamarteOS Pure — etap 0.1.1
 
-To jest własna powłoka Quickshell/QML dla obrazu testowego Fairphone 4.
-Nie uruchamia osobnej sesji obok Moarchy: zastępuje wyłącznie program powłoki,
+To jest własna powłoka Quickshell/QML i sesja Wayland dla obrazu testowego
+Fairphone 4. Sesja zastępuje uruchamianie powłoki Moarchy/Omarchy na tty1,
 pozostawiając kernel, sterowniki, modem i usługi sprzętowe z bazy FP4.
 
 ## Funkcje prototypu
@@ -44,8 +44,9 @@ Blokada wymaga działającego PAM, aktywnej sesji Quickshell i hasła użytkowni
 Nie instaluj obrazu na telefonie, dopóki CI nie zbuduje pakietu i obrazu
 referencyjnego, a blokada nie przejdzie testu na urządzeniu.
 
-To nadal prototyp. Nie jest wydaniem ZamarteOS i nie jest obecnie obrazem
-gotowym do flashowania.
+To nadal prototyp. CI ma sprawdzać, czy obraz uruchamia własną sesję
+ZamarteOS zamiast natywnej powłoki Moarchy. Nie jest to jeszcze wydanie
+ZamarteOS ani obraz gotowy do flashowania; potrzebne są testy na fizycznym FP4.
 
 ## Klawiatura ekranowa — polskie znaki
 
