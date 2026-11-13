@@ -19,3 +19,4 @@ Build after mapping FP4 hardware volume keys to PipeWire mixer 2026-11-11.
 Build 2026-11-11: restore native FP4 Quickshell plugin host, Phone, Messages, Settings, and upstream-tested Hyprland/PipeWire volume rocker; retain private first-boot PIN and Polish locale; audit image before download.
 Build request 2026-11-12: build latest zamarteos-pure-fp4-dev branch head for verification; no flashing.
 Build request 2026-11-13: rebuild latest branch head and verify complete FP4 image, Q6Voice config, checksums and package manifest; never flash automatically.
+Build request 2026-11-13: include Polish long-press keyboard layout for lowercase and uppercase diacritics; verify package and rootfs; do not flash.
