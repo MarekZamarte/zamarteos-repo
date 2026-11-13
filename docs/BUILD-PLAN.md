@@ -36,16 +36,19 @@ A first prototype now exists under packaging/zamarteos-shell. It provides a
 home screen, desktop-entry app drawer, search, a persistent top strip, a
 control-centre entry point and a PAM-backed Wayland session lock.
 
-The tracked overlay script integrates it into the pinned FP4 image build:
-- copies the package into the base tree's pkgbuilds/;
-- adds it to moarchy-meta;
-- redirects the existing session shell launcher to the ZamarteOS config;
-- redirects the existing lock helper to the ZamarteOS IPC lock endpoint.
+The tracked overlay script integrates the actual ZamarteOS session into the
+pinned FP4 image build:
+- installs shell.qml, the Hyprland touch-first session config and launchers;
+- redirects tty1 from the upstream desktop shell to zamarteos-session;
+- routes lock and restart helpers to ZamarteOS IPC and QML;
+- starts the FP4 graphical-session target, polkit/geoclue agents, on-screen
+  keyboard and idle/suspend policy from the ZamarteOS session.
 
-This replaces the user shell only. It does not replace the kernel, modem,
-firmware, NetworkManager or audio services. The QML still needs an ARM64
-qmllint/package build and real FP4 tests. Do not ship the upstream
-Moarchy/Omarchy shell as the final UI.
+This replaces the user-facing shell and session, not the kernel, modem,
+firmware, NetworkManager or audio services. The native Moarchy/Omarchy shell
+must not start in the finished image. Package/image verification checks the
+session wiring, but QML behaviour and every hardware feature still require
+tests on a physical Fairphone 4. Do not call the image ready before those tests.
 
 The first shell milestone will provide:
 - ZamarteOS home screen and application drawer;
