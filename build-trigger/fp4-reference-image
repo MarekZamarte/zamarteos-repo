@@ -33,3 +33,4 @@ Build request 2026-11-13: retry after fixing the pinned 81voltd PKGBUILD source 
 Build request 2026-11-13: stage the 81voltd service package changes in the overlay commit; rebuild with Q6Voice and VoLTE service enabled, verify image, never flash.
 
 Build request 2026-11-14: fix 81voltd source URL expansion and depend on moarchy-qcom-modem, which provides qrtr; rebuild and audit complete FP4 reference image, never flash.
+Build request 2026-11-14: correct the upstream verifier to validate the full ZamarteOS tty1 -> zamarteos-session -> Hyprland --config chain instead of requiring the obsolete direct Moarchy Lua path; rebuild and audit the full FP4 image, never flash.
