@@ -188,6 +188,34 @@ source = source.replace(old_locale, new_locale, 1).replace(old_lang, new_lang, 1
 path.write_text(source)
 PY
 
+# The pinned upstream verifier assumes zz-moarchy.sh itself names the
+# upstream Hyprland Lua config. ZamarteOS deliberately replaces that direct
+# launch with its own session wrapper, which must in turn exec Hyprland with
+# the ZamarteOS config. Validate the complete two-step chain instead of
+# rejecting the intentional hand-off as a false failure.
+python3 - "$ROOT/image/verify.sh" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+old = """sess_cfg=$(grep -oE '/usr/share/moarchy/config/hypr/hyprland.lua' "$R/etc/profile.d/zz-moarchy.sh" | head -1)
+[ -n "$sess_cfg" ] && ok "the session names the packaged Hyprland config" || no "zz-moarchy.sh does not exec Hyprland -c"
+"""
+new = """if grep -Fq 'exec /usr/bin/zamarteos-session' "$R/etc/profile.d/zz-moarchy.sh" &&
+   grep -Fq 'exec Hyprland --config /usr/share/zamarteos-shell/hyprland.conf' "$R/usr/bin/zamarteos-session" &&
+   [ -s "$R/usr/share/zamarteos-shell/hyprland.conf" ]; then
+  ok "tty1 hands off to the ZamarteOS session, which execs Hyprland with the packaged ZamarteOS config"
+else
+  no "the ZamarteOS tty1-to-Hyprland session chain or its config is missing"
+fi
+"""
+if old not in source:
+    raise SystemExit("Could not find the pinned upstream Hyprland session check; refusing a blind verifier edit")
+source = source.replace(old, new, 1)
+path.write_text(source)
+PY
+
 # Extend the pinned base verifier: a green image must contain the real ZamarteOS
 # QML shell, its own session launchers, lock service and physical volume bindings.
 python3 - "$ROOT/image/verify.sh" <<'PY'
