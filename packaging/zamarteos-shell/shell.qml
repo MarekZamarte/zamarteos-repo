@@ -364,6 +364,7 @@ Scope {
                             { title: "Telefon", subtitle: "Połączenia i kontakty", symbol: "☎", words: ["phone", "calls", "telefon"] },
                             { title: "Wiadomości", subtitle: "SMS i rozmowy", symbol: "✉", words: ["messages", "chatty", "sms", "messaging"] },
                             { title: "Kontakty", subtitle: "Osoby i numery", symbol: "♙", words: ["contacts", "address book", "kontakty"] },
+                            { title: "Internet", subtitle: "Przeglądarka WWW", symbol: "◎", words: ["epiphany", "web browser", "browser", "przeglądarka"] },
                             { title: "Pliki", subtitle: "Pamięć telefonu", symbol: "▤", words: ["files", "file manager", "pliki"] }
                         ]
                         delegate: Rectangle {
