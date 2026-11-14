@@ -31,3 +31,5 @@ Build request 2026-11-13: build the current 0.2.0 ZamarteOS Wayland session pack
 Build request 2026-11-13: supersede stale pre-audio build; include enabled 81voltd systemd unit and all Q6Voice call-audio checks; build latest Pure FP4 image and audit, never flash.
 Build request 2026-11-13: retry after fixing the pinned 81voltd PKGBUILD source matcher; require Q6Voice call-audio, installed and enabled IMS/VoLTE service, and full image audit; never flash.
 Build request 2026-11-13: stage the 81voltd service package changes in the overlay commit; rebuild with Q6Voice and VoLTE service enabled, verify image, never flash.
+
+Build request 2026-11-14: fix 81voltd source URL expansion and depend on moarchy-qcom-modem, which provides qrtr; rebuild and audit complete FP4 reference image, never flash.
