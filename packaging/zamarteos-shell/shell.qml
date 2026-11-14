@@ -60,6 +60,24 @@ Scope {
                genericName.indexOf("moarchy") === -1 && genericName.indexOf("omarchy") === -1
     }
 
+    function launchEntry(entry, label) {
+        if (!entry || typeof entry.execute !== "function") {
+            showNotice(label + ": wpis aplikacji nie ma polecenia uruchomienia.")
+            return false
+        }
+        try {
+            entry.execute()
+            drawerOpen = false
+            controlOpen = false
+            homeOpen = false
+            return true
+        } catch (error) {
+            console.warn("ZamarteOS: nie udało się uruchomić", label, error)
+            showNotice(label + ": nie udało się uruchomić aplikacji.")
+            return false
+        }
+    }
+
     function launchByKeywords(keywords, label) {
         const entries = DesktopEntries.applications.values
         for (let i = 0; i < entries.length; ++i) {
@@ -68,13 +86,8 @@ Scope {
                 continue
             const haystack = ((entry.name || "") + " " + (entry.genericName || "") + " " + (entry.id || "")).toLowerCase()
             for (let j = 0; j < keywords.length; ++j) {
-                if (haystack.indexOf(keywords[j]) !== -1) {
-                    entry.execute()
-                    drawerOpen = false
-                    controlOpen = false
-                    homeOpen = false
-                    return true
-                }
+                if (haystack.indexOf(keywords[j]) !== -1)
+                    return launchEntry(entry, label)
             }
         }
         console.warn("ZamarteOS: brak dopasowania dla", label,
@@ -498,12 +511,7 @@ Scope {
                         }
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: {
-                                modelData.execute()
-                                root.drawerOpen = false
-                                root.controlOpen = false
-                                root.homeOpen = false
-                            }
+                            onClicked: root.launchEntry(modelData, modelData.name || "Aplikacja")
                         }
                     }
                 }
