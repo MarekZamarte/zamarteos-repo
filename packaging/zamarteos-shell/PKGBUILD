@@ -22,6 +22,7 @@ source=(
 sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
+  set -x
   bash -n "$srcdir/zamarteos-session"
   bash -n "$srcdir/zamarteos-shell"
   bash -n "$srcdir/zamarteos-firstboot-pin"
