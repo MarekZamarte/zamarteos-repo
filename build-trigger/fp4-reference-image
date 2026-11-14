@@ -20,7 +20,7 @@ Build 2026-11-11: restore native FP4 Quickshell plugin host, Phone, Messages, Se
 Build request 2026-11-12: build latest zamarteos-pure-fp4-dev branch head for verification; no flashing.
 Build request 2026-11-13: rebuild latest branch head and verify complete FP4 image, Q6Voice config, checksums and package manifest; never flash automatically.
 Build request 2026-11-13: include Polish long-press keyboard layout for lowercase and uppercase diacritics; verify package and rootfs; do not flash.
-Build request 2026-11-13: integrate offline Polish Hunspell spelling suggestions into the pinned Wayland on-screen keyboard; build and audit FP4 image only; never flash device.
+Build request 2026-11-13: integrate offline Polish Hunspell spelling suggestions into the pinned Wayland on-screen keyboard; build and audit FP4 image only; never flash.
 
 Build request 2026-11-13: install and launch the real ZamarteOS Quickshell session on tty1; replace upstream Moarchy shell startup and route lock/restart IPC to ZamarteOS; verify the image contains the actual ZamarteOS QML and Hyprland session.
 Build request 2026-11-13: supersede queued build from the earlier shell prototype; build current ZamarteOS QML session integration and retain the verified artifact, package manifest, image checksums and provenance.
@@ -34,3 +34,4 @@ Build request 2026-11-13: stage the 81voltd service package changes in the overl
 
 Build request 2026-11-14: fix 81voltd source URL expansion and depend on moarchy-qcom-modem, which provides qrtr; rebuild and audit complete FP4 reference image, never flash.
 Build request 2026-11-14: correct the upstream verifier to validate the full ZamarteOS tty1 -> zamarteos-session -> Hyprland --config chain instead of requiring the obsolete direct Moarchy Lua path; rebuild and audit the full FP4 image, never flash.
+Build request 2026-11-14: run full FP4 reference-image build after ARM64 shell package and overlay integration checks passed; produce image, package manifest, provenance, verifier report and SHA256 checksums; build only, never flash.
