@@ -103,12 +103,19 @@ import sys
 path = Path(sys.argv[1])
 source = path.read_text()
 old_source = 'source=("$pkgname-$_ver.tar.gz::$url/-/archive/v$_ver/$pkgname-v$_ver.tar.gz")'
-new_source = 'source=("$pkgname-$_ver.tar.gz::$_url/-/archive/v$_ver/$pkgname-v$_ver.tar.gz" "81voltd.service")'
+new_source = 'source=("$pkgname-$_ver.tar.gz::$url/-/archive/v$_ver/$pkgname-v$_ver.tar.gz" "81voltd.service")'
 old_sums = "sha256sums=('bb0e9774463fb4964067bf70f10cc316afc1c8ed163ff7969b3fd3ae3dc2e937')"
 new_sums = "sha256sums=('bb0e9774463fb4964067bf70f10cc316afc1c8ed163ff7969b3fd3ae3dc2e937' 'SKIP')"
 if old_source not in source or old_sums not in source:
     raise SystemExit("81voltd PKGBUILD source/checksum pins changed; refusing an unsafe patch")
 source = source.replace(old_source, new_source, 1).replace(old_sums, new_sums, 1)
+# The qrtr library is shipped by moarchy-qcom-modem (provides=qrtr).
+# Depend on the actual package name so the offline builder can resolve it.
+old_dep = "depends=('modemmanager' 'libqmi' 'qrtr' 'glib2')"
+new_dep = "depends=('modemmanager' 'libqmi' 'moarchy-qcom-modem' 'glib2')"
+if old_dep not in source:
+    raise SystemExit("81voltd dependency list changed; refusing an unsafe patch")
+source = source.replace(old_dep, new_dep, 1)
 source = source.replace("pkgrel=1\n", "pkgrel=2\n", 1)
 needle = '  DESTDIR="$pkgdir" ninja -C build install\n'
 addition = '''  DESTDIR="$pkgdir" ninja -C build install
