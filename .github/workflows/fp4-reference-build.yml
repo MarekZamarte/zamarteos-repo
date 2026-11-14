@@ -1,0 +1,147 @@
+name: FP4 reference build (not a release)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - zamarteos-pure-fp4-dev
+    paths:
+      - "build-trigger/fp4-reference-image"
+
+concurrency:
+  group: zamarteos-fp4-reference-image
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-fp4-reference:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+    steps:
+      - name: Checkout ZamarteOS manifest
+        uses: actions/checkout@v4
+
+      - name: Check build host
+        run: |
+          set -euxo pipefail
+          uname -m
+          test "$(uname -m)" = aarch64
+          docker info
+
+      - name: Fetch pinned FP4 hardware base
+        env:
+          BASE_COMMIT: c78bcd1f43340c447e0016ab45a5fa99f186810c
+        run: |
+          set -euxo pipefail
+          git clone --branch fp4 --single-branch https://github.com/taufderl/moarchy.git moarchy-base
+          git -C moarchy-base checkout --detach "$BASE_COMMIT"
+          test "$(git -C moarchy-base rev-parse HEAD)" = "$BASE_COMMIT"
+
+      - name: Apply tracked ZamarteOS shell overlay
+        run: |
+          set -euxo pipefail
+          bash scripts/apply-zamarteos-overlay.sh moarchy-base
+          git -C moarchy-base config user.name "ZamarteOS Build"
+          git -C moarchy-base config user.email "build@zamarteos.invalid"
+          git -C moarchy-base add bin/moarchy-lock bin/moarchy-restart-shell default/etc/profile.d/zz-moarchy.sh manifest.toml docker/build-packages.sh zamarteos-keyboard-predictor image/configure.sh image/verify.sh pkgbuilds/moarchy/PKGBUILD pkgbuilds/moarchy-meta/PKGBUILD pkgbuilds/zamarteos-shell pkgbuilds/81voltd
+          git -C moarchy-base commit -m "Apply ZamarteOS Pure shell integration"
+          git -C moarchy-base status --short
+          test -z "$(git -C moarchy-base status --porcelain)"
+
+      - name: Build FP4 packages
+        working-directory: moarchy-base
+        run: |
+          set -euxo pipefail
+          DEVICES=fp4 ./scripts/provision.sh build
+
+      - name: Build FP4 reference image (never flash)
+        working-directory: moarchy-base
+        run: |
+          set -euxo pipefail
+          DEVICE=fp4 ./scripts/build-image.sh
+          IMAGE="$(find images -mindepth 1 -maxdepth 1 -type d -name 'moarchy-fp4-*' | sort | tail -n 1)"
+          test -n "$IMAGE"
+          VERIFY_STATUS=0
+          if ./scripts/verify-image.sh "$IMAGE" | tee ../reference-image-verification.txt; then
+            echo "Image verification passed."
+          else
+            VERIFY_STATUS=$?
+            echo "Image verification failed (status $VERIFY_STATUS); continuing to collect the complete audit." >&2
+          fi
+          printf '%s\n' "$IMAGE" > ../reference-image-path.txt
+          IMAGE_NAME="$(basename "$IMAGE")"
+          CHECKSUM_STATUS=0
+          if (
+            cd "$IMAGE"
+            sha256sum -c "$IMAGE_NAME.sha256"
+          ) | tee ../reference-checksums.txt; then
+            echo "Image checksums passed."
+          else
+            CHECKSUM_STATUS=$?
+            echo "Image checksum verification failed (status $CHECKSUM_STATUS)." >&2
+          fi
+          test -s packages/.build-manifest
+          cp packages/.build-manifest ../reference-build-manifest.txt
+          test -s "images/${IMAGE_NAME}.packages"
+          cp "images/${IMAGE_NAME}.packages" ../reference-image-packages.txt
+          test -s "images/${IMAGE_NAME}.build-info"
+          cp "images/${IMAGE_NAME}.build-info" ../reference-image-build-info.txt
+          find "$IMAGE" -mindepth 1 -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort > ../reference-image-files.txt
+          {
+            printf 'zamarteos_repo_commit=%s\n' "$GITHUB_SHA"
+            printf 'moarchy_overlay_commit=%s\n' "$(git rev-parse HEAD)"
+            printf 'pinned_hardware_base_commit=%s\n' "c78bcd1f43340c447e0016ab45a5fa99f186810c"
+          } > ../reference-provenance.txt
+          test -s ../reference-image-verification.txt
+          test -s ../reference-checksums.txt
+          test -s ../reference-build-manifest.txt
+          test -s ../reference-image-packages.txt
+          test -s ../reference-image-build-info.txt
+          test -s ../reference-image-files.txt
+          test -s ../reference-provenance.txt
+          if [ "$VERIFY_STATUS" -ne 0 ]; then exit "$VERIFY_STATUS"; fi
+          if [ "$CHECKSUM_STATUS" -ne 0 ]; then exit "$CHECKSUM_STATUS"; fi
+
+      - name: Upload reference artifact and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-fp4-reference-${{ github.run_number }}
+          path: |
+            moarchy-base/images/moarchy-fp4-*/
+            moarchy-base/packages/.build-manifest
+            moarchy-base/images/moarchy-fp4-*.packages
+            moarchy-base/images/moarchy-fp4-*.build-info
+            reference-image-path.txt
+            reference-build-manifest.txt
+            reference-image-packages.txt
+            reference-image-build-info.txt
+            reference-provenance.txt
+            reference-image-verification.txt
+            reference-checksums.txt
+            reference-image-files.txt
+          if-no-files-found: warn
+          retention-days: 14
+          include-hidden-files: true
+
+      - name: Upload compact reference audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-fp4-audit-${{ github.run_number }}
+          path: |
+            moarchy-base/packages/.build-manifest
+            moarchy-base/images/moarchy-fp4-*/*.sha256
+            reference-image-path.txt
+            reference-build-manifest.txt
+            reference-image-packages.txt
+            reference-image-build-info.txt
+            reference-provenance.txt
+            reference-image-verification.txt
+            reference-checksums.txt
+            reference-image-files.txt
+          if-no-files-found: warn
+          retention-days: 14
+          include-hidden-files: true

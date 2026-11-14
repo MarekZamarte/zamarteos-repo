@@ -1,0 +1,3 @@
+# Reuse the distribution's login authentication stack, including its configured
+# password lockout policy. Quickshell PamContext handles the auth stack.
+auth include login

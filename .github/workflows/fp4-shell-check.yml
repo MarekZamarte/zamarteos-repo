@@ -1,0 +1,125 @@
+name: ZamarteOS shell package check
+
+on:
+  push:
+    branches:
+      - zamarteos-pure-fp4-dev
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: zamarteos-fp4-shell-check-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-shell-package:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable ARM64 container execution
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build package in pinned Arch Linux ARM environment
+        run: |
+          set -euxo pipefail
+          docker run --rm --platform linux/arm64 \
+            -v "$PWD:/repo" \
+            -w /repo/packaging/zamarteos-shell \
+            docker.io/menci/archlinuxarm@sha256:f7c6f64c0f246f41775e01793340c49f8e9abf3991141c25405361d56b100ccb \
+            bash -lc '
+              set -euxo pipefail
+              pacman-key --init
+              pacman-key --populate archlinuxarm
+              # QEMU runner kernel lacks Landlock; disable pacman download sandbox only inside this disposable CI container.
+              sed -i "/^\\[options\\]$/a DisableSandbox" /etc/pacman.conf
+              printf "%b" "\\n[danctnix]\\nSigLevel = Never\\nServer = https://archmobile.mirror.danctnix.org/\$repo/\$arch/\\n" >> /etc/pacman.conf
+              pacman -Syu --noconfirm base-devel pam hyprland quickshell qt6-declarative epiphany
+              useradd -m builder
+              echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
+              chown -R builder:builder /repo/packaging/zamarteos-shell
+              runuser -u builder -- makepkg --noconfirm --cleanbuild
+              ls -lh *.pkg.tar.*
+            '
+
+  overlay-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch pinned FP4 base
+        run: |
+          set -euxo pipefail
+          git clone --branch fp4 --single-branch https://github.com/taufderl/moarchy.git moarchy-base
+          git -C moarchy-base checkout --detach c78bcd1f43340c447e0016ab45a5fa99f186810c
+
+      - name: Apply and verify ZamarteOS integration
+        run: |
+          set -euxo pipefail
+          bash scripts/apply-zamarteos-overlay.sh moarchy-base
+          bash -n moarchy-base/bin/moarchy-lock
+          bash -n moarchy-base/bin/moarchy-restart-shell
+          grep -q "'zamarteos-shell'" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
+          ! grep -Fq '[aur.spot-client]' moarchy-base/manifest.toml
+          grep -q "^pkgrel=4$" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
+          ! grep -q "^pkgrel=19$" moarchy-base/pkgbuilds/moarchy/PKGBUILD
+          grep -Fq 'exec /usr/bin/zamarteos-session' moarchy-base/default/etc/profile.d/zz-moarchy.sh
+          grep -Fq 'exec /usr/bin/zamarteos-shell' moarchy-base/bin/moarchy-restart-shell
+          grep -Fq 'ipc call zamarteos-lock lock' moarchy-base/bin/moarchy-lock
+          test -s moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          test -s moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
+          grep -Fq 'usr/share/zamarteos-shell/shell.qml' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          grep -Fq 'usr/share/zamarteos-shell/hyprland.conf' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          grep -q 'exec-once = zamarteos-shell' moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
+          grep -q 'moarchy-session.target' moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
+          grep -q 'XF86AudioRaiseVolume' moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
+          grep -q 'XF86AudioLowerVolume' moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
+          grep -q 'target: "zamarteos-lock"' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -q 'qmllint --ignore-settings' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          grep -Fq 'words: ["contacts", "address book", "kontakty"]' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -Fq 'words: ["epiphany", "web browser", "browser", "przeglądarka"]' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -Fq "'epiphany'" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          grep -q "pl_PL.UTF-8" moarchy-base/image/configure.sh
+          grep -q "'zamarteos-firstboot-pin'" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          test -f moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
+          bash -n moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
+          grep -q 'passwd -l "$USER_NAME"' moarchy-base/image/configure.sh
+          grep -q '10-zamarteos-wheel' moarchy-base/image/configure.sh
+          ! grep -Eq '^[[:space:]]*[^#].*NOPASSWD[[:space:]]*:' moarchy-base/image/configure.sh
+          ! grep -q 'DEFAULT_PIN=1337' moarchy-base/image/configure.sh
+          bash -n moarchy-base/image/configure.sh
+          bash -n moarchy-base/image/verify.sh
+          grep -q 'headless first boot creates a private 8-digit PIN' moarchy-base/image/verify.sh
+          grep -q 'no per-device PIN is baked into the published image' moarchy-base/image/verify.sh
+          grep -q 'no active passwordless sudo rules' moarchy-base/image/verify.sh
+          grep -q 'od -An -N4 -tu4 /dev/urandom' moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
+          grep -q 'have /usr/share/zamarteos-shell/shell.qml' moarchy-base/image/verify.sh
+          grep -q 'have /usr/share/zamarteos-shell/hyprland.conf' moarchy-base/image/verify.sh
+          grep -q 'ZamarteOS FP4 call-audio acceptance checks' moarchy-base/image/verify.sh
+          grep -q 'for module in q6voice q6voice-dai q6mvm q6cvs q6cvp; do' moarchy-base/image/verify.sh
+          grep -q 'q6voiced targets the measured FP4 VoiceMMode1 PCM' moarchy-base/image/verify.sh
+          grep -q 'FP4 call uplink, downlink and uncalibrated-DSP topology routes are present' moarchy-base/image/verify.sh
+          grep -q 'the Q6Voice daemon is wired to the FP4 device configuration' moarchy-base/image/verify.sh
+          grep -q "'81voltd'" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
+          grep -q '^pkgrel=2$' moarchy-base/pkgbuilds/81voltd/PKGBUILD
+          grep -q '81voltd.service' moarchy-base/pkgbuilds/81voltd/PKGBUILD
+          grep -q 'ExecStart=/usr/bin/81voltd' moarchy-base/pkgbuilds/81voltd/81voltd.service
+          grep -q '81voltd IMS service is enabled at boot' moarchy-base/image/verify.sh
+          grep -q 'have /usr/lib/systemd/system/81voltd.service' moarchy-base/image/verify.sh
+          grep -q 'have /usr/bin/zamarteos-session' moarchy-base/image/verify.sh
+          grep -q 'tty1 starts the ZamarteOS Wayland session' moarchy-base/image/verify.sh
+          grep -q 'ipc call zamarteos-lock lock' moarchy-base/image/verify.sh
+          grep -q 'XF86AudioRaiseVolume' moarchy-base/image/verify.sh
+          grep -q 'omarchy-theme-browser' scripts/apply-zamarteos-overlay.sh
+          grep -q 'Requires=zamarteos-firstboot-pin.service' moarchy-base/pkgbuilds/zamarteos-shell/moarchy-firstboot-pin.conf
+          grep -q 'Requires=moarchy-firstboot.service' moarchy-base/pkgbuilds/zamarteos-shell/getty-firstboot-pin.conf
+          git -C moarchy-base diff --check

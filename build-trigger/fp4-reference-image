@@ -1,0 +1,41 @@
+One-shot request to build the latest integrated ZamarteOS Pure FP4 reference image.
+The workflow applies the tracked ZamarteOS shell overlay and builds an image artifact.
+This file is a CI trigger only. It does not flash or modify any phone.
+
+Rebuild request: latest ZamarteOS branch head, 2026-11-10.
+Rebuild request: include package manifest, image package list, provenance and checksum verification.
+Rebuild request: corrected verifier patch and complete manifest audit.
+Rebuild request: stage the added ZamarteOS rootfs verifier in the image overlay commit.
+Rebuild request: QML bound component context, scoped package ownership, and explicit PAM policy verification.
+Rebuild request: build latest audited ZamarteOS Pure FP4 commit with compact provenance and checksum artifact, 2026-11-11.
+Build request 2026-11-11: repeat FP4 reference build for current branch.
+Build after launcher branding filter 2026-11-11.
+Build latest branch head after private per-device PIN and first-boot fixes 2026-11-11.
+Build after sudo hardening, launcher visibility fix and complete audit collection 2026-11-11.
+Build after shell package CI assertion correction 2026-11-11.
+Build after touch home-navigation fix 2026-11-11.
+Build after fixing vertical touch scrolling and top-edge pull-down 2026-11-11.
+Build after mapping FP4 hardware volume keys to PipeWire mixer 2026-11-11.
+Build 2026-11-11: restore native FP4 Quickshell plugin host, Phone, Messages, Settings, and upstream-tested Hyprland/PipeWire volume rocker; retain private first-boot PIN and Polish locale; audit image before download.
+Build request 2026-11-12: build latest zamarteos-pure-fp4-dev branch head for verification; no flashing.
+Build request 2026-11-13: rebuild latest branch head and verify complete FP4 image, Q6Voice config, checksums and package manifest; never flash automatically.
+Build request 2026-11-13: include Polish long-press keyboard layout for lowercase and uppercase diacritics; verify package and rootfs; do not flash.
+Build request 2026-11-13: integrate offline Polish Hunspell spelling suggestions into the pinned Wayland on-screen keyboard; build and audit FP4 image only; never flash.
+
+Build request 2026-11-13: install and launch the real ZamarteOS Quickshell session on tty1; replace upstream Moarchy shell startup and route lock/restart IPC to ZamarteOS; verify the image contains the actual ZamarteOS QML and Hyprland session.
+Build request 2026-11-13: supersede queued build from the earlier shell prototype; build current ZamarteOS QML session integration and retain the verified artifact, package manifest, image checksums and provenance.
+Build request 2026-11-13: retry reference image after staging the tty1 ZamarteOS session profile override in the base integration commit.
+Build request 2026-11-13: skip the nonessential spot-client AUR build that is incompatible with the runner's OpenSSL 4.1; rebuild the ZamarteOS Pure FP4 image with all required phone packages.
+Build request 2026-11-13: retry after correcting the optional spot-client manifest section matcher.
+Build request 2026-11-13: build the current 0.2.0 ZamarteOS Wayland session package, including all QML, Hyprland config, session launcher, PAM lock integration, first-boot PIN and Polish keyboard payload. This supersedes earlier reference build attempts that started before commit 702a8296.Build request 2026-11-13: mandatory FP4 call audio: Q6Voice kernel modules, VoiceMMode1 PCM, q6voiced, FP4 call mixer routes, UCM/WirePlumber, and enabled 81voltd IMS service for VoLTE; image audit must fail if any component is missing; build only, never flash.
+Build request 2026-11-13: supersede stale pre-audio build; include enabled 81voltd systemd unit and all Q6Voice call-audio checks; build latest Pure FP4 image and audit, never flash.
+Build request 2026-11-13: retry after fixing the pinned 81voltd PKGBUILD source matcher; require Q6Voice call-audio, installed and enabled IMS/VoLTE service, and full image audit; never flash.
+Build request 2026-11-13: stage the 81voltd service package changes in the overlay commit; rebuild with Q6Voice and VoLTE service enabled, verify image, never flash.
+
+Build request 2026-11-14: fix 81voltd source URL expansion and depend on moarchy-qcom-modem, which provides qrtr; rebuild and audit complete FP4 reference image, never flash.
+Build request 2026-11-14: correct the upstream verifier to validate the full ZamarteOS tty1 -> zamarteos-session -> Hyprland --config chain instead of requiring the obsolete direct Moarchy Lua path; rebuild and audit the full FP4 image, never flash.
+Build request 2026-11-14: run full FP4 reference-image build after ARM64 shell package and overlay integration checks passed; produce image, package manifest, provenance, verifier report and SHA256 checksums; build only, never flash.
+
+Build request 2026-11-14: rebuild the complete ZamarteOS Pure FP4 reference image from latest branch head 50e6afb1308bd9cba1f34f70b754f2089305c2b8; include Contacts and Epiphany launcher entries, Epiphany runtime package, qmllint package check, complete package manifest, image verifier, provenance and SHA256 audit. Build and audit only; do not flash any device.
+
+Build request 2026-11-14: produce latest FP4 image for next-day review, verify packages, Q6Voice, UI integration, checksum and provenance; never flash.

@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Generate a private per-device PIN before tty1 autologin. No keyboard is
+# required: the PIN is stored in a private file in the user's home directory.
+set -euo pipefail
+
+USER_ENTRY="$(getent passwd moarchy || true)"
+USER_NAME="${USER_ENTRY%%:*}"
+USER_HOME="$(cut -d: -f6 <<< "$USER_ENTRY")"
+if [[ -z "$USER_NAME" || -z "$USER_HOME" || ! -d "$USER_HOME" ]]; then
+  printf 'ZamarteOS: nie znaleziono konta użytkownika moarchy lub katalogu domowego.\n' >&2
+  exit 1
+fi
+
+STATE_DIR="${ZAMARTEOS_STATE_DIR:-/var/lib/zamarteos}"
+STAMP="$STATE_DIR/firstboot-pin-done"
+PIN_FILE="$USER_HOME/PIERWSZE-URUCHOMIENIE.txt"
+[[ -e "$STAMP" ]] && exit 0
+
+HASH="$(getent shadow "$USER_NAME" | cut -d: -f2)"
+case "$HASH" in
+  ""|"!"*|"*"*) ;;
+  *)
+    install -d -m 700 "$STATE_DIR"
+    : > "$STAMP"
+    chmod 600 "$STAMP"
+    exit 0
+    ;;
+esac
+
+while true; do
+  RAW="$(od -An -N4 -tu4 /dev/urandom | tr -d '[:space:]')"
+  if [[ ! "$RAW" =~ ^[0-9]+$ ]]; then
+    printf 'ZamarteOS: nie udało się wygenerować losowego PIN-u.\n' >&2
+    exit 1
+  fi
+  PIN="$(printf '%08d' "$((RAW % 90000000 + 10000000))")"
+  case "$PIN" in
+    12345678|87654321) continue ;;
+  esac
+  break
+done
+
+install -d -m 700 "$STATE_DIR"
+TMP_PIN_FILE="$PIN_FILE.tmp.$$"
+umask 077
+cat > "$TMP_PIN_FILE" <<EOF
+ZAMARTEOS — PIERWSZE URUCHOMIENIE
+
+Twój prywatny PIN: $PIN
+
+Zapisz go w bezpiecznym miejscu.
+Aby zmienić PIN później, otwórz terminal i wpisz: passwd
+Po zmianie PIN-u usuń ten plik.
+EOF
+chown "$USER_NAME" "$TMP_PIN_FILE"
+chmod 600 "$TMP_PIN_FILE"
+mv -f "$TMP_PIN_FILE" "$PIN_FILE"
+
+if printf '%s:%s\n' "$USER_NAME" "$PIN" | chpasswd -c SHA512; then
+  : > "$STAMP"
+  chmod 600 "$STAMP"
+  unset PIN RAW
+  exit 0
+fi
+
+rm -f "$PIN_FILE"
+unset PIN RAW
+printf 'ZamarteOS: nie udało się ustawić początkowego PIN-u.\n' >&2
+exit 1

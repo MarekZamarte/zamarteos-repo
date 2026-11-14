@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=ZamarteOS Pure
+Comment=Native Linux mobile session for Fairphone 4
+Exec=/usr/bin/zamarteos-session
+Type=Application
+DesktopNames=ZamarteOS
