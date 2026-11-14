@@ -363,7 +363,7 @@ Scope {
                         model: [
                             { title: "Telefon", subtitle: "Połączenia i kontakty", symbol: "☎", words: ["phone", "calls", "telefon"] },
                             { title: "Wiadomości", subtitle: "SMS i rozmowy", symbol: "✉", words: ["messages", "chatty", "sms", "messaging"] },
-                            { title: "Aparat", subtitle: "Zdjęcia", symbol: "◎", words: ["camera", "megapixels", "aparat"] },
+                            { title: "Kontakty", subtitle: "Osoby i numery", symbol: "♙", words: ["contacts", "address book", "kontakty"] },
                             { title: "Pliki", subtitle: "Pamięć telefonu", symbol: "▤", words: ["files", "file manager", "pliki"] }
                         ]
                         delegate: Rectangle {
@@ -485,7 +485,8 @@ Scope {
                         const q = root.searchText.toLowerCase()
                         return q.length === 0 ||
                             (entry.name || "").toLowerCase().indexOf(q) !== -1 ||
-                            (entry.genericName || "").toLowerCase().indexOf(q) !== -1
+                            (entry.genericName || "").toLowerCase().indexOf(q) !== -1 ||
+                            (entry.id || "").toLowerCase().indexOf(q) !== -1
                     })
                     delegate: Item {
                         required property var modelData
