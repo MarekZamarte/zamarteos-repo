@@ -86,6 +86,8 @@ jobs:
           grep -q 'target: "zamarteos-lock"' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -q 'qmllint --ignore-settings' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
           grep -Fq 'words: ["contacts", "address book", "kontakty"]' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -Fq 'words: ["epiphany", "web browser", "browser", "przeglądarka"]' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -Fq "'epiphany'" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
           grep -q "pl_PL.UTF-8" moarchy-base/image/configure.sh
           grep -q "'zamarteos-firstboot-pin'" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
           test -f moarchy-base/pkgbuilds/zamarteos-shell/zamarteos-firstboot-pin
