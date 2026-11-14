@@ -31,6 +31,6 @@ Szczegóły: [plan budowy](docs/BUILD-PLAN.md) i [status FP4](docs/FP4-STATUS.md
 
 ## Ostatnia kontrola
 
-- Powłoka ma teraz szybki kafelek Kontaktów zamiast Aparatu, a wyszukiwarka sprawdza także identyfikator wpisu aplikacji.
-- Kolejny przebieg ARM64 CI uruchomi `qmllint` na rzeczywistym pliku `shell.qml`; do czasu zielonego wyniku kontrola nie jest uznana za zaliczoną.
+- Powłoka ma szybkie kafelki Telefonu, Wiadomości, Kontaktów, Plików i Internetu. Do pakietu powłoki dodano zależność od przeglądarki Epiphany dla ARM64, a wyszukiwarka sprawdza także identyfikator wpisu aplikacji.
+- Kolejny przebieg ARM64 CI uruchomi `qmllint` na rzeczywistym pliku `shell.qml`; do czasu zielonego wyniku kontrola nie jest uznana za zaliczoną. Zależność Epiphany i kafelek przeglądarki także wymagają potwierdzenia w nowym buildzie.
 - Obecność wpisów .desktop i pakietów nie jest dowodem działania aplikacji. Testy dotyku, gestów, połączeń, Caller ID, ringback i audio wymagają fizycznego FP4.
