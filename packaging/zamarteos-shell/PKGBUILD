@@ -5,7 +5,7 @@ pkgdesc="ZamarteOS touch-first Wayland shell and Fairphone 4 session"
 arch=('aarch64')
 url="https://github.com/MarekZamarte/zamarteos-repo"
 license=('custom')
-depends=('hyprland' 'quickshell' 'pam')
+depends=('hyprland' 'quickshell' 'pam' 'epiphany')
 source=(
   'shell.qml'
   'hyprland.conf'
