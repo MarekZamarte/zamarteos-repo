@@ -15,15 +15,22 @@ Androidowy format `boot.img` jest wyłącznie formatem startowym wymaganym przez
 ## Stan
 - [x] Wybrana baza sprzętowa FP4 z udokumentowanym testem dźwięku rozmów.
 - [x] Utworzona osobna gałąź rozwojowa.
-- [ ] Powtarzalny build referencyjnej bazy FP4 w GitHub Actions.
+- [x] Powtarzalny build referencyjnej bazy FP4 w GitHub Actions (obraz referencyjny nr 43; nie jest wydaniem).
 - [x] Pierwszy prototyp powłoki QML: ekran główny, szuflada aplikacji i centrum telefonu.
-- [ ] Kompilacja pakietu QML/PAM w ARM64 CI.
+- [x] Kompilacja pakietu powłoki QML/PAM w ARM64 CI; dodano kontrolę `qmllint` do kolejnego przebiegu CI.
 - [x] Przygotowany skrypt integrujący własną powłokę i blokadę z sesją obrazu FP4.
-- [ ] Doprowadzenie powłoki do poziomu codziennego użycia: klawiatura ekranowa, gesty, blokada i powiadomienia.
+- [ ] Doprowadzenie powłoki do poziomu codziennego użycia: pełna klawiatura ekranowa, gesty, blokada, powiadomienia i działające centrum ustawień.
 - [ ] Test uruchomienia, blokady i odblokowania na fizycznym FP4.
-- [ ] Integracja aplikacji i testy fizycznego telefonu.
+- [ ] Potwierdzenie działania Telefonu, SMS, Kontaktów, Plików i przeglądarki oraz testy fizycznego telefonu.
 - [ ] Obraz do wgrania dopiero po testach.
 
-**Bezpieczeństwo:** żaden skrypt w tym repozytorium nie flashuje telefonu. Pierwszy build CI jest bazą referencyjną, nie wydaniem ZamarteOS i nie wolno go instalować.
+**Bezpieczeństwo:** żaden skrypt w tym repozytorium nie flashuje telefonu. Obraz nr 43 jest bazą referencyjną opartą na sprzętowej bazie Moarchy z powłoką ZamarteOS; nie jest wydaniem i nie wolno go instalować przed testami na fizycznym FP4.
 
 Szczegóły: [plan budowy](docs/BUILD-PLAN.md) i [status FP4](docs/FP4-STATUS.md).
+
+
+## Ostatnia kontrola
+
+- Powłoka ma teraz szybki kafelek Kontaktów zamiast Aparatu, a wyszukiwarka sprawdza także identyfikator wpisu aplikacji.
+- Kolejny przebieg ARM64 CI uruchomi `qmllint` na rzeczywistym pliku `shell.qml`; do czasu zielonego wyniku kontrola nie jest uznana za zaliczoną.
+- Obecność wpisów .desktop i pakietów nie jest dowodem działania aplikacji. Testy dotyku, gestów, połączeń, Caller ID, ringback i audio wymagają fizycznego FP4.
