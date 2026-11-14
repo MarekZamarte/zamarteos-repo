@@ -35,3 +35,5 @@ Build request 2026-11-13: stage the 81voltd service package changes in the overl
 Build request 2026-11-14: fix 81voltd source URL expansion and depend on moarchy-qcom-modem, which provides qrtr; rebuild and audit complete FP4 reference image, never flash.
 Build request 2026-11-14: correct the upstream verifier to validate the full ZamarteOS tty1 -> zamarteos-session -> Hyprland --config chain instead of requiring the obsolete direct Moarchy Lua path; rebuild and audit the full FP4 image, never flash.
 Build request 2026-11-14: run full FP4 reference-image build after ARM64 shell package and overlay integration checks passed; produce image, package manifest, provenance, verifier report and SHA256 checksums; build only, never flash.
+
+Build request 2026-11-14: rebuild the complete ZamarteOS Pure FP4 reference image from latest branch head 50e6afb1308bd9cba1f34f70b754f2089305c2b8; include Contacts and Epiphany launcher entries, Epiphany runtime package, qmllint package check, complete package manifest, image verifier, provenance and SHA256 audit. Build and audit only; do not flash any device.
