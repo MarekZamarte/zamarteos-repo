@@ -42,7 +42,7 @@ jobs:
               # QEMU runner kernel lacks Landlock; disable pacman download sandbox only inside this disposable CI container.
               sed -i "/^\\[options\\]$/a DisableSandbox" /etc/pacman.conf
               printf "%b" "\\n[danctnix]\\nSigLevel = Never\\nServer = https://archmobile.mirror.danctnix.org/\$repo/\$arch/\\n" >> /etc/pacman.conf
-              pacman -Syu --noconfirm base-devel pam hyprland quickshell qt6-declarative
+              pacman -Syu --noconfirm base-devel pam hyprland quickshell qt6-declarative epiphany
               useradd -m builder
               echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
               chown -R builder:builder /repo/packaging/zamarteos-shell
