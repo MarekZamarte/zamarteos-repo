@@ -30,11 +30,11 @@ check() {
   grep -q 'exec qs -n -p /usr/share/zamarteos-shell' "$srcdir/zamarteos-shell"
   grep -q 'IpcHandler' "$srcdir/shell.qml"
   grep -q 'target: "zamarteos-lock"' "$srcdir/shell.qml"
-  command -v qmllint >/dev/null
+  test -x /usr/lib/qt6/bin/qmllint
   # Parse and lint the actual packaged QML with Qt's import metadata.
   # Quickshell-specific type warnings are retained in the log; syntax and
   # hard QML errors still fail the package check.
-  qmllint --ignore-settings --max-warnings 99999 -I /usr/lib/qt6/qml "$srcdir/shell.qml"
+  /usr/lib/qt6/bin/qmllint --ignore-settings --max-warnings 99999 -I /usr/lib/qt6/qml "$srcdir/shell.qml"
   grep -q 'od -An -N4 -tu4 /dev/urandom' "$srcdir/zamarteos-firstboot-pin"
   grep -q 'PIERWSZE-URUCHOMIENIE.txt' "$srcdir/zamarteos-firstboot-pin"
   grep -q 'chpasswd -c SHA512' "$srcdir/zamarteos-firstboot-pin"
