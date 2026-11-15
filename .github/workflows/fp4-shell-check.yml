@@ -78,8 +78,8 @@ jobs:
           ];
           let reference = null;
           for (const file of files) {
-            const source = fs.readFileSync(file, 'utf8').replace(/^\\.pragma library\\s*/, '') +
-              '\\nglobalThis.NumbersTest = { key, same, label, people, index };';
+            const source = fs.readFileSync(file, 'utf8').replace(/^\.pragma library\s*/, '') +
+              '\nglobalThis.NumbersTest = { key, same, label, people, index };';
             if (reference !== null) assert.strictEqual(source, reference, 'Phone and SMS number helpers must match');
             reference = source;
             const context = {};
