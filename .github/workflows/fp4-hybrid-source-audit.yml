@@ -1,0 +1,193 @@
+name: ZamarteOS Hybrid FP4 — kernel build (no image/flash)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - zamarteos-hybrid-fp4-dev
+    paths:
+      - "hybrid/**"
+      - "docs/HYBRID-PLAN-PL.md"
+      - "scripts/audit-fp4-halium-source.sh"
+      - "scripts/resolve-fp4-kernel-source.py"
+      - ".github/workflows/fp4-hybrid-source-audit.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zamarteos-hybrid-fp4-source-audit
+  cancel-in-progress: false
+
+jobs:
+  audit-upstream-device-port:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout ZamarteOS Hybrid manifest
+        uses: actions/checkout@v4
+
+      - name: Validate Hybrid manifest
+        run: |
+          set -euxo pipefail
+          grep -Fx 'device: fairphone-fp4' hybrid/manifest.yml
+          grep -Fx 'codename: FP4' hybrid/manifest.yml
+          grep -Fx 'compatibility_layer: Halium' hybrid/manifest.yml
+          grep -Fx 'halium_version: "11"' hybrid/manifest.yml
+          grep -Fx 'target_userspace: ZamarteOS Linux' hybrid/manifest.yml
+          grep -Fx 'flash_automatically: false' hybrid/manifest.yml
+          bash -n scripts/audit-fp4-halium-source.sh
+          python3 -m py_compile scripts/resolve-fp4-kernel-source.py
+
+      - name: Fetch FP4 Halium 11 device port
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --branch focal \
+            https://gitlab.com/ubports/porting/reference-device-ports/android11/fairphone-4/fairphone-fp4.git \
+            upstream-fairphone-fp4
+          git -C upstream-fairphone-fp4 rev-parse HEAD | tee upstream-device-port-commit.txt
+          test -s upstream-fairphone-fp4/deviceinfo
+
+      - name: Audit device source metadata
+        run: |
+          set -euxo pipefail
+          bash scripts/audit-fp4-halium-source.sh upstream-fairphone-fp4 hybrid-device-audit.txt
+          cat hybrid-device-audit.txt
+
+      - name: Resolve kernel source from deviceinfo
+        id: kernel
+        run: |
+          set -euxo pipefail
+          python3 scripts/resolve-fp4-kernel-source.py upstream-fairphone-fp4/deviceinfo
+
+      - name: Fetch exact kernel source declared by deviceinfo
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --branch "${{ steps.kernel.outputs.kernel_branch }}" \
+            "${{ steps.kernel.outputs.kernel_source }}" upstream-fp4-kernel
+          git -C upstream-fp4-kernel rev-parse HEAD | tee upstream-kernel-commit.txt
+          test -s upstream-fp4-kernel/Makefile
+          test -d upstream-fp4-kernel/drivers
+
+      - name: Convert legacy Python 2 kernel helper for Python 3 runner
+        run: |
+          set -euxo pipefail
+          test -s upstream-fp4-kernel/scripts/gcc-wrapper.py
+          # Ubuntu 24.04's minimal Python installation may omit the deprecated
+          # lib2to3 stdlib module; install its split package explicitly.
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3-lib2to3
+          python3 -m lib2to3 -w -n upstream-fp4-kernel/scripts/gcc-wrapper.py
+          # Python 3 subprocess pipes yield bytes. Decode each compiler line
+          # before the legacy warning parser performs string operations.
+          python3 - upstream-fp4-kernel/scripts/gcc-wrapper.py <<'PY'
+          from pathlib import Path
+          import sys
+          path = Path(sys.argv[1])
+          source = path.read_text()
+          needle = "def interpret_warning(line):"
+          if needle not in source:
+              raise SystemExit("Could not find the legacy warning parser")
+          if 'line = line.decode("utf-8", errors="replace")' not in source:
+              patch = needle + '\n    if isinstance(line, bytes):\n        line = line.decode("utf-8", errors="replace")'
+              source = source.replace(needle, patch, 1)
+              path.write_text(source)
+          PY
+          grep -Fq 'line = line.decode("utf-8", errors="replace")' upstream-fp4-kernel/scripts/gcc-wrapper.py
+          python3 -m py_compile upstream-fp4-kernel/scripts/gcc-wrapper.py
+
+      - name: Audit kernel configuration against deviceinfo
+        run: |
+          set -euxo pipefail
+          python3 - upstream-fairphone-fp4/deviceinfo upstream-fp4-kernel hybrid-kernel-audit.txt <<'PY'
+          from pathlib import Path
+          import re, sys
+          deviceinfo, kernel, output = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+          text = deviceinfo.read_text()
+          def val(name):
+              for line in text.splitlines():
+                  if line.startswith(name + "="):
+                      return line.split("=", 1)[1].strip().strip("'\\\"")
+              raise SystemExit(f"Missing {name} in deviceinfo")
+          configs = val("deviceinfo_kernel_defconfig").split()
+          config_dirs = [kernel / "arch/arm64/configs", kernel / "arch/arm/configs"]
+          lines = ["ZamarteOS Hybrid FP4 kernel audit", f"kernel_commit={__import__('subprocess').check_output(['git','-C',str(kernel),'rev-parse','HEAD'],text=True).strip()}", f"kernel_defconfig={ ' '.join(configs) }"]
+          missing=[]
+          for name in configs:
+              found=[str(d/name) for d in config_dirs if (d/name).is_file()]
+              lines.append(f"config {name}: " + (", ".join(found) if found else "MISSING"))
+              if not found: missing.append(name)
+          lines.append("kernel_makefile_version:")
+          lines.extend(kernel.joinpath("Makefile").read_text(errors="replace").splitlines()[:5])
+          lines.append("relevant_audio_and_qcom_directories:")
+          for p in sorted(kernel.rglob("*")):
+              if p.is_dir() and any(k in p.name.lower() for k in ("qcom","audio","sound","sm7225")):
+                  rel=p.relative_to(kernel)
+                  if len(rel.parts)<=5: lines.append(str(rel))
+          output.write_text("\n".join(lines)+"\n")
+          print(output.read_text())
+          if missing: raise SystemExit("Kernel defconfig(s) from deviceinfo not found: " + ", ".join(missing))
+          PY
+
+      - name: Install ARM64 kernel build dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential clang-14 lld-14 llvm-14 \
+            flex gcc-aarch64-linux-gnu libelf-dev libssl-dev libncurses-dev \
+            dwarves python3
+          # Ubuntu installs versioned LLVM binaries only. This legacy kernel
+          # calls unversioned names, so expose the LLVM 14 tools explicitly.
+          # The legacy Kbuild scripts call unversioned LLVM tool names.
+          # Expose the full LLVM 14 binutils set, not only the linker/objdump.
+          for tool in ld.lld llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-ranlib llvm-strip llvm-readelf llvm-size llvm-strings llvm-addr2line; do
+            test -x "/usr/bin/${tool}-14"
+            sudo ln -sf "/usr/bin/${tool}-14" "/usr/local/bin/${tool}"
+            command -v "${tool}"
+            "${tool}" --version | head -n 1
+          done
+
+      - name: Build FP4 Halium kernel (no flashing)
+        run: |
+          set -euxo pipefail
+          cd upstream-fp4-kernel
+          read -r -a configs <<< "${{ steps.kernel.outputs.kernel_defconfig }}"
+          test "${#configs[@]}" -gt 0
+          export ARCH=arm64
+          export CC=clang-14
+          # Ubuntu 24.04 packages version-suffixed LLVM binaries (e.g.
+          # ld.lld-14 and llvm-objdump-14); tell Kbuild to use those names.
+          export LLVM=-14
+          export LLVM_IAS=1
+          # This kernel's optional gcc-wrapper.py is a legacy GCC warning
+          # wrapper. Disable it for the Clang build: it interferes with Kbuild's
+          # compiler-version probe and is not needed when CC is Clang.
+          test -x /usr/bin/clang-14
+          /usr/bin/clang-14 --version
+          test -x /usr/bin/aarch64-linux-gnu-gcc
+          /usr/bin/aarch64-linux-gnu-gcc -dumpversion
+          # Keep CROSS_COMPILE as a tool prefix (not an absolute path), because
+          # Kbuild also derives Clang's target triple and binutils from it.
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          make O=out REAL_CC=clang-14 DISABLE_WRAPPER=1 "${configs[@]}" 2>&1 | tee ../hybrid-kernel-config.log
+          make -j"$(nproc)" O=out REAL_CC=clang-14 DISABLE_WRAPPER=1 Image.gz dtbs modules 2>&1 | tee ../hybrid-kernel-build.log
+          test -s out/arch/arm64/boot/Image.gz
+          find out/arch/arm64/boot -type f \( -name '*.dtb' -o -name 'Image.gz' \) -print | sort | tee ../hybrid-kernel-artifacts.txt
+
+      - name: Upload kernel build audit (not flashable)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-hybrid-fp4-source-audit-${{ github.run_number }}
+          path: |
+            hybrid-device-audit.txt
+            hybrid-kernel-audit.txt
+            upstream-device-port-commit.txt
+            upstream-kernel-commit.txt
+            hybrid-kernel-config.log
+            hybrid-kernel-build.log
+            hybrid-kernel-artifacts.txt
+            upstream-fp4-kernel/out/arch/arm64/boot/Image.gz
+            upstream-fp4-kernel/out/arch/arm64/boot/dts/**/*.dtb
+          if-no-files-found: warn
+          retention-days: 30
