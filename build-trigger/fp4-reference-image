@@ -41,3 +41,5 @@ Build request 2026-11-14: rebuild the complete ZamarteOS Pure FP4 reference imag
 Build request 2026-11-14: produce latest FP4 image for next-day review, verify packages, Q6Voice, UI integration, checksum and provenance; never flash.
 
 Build request 2026-11-15: rebuild FP4 reference image with exact-match caller ID fix in Phone and SMS; run full image verification and SHA256; never flash the device.
+
+Build request 2026-11-15: fix black-screen startup in ZamarteOS shell: show home panel by default, hide it only while an app is foregrounded, remove invalid right anchors from drawer/control header Rows, bump shell package release, and run full FP4 reference build plus package/image verification. Build only; never flash the phone.
