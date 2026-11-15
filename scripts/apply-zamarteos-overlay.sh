@@ -45,6 +45,69 @@ if insert not in s:
     p.write_text(s)
 PY
 
+# Caller ID must never identify somebody by a coincidental suffix match.
+# The pinned phone and SMS plugins share this helper; compare the complete
+# normalized number (or exact sender word), not only its last nine digits.
+python3 - "$ROOT" <<'PY'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+paths = [
+    root / "default/omarchy/plugins/moarchy.phone/Numbers.js",
+    root / "default/omarchy/plugins/moarchy.messages/Numbers.js",
+]
+old_tail = "var TAIL = 9\n"
+old_key = '''function key(value) {
+  if (isWord(value)) return text(value).toLowerCase()
+  var d = digits(value)
+  return d.length >= TAIL ? d.slice(d.length - TAIL) : d
+}'''
+new_key = '''function key(value) {
+  var raw = text(value)
+  if (!raw) return ""
+  if (isWord(raw)) return raw.toLowerCase()
+  // Service codes must not collapse onto an ordinary numeric phone number.
+  if (/[ *#]/.test(raw)) return raw.replace(/[\\s().\\-\\/]/g, "")
+  // Full digits only: never guess a contact from a shared suffix. A national
+  // number and its international form need an explicit country-code rule;
+  // a false caller identity is worse than showing the raw number.
+  return digits(raw)
+}'''
+contents = [p.read_text() for p in paths]
+if contents[0] != contents[1]:
+    raise SystemExit("Phone and SMS Numbers.js differ; refusing an incomplete caller-ID patch")
+source = contents[0]
+if old_tail not in source or old_key not in source:
+    raise SystemExit("Pinned Numbers.js no longer matches the reviewed suffix-matching implementation")
+source = source.replace(old_tail, "", 1).replace(old_key, new_key, 1)
+for path in paths:
+    path.write_text(source)
+
+test = root / "default/omarchy/plugins/moarchy.phone/tests/tst_numbers.qml"
+s = test.read_text()
+s = s.replace('''  function test_a_number_is_the_same_in_both_spellings() {
+    verify(Numbers.same("+44 7700 900412", "07700900412"))
+    verify(Numbers.same("+49 170 1234567", "0170 123 4567"))
+    verify(Numbers.same("+4917012345678", "+49 170 12345678"))
+    verify(!Numbers.same("+49 170 1234567", "+49 170 1234568"))
+  }''', '''  function test_formatting_is_ignored_but_country_digits_are_not_guessed() {
+    verify(Numbers.same("+44 7700 900412", "+447700900412"))
+    verify(Numbers.same("+49 170 1234567", "+491701234567"))
+    verify(Numbers.same("+4917012345678", "+49 170 12345678"))
+    verify(!Numbers.same("+49 170 1234567", "+49 170 1234568"))
+    verify(!Numbers.same("+49 170 1234567", "0170 123 4567"))
+  }
+
+  function test_a_shared_nine_digit_suffix_is_not_a_contact_match() {
+    verify(!Numbers.same("+1 202 555 0123", "+44 20 2555 0123"))
+  }''', 1)
+s = s.replace('Numbers.nameFor(names, "07700900030")', 'Numbers.nameFor(names, "+44 7700 900030")', 1)
+s = s.replace('Numbers.label(names, "030 5550188")', 'Numbers.label(names, "+49 30 5550188")', 1)
+if 'test_a_shared_nine_digit_suffix_is_not_a_contact_match' not in s or 'Numbers.nameFor(names, "+44 7700 900030")' not in s:
+    raise SystemExit("Could not update the pinned caller-ID regression tests safely")
+test.write_text(s)
+PY
+
 # Skip one optional AUR application that currently prevents the ARM64 package
 # batch from completing: spot-client 0.5.0 pins openssl-sys 0.9.104, which
 # rejects the OpenSSL 4.1 shipped by the current Arch Linux ARM build image.
