@@ -67,7 +67,7 @@ new_key = '''function key(value) {
   if (!raw) return ""
   if (isWord(raw)) return raw.toLowerCase()
   // Service codes must not collapse onto an ordinary numeric phone number.
-  if (/[ *#]/.test(raw)) return raw.replace(/[\\s().\\-\\/]/g, "")
+  if (/[*#]/.test(raw)) return raw.replace(/[\\s().\\-\\/]/g, "")
   // Full digits only: never guess a contact from a shared suffix. A national
   // number and its international form need an explicit country-code rule;
   // a false caller identity is worse than showing the raw number.
