@@ -68,6 +68,33 @@ jobs:
           grep -Fq 'return digits(raw)' moarchy-base/default/omarchy/plugins/moarchy.messages/Numbers.js
           grep -Fq 'test_a_shared_nine_digit_suffix_is_not_a_contact_match' moarchy-base/default/omarchy/plugins/moarchy.phone/tests/tst_numbers.qml
           grep -Fq 'test_a_shared_nine_digit_suffix_is_not_a_contact_match' moarchy-base/default/omarchy/plugins/moarchy.messages/tests/tst_numbers.qml
+          node <<'NODE'
+          const fs = require('fs');
+          const vm = require('vm');
+          const assert = require('assert');
+          const files = [
+            'moarchy-base/default/omarchy/plugins/moarchy.phone/Numbers.js',
+            'moarchy-base/default/omarchy/plugins/moarchy.messages/Numbers.js'
+          ];
+          let reference = null;
+          for (const file of files) {
+            const source = fs.readFileSync(file, 'utf8').replace(/^\\.pragma library\\s*/, '') +
+              '\\nglobalThis.NumbersTest = { key, same, label, people, index };';
+            if (reference !== null) assert.strictEqual(source, reference, 'Phone and SMS number helpers must match');
+            reference = source;
+            const context = {};
+            vm.runInNewContext(source, context, { filename: file });
+            const n = context.NumbersTest;
+            assert.strictEqual(n.same('+44 7700 900412', '+447700900412'), true);
+            assert.strictEqual(n.same('+49 170 1234567', '0170 123 4567'), false);
+            assert.strictEqual(n.same('+1 202 555 0123', '+44 20 2555 0123'), false);
+            assert.strictEqual(n.same('*100#', '100'), false);
+            const names = n.index(n.people({ contacts: [{ name: 'Known', phone: '+44 7700 900030' }] }));
+            assert.strictEqual(n.label(names, '+44 7700 900030'), 'Known');
+            assert.strictEqual(n.label(names, '+1 202 555 0030'), '+1 202 555 0030');
+          }
+          console.log('Caller ID exact-match regression checks passed for Phone and SMS.');
+          NODE
           bash -n moarchy-base/bin/moarchy-restart-shell
           grep -q "'zamarteos-shell'" moarchy-base/pkgbuilds/moarchy-meta/PKGBUILD
           ! grep -Fq '[aur.spot-client]' moarchy-base/manifest.toml
