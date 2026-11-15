@@ -79,7 +79,7 @@ jobs:
           let reference = null;
           for (const file of files) {
             const source = fs.readFileSync(file, 'utf8').replace(/^\.pragma library\s*/, '') +
-              '\nglobalThis.NumbersTest = { key, same, label, people, index };';
+              '\nglobalThis.NumbersTest = { key, same, label, people, index };\nglobalThis.CallerNames = NumbersTest.index(NumbersTest.people({ contacts: [{ name: \'Known\', phone: \'+44 7700 900030\' }] }));';
             if (reference !== null) assert.strictEqual(source, reference, 'Phone and SMS number helpers must match');
             reference = source;
             const context = {};
@@ -89,7 +89,7 @@ jobs:
             assert.strictEqual(n.same('+49 170 1234567', '0170 123 4567'), false);
             assert.strictEqual(n.same('+1 202 555 0123', '+44 20 2555 0123'), false);
             assert.strictEqual(n.same('*100#', '100'), false);
-            const names = n.index(n.people({ contacts: [{ name: 'Known', phone: '+44 7700 900030' }] }));
+            const names = context.CallerNames;
             assert.strictEqual(n.label(names, '+44 7700 900030'), 'Known');
             assert.strictEqual(n.label(names, '+1 202 555 0030'), '+1 202 555 0030');
           }
