@@ -83,9 +83,12 @@ source = source.replace(old_tail, "", 1).replace(old_key, new_key, 1)
 for path in paths:
     path.write_text(source)
 
-test = root / "default/omarchy/plugins/moarchy.phone/tests/tst_numbers.qml"
-s = test.read_text()
-s = s.replace('''  function test_a_number_is_the_same_in_both_spellings() {
+for test in [
+    root / "default/omarchy/plugins/moarchy.phone/tests/tst_numbers.qml",
+    root / "default/omarchy/plugins/moarchy.messages/tests/tst_numbers.qml",
+]:
+    s = test.read_text()
+    s = s.replace('''  function test_a_number_is_the_same_in_both_spellings() {
     verify(Numbers.same("+44 7700 900412", "07700900412"))
     verify(Numbers.same("+49 170 1234567", "0170 123 4567"))
     verify(Numbers.same("+4917012345678", "+49 170 12345678"))
@@ -101,11 +104,11 @@ s = s.replace('''  function test_a_number_is_the_same_in_both_spellings() {
   function test_a_shared_nine_digit_suffix_is_not_a_contact_match() {
     verify(!Numbers.same("+1 202 555 0123", "+44 20 2555 0123"))
   }''', 1)
-s = s.replace('Numbers.nameFor(names, "07700900030")', 'Numbers.nameFor(names, "+44 7700 900030")', 1)
-s = s.replace('Numbers.label(names, "030 5550188")', 'Numbers.label(names, "+49 30 5550188")', 1)
-if 'test_a_shared_nine_digit_suffix_is_not_a_contact_match' not in s or 'Numbers.nameFor(names, "+44 7700 900030")' not in s:
-    raise SystemExit("Could not update the pinned caller-ID regression tests safely")
-test.write_text(s)
+    s = s.replace('Numbers.nameFor(names, "07700900030")', 'Numbers.nameFor(names, "+44 7700 900030")', 1)
+    s = s.replace('Numbers.label(names, "030 5550188")', 'Numbers.label(names, "+49 30 5550188")', 1)
+    if 'test_a_shared_nine_digit_suffix_is_not_a_contact_match' not in s or 'Numbers.nameFor(names, "+44 7700 900030")' not in s:
+        raise SystemExit(f"Could not update caller-ID regression tests safely: {test}")
+    test.write_text(s)
 PY
 
 # Skip one optional AUR application that currently prevents the ARM64 package
