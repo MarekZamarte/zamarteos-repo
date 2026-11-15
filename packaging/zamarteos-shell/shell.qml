@@ -10,7 +10,7 @@ Scope {
     property var now: new Date()
     property bool drawerOpen: false
     property bool controlOpen: false
-    property bool homeOpen: false
+    property bool homeOpen: true
     property string searchText: ""
     property string notice: ""
     property string lockInput: ""
@@ -247,6 +247,9 @@ Scope {
 
     PanelWindow {
         anchors { top: true; bottom: true; left: true; right: true }
+        // The home surface must be shown at login. Hide it only while a
+        // launched application is in the foreground.
+        visible: root.homeOpen || root.drawerOpen || root.controlOpen
         aboveWindows: root.drawerOpen || root.controlOpen || root.homeOpen
         exclusiveZone: 0
         focusable: root.drawerOpen || root.controlOpen || root.homeOpen
@@ -437,13 +440,15 @@ Scope {
                 Row {
                     width: parent.width; height: 52
                     Text {
+                        id: drawerTitle
+                        width: parent.width - 60
+                        height: parent.height
                         text: "Aplikacje"; color: "#f3f6fa"; font.pixelSize: 27
-                        font.weight: Font.DemiBold; anchors.verticalCenter: parent.verticalCenter
+                        font.weight: Font.DemiBold
+                        verticalAlignment: Text.AlignVCenter
                     }
-                    Item { width: 1; height: 1 }
                     Rectangle {
                         width: 48; height: 48; radius: 16; color: "#26394d"
-                        anchors.right: parent.right
                         Text { anchors.centerIn: parent; text: "✕"; color: "#ffffff"; font.pixelSize: 20 }
                         MouseArea { anchors.fill: parent; onClicked: root.drawerOpen = false }
                     }
@@ -542,12 +547,15 @@ Scope {
                 Row {
                     width: parent.width; height: 54
                     Text {
+                        id: controlTitle
+                        width: parent.width - 60
+                        height: parent.height
                         text: "Centrum telefonu"; color: "#f3f6fa"; font.pixelSize: 25
-                        font.weight: Font.DemiBold; anchors.verticalCenter: parent.verticalCenter
+                        font.weight: Font.DemiBold
+                        verticalAlignment: Text.AlignVCenter
                     }
                     Rectangle {
                         width: 48; height: 48; radius: 16; color: "#26394d"
-                        anchors.right: parent.right
                         Text { anchors.centerIn: parent; text: "✕"; color: "#ffffff"; font.pixelSize: 20 }
                         MouseArea { anchors.fill: parent; onClicked: root.controlOpen = false }
                     }
