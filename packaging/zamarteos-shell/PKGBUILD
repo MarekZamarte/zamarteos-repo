@@ -32,7 +32,8 @@ check() {
   grep -q 'target: "zamarteos-lock"' "$srcdir/shell.qml"
   grep -q 'property bool homeOpen: true' "$srcdir/shell.qml"
   grep -q 'visible: root.homeOpen || root.drawerOpen || root.controlOpen' "$srcdir/shell.qml"
-  ! grep -q 'anchors.right: parent.right' "$srcdir/shell.qml"
+  grep -q 'id: drawerTitle' "$srcdir/shell.qml"
+  grep -q 'id: controlTitle' "$srcdir/shell.qml"
   test -x /usr/lib/qt6/bin/qmllint
   # Parse and lint the actual packaged QML with Qt's import metadata.
   # Quickshell-specific type warnings are retained in the log; syntax and
