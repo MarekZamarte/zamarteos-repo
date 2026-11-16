@@ -7,12 +7,24 @@ ApplicationWindow {
         Page {
             id: home
             allowedOrientations: Orientation.Portrait
+            property string statusText: "Gotowy"
+            property string currentTime: Qt.formatTime(new Date(), "HH:mm")
+            property string currentDate: Qt.formatDate(new Date(), "dddd, d MMMM yyyy")
 
-            property string notice: "ZamarteOS — ekran startowy"
+            Timer {
+                interval: 1000
+                running: true
+                repeat: true
+                onTriggered: {
+                    home.currentTime = Qt.formatTime(new Date(), "HH:mm")
+                    home.currentDate = Qt.formatDate(new Date(), "dddd, d MMMM yyyy")
+                }
+            }
 
             SilicaFlickable {
                 anchors.fill: parent
                 contentHeight: contentColumn.height + Theme.paddingLarge
+                clip: true
 
                 Column {
                     id: contentColumn
@@ -21,14 +33,14 @@ ApplicationWindow {
 
                     PageHeader {
                         title: "ZamarteOS"
-                        description: "Fairphone 4 • Sailfish OS"
+                        description: "Panel dla Fairphone 4"
                     }
 
                     Rectangle {
                         width: parent.width - 2 * Theme.horizontalPageMargin
-                        height: 112
+                        height: 154
                         anchors.horizontalCenter: parent.horizontalCenter
-                        radius: Theme.paddingMedium
+                        radius: Theme.paddingLarge
                         color: "#142b3a"
                         border.color: "#267b83"
                         border.width: 1
@@ -39,26 +51,24 @@ ApplicationWindow {
                             spacing: Theme.paddingSmall
 
                             Label {
-                                text: Qt.formatDate(new Date(), "dddd, d MMMM")
+                                text: home.currentDate
                                 color: "#a9c8ce"
                                 font.pixelSize: Theme.fontSizeSmall
                             }
                             Label {
-                                text: Qt.formatTime(new Date(), "HH:mm")
+                                text: home.currentTime
                                 color: "#ffffff"
                                 font.pixelSize: Theme.fontSizeHuge
                             }
                             Label {
-                                text: "System bazowy Sailfish OS"
+                                text: "Sailfish OS 5 • Fairphone 4"
                                 color: "#a9c8ce"
                                 font.pixelSize: Theme.fontSizeTiny
                             }
                         }
                     }
 
-                    SectionHeader {
-                        text: "Aplikacje"
-                    }
+                    SectionHeader { text: "Szybki dostęp" }
 
                     Grid {
                         width: parent.width - 2 * Theme.horizontalPageMargin
@@ -68,17 +78,18 @@ ApplicationWindow {
 
                         Repeater {
                             model: [
-                                { name: "Telefon", symbol: "☎", detail: "Połączenia" },
-                                { name: "Wiadomości", symbol: "✉", detail: "SMS" },
-                                { name: "Kontakty", symbol: "♙", detail: "Osoby" },
-                                { name: "Aparat", symbol: "◎", detail: "Zdjęcia" },
-                                { name: "Internet", symbol: "⌘", detail: "Przeglądarka" },
-                                { name: "Ustawienia", symbol: "⚙", detail: "System" }
+                                { name: "Telefon", symbol: "☎", detail: "Połączenia", action: "tel:" },
+                                { name: "Wiadomości", symbol: "✉", detail: "Nowy SMS", action: "sms:" },
+                                { name: "Internet", symbol: "⌘", detail: "Przeglądarka", action: "https://example.com" },
+                                { name: "Kontakty", symbol: "♙", detail: "Kontakty systemowe", action: "" },
+                                { name: "Aparat", symbol: "◎", detail: "Zdjęcia", action: "" },
+                                { name: "Ustawienia", symbol: "⚙", detail: "Ustawienia systemu", action: "" }
                             ]
 
                             delegate: BackgroundItem {
                                 width: (parent.width - Theme.paddingMedium) / 2
-                                height: 104
+                                height: 112
+
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: Theme.paddingMedium
@@ -86,6 +97,7 @@ ApplicationWindow {
                                     border.color: "#315b68"
                                     border.width: 1
                                 }
+
                                 Column {
                                     anchors.centerIn: parent
                                     spacing: Theme.paddingSmall
@@ -108,20 +120,29 @@ ApplicationWindow {
                                         font.pixelSize: Theme.fontSizeTiny
                                     }
                                 }
-                                onClicked: home.notice = modelData.name + " — skrót zostanie podłączony po testach"
+
+                                onClicked: {
+                                    if (modelData.action !== "") {
+                                        var ok = Qt.openUrlExternally(modelData.action)
+                                        home.statusText = ok
+                                            ? modelData.name + " — przekazano do systemu"
+                                            : "Nie udało się otworzyć: " + modelData.name
+                                    } else {
+                                        home.statusText = modelData.name
+                                            + " — integracja wymaga sprawdzenia na telefonie"
+                                    }
+                                }
                             }
                         }
                     }
 
-                    SectionHeader {
-                        text: "Informacja"
-                    }
+                    SectionHeader { text: "Stan panelu" }
 
                     Label {
                         x: Theme.horizontalPageMargin
                         width: parent.width - 2 * Theme.horizontalPageMargin
-                        text: home.notice
-                        color: Theme.secondaryColor
+                        text: home.statusText
+                        color: Theme.highlightColor
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.fontSizeSmall
                     }
@@ -129,7 +150,7 @@ ApplicationWindow {
                     Label {
                         x: Theme.horizontalPageMargin
                         width: parent.width - 2 * Theme.horizontalPageMargin
-                        text: "To niezależna aplikacja testowa. Nie zastępuje ekranu systemowego i nie zmienia obsługi połączeń ani dźwięku."
+                        text: "Panel działa jako osobna aplikacja. Nie zastępuje Lipstick i nie zmienia modemu, dźwięku rozmów ani usług telefonicznych."
                         color: Theme.secondaryColor
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.fontSizeTiny
