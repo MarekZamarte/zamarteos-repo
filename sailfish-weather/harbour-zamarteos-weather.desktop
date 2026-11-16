@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Name=ZamarteOS Weather
+Name[pl]=Pogoda ZamarteOS
+Icon=harbour-zamarteos-weather
+Exec=harbour-zamarteos-weather
+
+[X-Sailjail]
+OrganizationName=org.zamarteos
+ApplicationName=weather
