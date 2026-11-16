@@ -1,29 +1,24 @@
-# ZamarteOS Home — Sailfish OS prototype
+# ZamarteOS Home — natywna aplikacja Sailfish
 
-This directory contains an **independent native Sailfish Silica application prototype** for Fairphone 4 running Sailfish OS 5.0.0.72.
+Niezależna aplikacja Qt Quick / Sailfish Silica dla Fairphone 4 z Sailfish OS 5.0.0.72.
 
-It is intentionally a normal app, not a replacement for Lipstick, the system launcher, telephony, audio, modem, or device adaptation. It does not change system settings or intercept calls.
+## Co zawiera
+- natywny ekran Silica z panelem daty i zegara odświeżanym co sekundę;
+- kafelki szybkiego dostępu;
+- przekazywanie standardowych schematów `tel:`, `sms:` i `https:` do obsługi przez system;
+- komunikat stanu dla funkcji, których integracja wymaga potwierdzenia na urządzeniu;
+- wpis aplikacji i ikonę SVG instalowane do standardowych katalogów Sailfish OS.
 
-## Contents
+## Budowanie
+Projekt używa qmake i biblioteki SailfishApp. Należy budować go w Sailfish SDK na celu `aarch64` zgodnym z Sailfish OS 5.0.0.72. Oficjalna dokumentacja opisuje użycie `sfdk` i wybór celu ARM64:
+https://docs.sailfishos.org/Tools/Sailfish_SDK/Building_packages/
 
-- `ZamarteOS-Home.pro` — qmake project for Sailfish SDK
-- `src/harbour-zamarteos-home.cpp` — Sailfish application entry point
-- `qml/main.qml` — home-screen concept with app tiles and status panel
-- `harbour-zamarteos-home.desktop` — application launcher entry
+## Ograniczenia — uczciwy status
+- Źródła nie zostały jeszcze skompilowane w Sailfish SDK.
+- Nie wykonano testu uruchomienia na Fairphone 4.
+- Telefon, wiadomości i przeglądarka korzystają ze standardowego przekazywania URL; działanie zależy od zarejestrowanych handlerów w systemie.
+- Kontakty, aparat i ustawienia są na razie kafelkami informacyjnymi — ich bezpieczne uruchamianie wymaga weryfikacji rzeczywistych usług na urządzeniu.
+- To nie jest zamiennik Lipstick ani kompletna powłoka systemowa.
 
-## Build
-
-Build with the **Sailfish OS SDK** and its SailfishOS 5.0-compatible ARM64 target. Open `ZamarteOS-Home.pro` in Sailfish IDE, select the aarch64 Sailfish target, then build the RPM.
-
-The GitHub repository currently stores APK repository packages separately. This source is kept under `sailfish-home/` so it does not overwrite those packages.
-
-## Current limitations
-
-This is an early UI prototype. The tiles are visual shortcuts/placeholders; they do not yet launch or control system applications. It has not yet been compiled or tested on the Fairphone 4. Do not install it as a system launcher or replace Lipstick.
-
-## Safety / compatibility priorities
-
-- Keep the existing Sailfish kernel, modem, audio stack, and telephony services untouched.
-- Keep the application sandboxed.
-- Verify compilation and on-device launch before adding integrations.
-- Do not claim call audio, contacts, messaging, or hardware integration until each is tested on the phone.
+## Bezpieczeństwo
+Aplikacja nie ingeruje w Lipstick, modem, sterowniki, stos audio ani usługi telefoniczne. Nie instaluje Androida ani usług Google.
