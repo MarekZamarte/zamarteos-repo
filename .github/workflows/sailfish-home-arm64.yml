@@ -40,13 +40,14 @@ jobs:
       - name: Zbuduj RPM dla Sailfish OS 5.0 ARM64
         run: |
           mkdir -p "${{ github.workspace }}/artifacts"
+          chmod -R a+rwX sailfish-home artifacts
           docker pull coderus/sailfishos-platform-sdk:5.0.0.43
-          docker run --rm \
+          docker run --rm --entrypoint /bin/bash \
             -v "${{ github.workspace }}/sailfish-home:/home/mersdk/sailfish-home" \
             -v "${{ github.workspace }}/artifacts:/home/mersdk/artifacts" \
             -w /home/mersdk/sailfish-home \
             coderus/sailfishos-platform-sdk:5.0.0.43 \
-            /bin/bash -lc 'mb2 -t SailfishOS-5.0.0.43-aarch64 build && mkdir -p /home/mersdk/artifacts && cp -v RPMS/*.rpm /home/mersdk/artifacts/'
+            -lc 'mb2 -t SailfishOS-5.0.0.43-aarch64 build && cp -v RPMS/*.rpm /home/mersdk/artifacts/'
 
       - name: Sprawdź wygenerowane pakiety
         run: |
