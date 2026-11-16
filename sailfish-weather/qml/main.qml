@@ -31,7 +31,7 @@ ApplicationWindow {
                 if (index === 1) return "Jutro"
                 var p = dateText.split("-")
                 var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]))
-                return Qt.locale("pl_PL").standaloneDayName(d.getDay(), Locale.LongFormat)
+                return Qt.locale("pl_PL").standaloneDayName((d.getDay() + 6) % 7 + 1, Locale.LongFormat)
             }
 
             function loadWeather() {
@@ -81,9 +81,9 @@ ApplicationWindow {
                         return
                     }
                     currentSummary = location.name + ", " + location.country
-                            + "\\nTeraz: " + Math.round(data.current.temperature_2m) + " °C, "
+                            + "\nTeraz: " + Math.round(data.current.temperature_2m) + " °C, "
                             + description(data.current.weather_code)
-                            + "\\nOdczuwalna: " + Math.round(data.current.apparent_temperature)
+                            + "\nOdczuwalna: " + Math.round(data.current.apparent_temperature)
                             + " °C • Wiatr: " + Math.round(data.current.wind_speed_10m) + " km/h"
                     var rows = []
                     for (var i = 0; i < 7; i++) {
