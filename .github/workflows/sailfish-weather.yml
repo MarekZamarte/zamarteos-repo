@@ -1,0 +1,65 @@
+name: Build ZamarteOS Weather (7 days)
+
+on:
+  push:
+    branches:
+      - sailfish-home-prototype
+    paths:
+      - "sailfish-weather/**"
+      - ".github/workflows/sailfish-weather.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "sailfish-weather/**"
+      - ".github/workflows/sailfish-weather.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sailfish-weather-arm64-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Pobierz repozytorium
+        uses: actions/checkout@v4
+
+      - name: Sprawdź pliki aplikacji pogodowej
+        run: |
+          test -f sailfish-weather/ZamarteOS-Weather.pro
+          test -f sailfish-weather/rpm/harbour-zamarteos-weather.spec
+          test -f sailfish-weather/harbour-zamarteos-weather.desktop
+          test -f sailfish-weather/qml/main.qml
+          test -f sailfish-weather/icons/harbour-zamarteos-weather.svg
+
+      - name: Zbuduj samodzielną aplikację pogodową ARM64
+        run: |
+          mkdir -p "${{ github.workspace }}/artifacts"
+          chmod -R a+rwX sailfish-weather artifacts
+          docker pull coderus/sailfishos-platform-sdk:5.0.0.43
+          docker run --rm --entrypoint /bin/bash \
+            -v "${{ github.workspace }}/sailfish-weather:/home/mersdk/sailfish-weather" \
+            -v "${{ github.workspace }}/artifacts:/home/mersdk/artifacts" \
+            -w /home/mersdk/sailfish-weather \
+            coderus/sailfishos-platform-sdk:5.0.0.43 \
+            -lc 'mb2 -t SailfishOS-5.0.0.43-aarch64 build && cp -v RPMS/*.rpm /home/mersdk/artifacts/'
+
+      - name: Sprawdź pakiet RPM
+        run: |
+          test -n "$(find artifacts -maxdepth 1 -type f -name '*.rpm' -print -quit)"
+          find artifacts -maxdepth 1 -type f -name '*.rpm' -printf '%f %s bytes\n'
+
+      - name: Zachowaj pakiet RPM
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-weather-sailfish-arm64
+          path: artifacts/*.rpm
+          if-no-files-found: error
+          retention-days: 30
