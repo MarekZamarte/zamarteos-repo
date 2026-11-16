@@ -1,0 +1,63 @@
+name: Build Sailfish Home (ARM64)
+
+on:
+  push:
+    branches:
+      - sailfish-home-prototype
+    paths:
+      - "sailfish-home/**"
+      - ".github/workflows/sailfish-home-arm64.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "sailfish-home/**"
+      - ".github/workflows/sailfish-home-arm64.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sailfish-home-arm64-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Pobierz repozytorium
+        uses: actions/checkout@v4
+
+      - name: Sprawdź pliki projektu
+        run: |
+          test -f sailfish-home/ZamarteOS-Home.pro
+          test -f sailfish-home/rpm/harbour-zamarteos-home.spec
+          test -f sailfish-home/harbour-zamarteos-home.desktop
+          test -f sailfish-home/qml/main.qml
+
+      - name: Zbuduj RPM dla Sailfish OS 5.0 ARM64
+        run: |
+          mkdir -p "${{ github.workspace }}/artifacts"
+          docker pull coderus/sailfishos-platform-sdk:5.0.0.43
+          docker run --rm \
+            -v "${{ github.workspace }}/sailfish-home:/home/mersdk/sailfish-home" \
+            -v "${{ github.workspace }}/artifacts:/home/mersdk/artifacts" \
+            -w /home/mersdk/sailfish-home \
+            coderus/sailfishos-platform-sdk:5.0.0.43 \
+            /bin/bash -lc 'mb2 -t SailfishOS-5.0.0.43-aarch64 build && mkdir -p /home/mersdk/artifacts && cp -v RPMS/*.rpm /home/mersdk/artifacts/'
+
+      - name: Sprawdź wygenerowane pakiety
+        run: |
+          test -n "$(find artifacts -maxdepth 1 -type f -name '*.rpm' -print -quit)"
+          find artifacts -maxdepth 1 -type f -name '*.rpm' -printf '%f %s bytes\n'
+
+      - name: Zachowaj pakiet RPM
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-home-sailfish-arm64
+          path: artifacts/*.rpm
+          if-no-files-found: error
+          retention-days: 30
