@@ -2,5 +2,10 @@
 Type=Application
 X-Nemo-Application-Type=silica-qt5
 Name=ZamarteOS Home
+Name[pl]=Ekran główny ZamarteOS
 Icon=harbour-zamarteos-home
 Exec=harbour-zamarteos-home
+
+[X-Sailjail]
+OrganizationName=org.zamarteos
+ApplicationName=home
