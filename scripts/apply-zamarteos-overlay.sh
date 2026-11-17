@@ -96,6 +96,7 @@ s = s.replace('''    p=$(basename "$d")
     # Two reasons to pass over a package here''', 1)
 if "only_repo_package \"$p\" || continue" not in s:
     raise SystemExit("Could not install focused package filter in in-repo loop")
+PY
 # install-first packages bypass the normal dependency synchronizer upstream.
 # Install declared dependencies for selected packages before makepkg runs.
 python3 - "$ROOT/docker/build-packages.sh" <<'PY'
