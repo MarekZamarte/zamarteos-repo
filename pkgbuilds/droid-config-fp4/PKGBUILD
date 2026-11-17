@@ -9,7 +9,7 @@ arch=('any')
 url="https://github.com/SailfishOS-for-the-fairphone-4/droid-configs-FP4"
 license=('BSD-3-Clause')
 depends=('pulseaudio-modules-droid-fp4')
-source=("droid-configs-FP4::git+https://github.com/SailfishOS-for-the-fairphone-4/droid-configs-FP4#commit=98ddf2e76e3dd19fcceaaed2bf35ecb59f1b67d1")
+source=("droid-configs-FP4::git+https://github.com/SailfishOS-for-the-fairphone-4/droid-configs-FP4#commit=48934cb6aadf06eaef138104914fe4421ab9cad3")
 sha256sums=('SKIP')
 
 package() {
