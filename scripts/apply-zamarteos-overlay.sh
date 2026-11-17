@@ -41,7 +41,54 @@ if replacement not in source:
     if needle not in source:
         raise SystemExit("Phone.qml open() payload block changed; refusing to patch Contacts blindly")
     source = source.replace(needle, replacement, 1)
-    path.write_text(source)
+
+contact_anchor = '''          ColumnLayout {
+            anchors.fill: parent
+            visible: root.page === 2
+            spacing: 0
+
+            Chrome.TextField {
+'''
+contact_button = '''          ColumnLayout {
+            anchors.fill: parent
+            visible: root.page === 2
+            spacing: 0
+
+            Rectangle {
+              Layout.fillWidth: true
+              Layout.leftMargin: Metrics.GUTTER
+              Layout.rightMargin: Metrics.GUTTER
+              Layout.topMargin: 4
+              Layout.bottomMargin: Metrics.GAP
+              height: 42
+              radius: 12
+              color: root.accent
+
+              Text {
+                anchors.centerIn: parent
+                text: "Manage contacts"
+                color: root.background
+                font.pixelSize: 14
+                font.weight: Font.DemiBold
+              }
+
+              MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                  if (root.shell && typeof root.shell.openContacts === "function")
+                    root.shell.openContacts()
+                }
+              }
+            }
+
+            Chrome.TextField {
+'''
+if contact_button not in source:
+    if contact_anchor not in source:
+        raise SystemExit("Phone.qml contacts page layout changed; refusing to add editor button blindly")
+    source = source.replace(contact_anchor, contact_button, 1)
+
+path.write_text(source)
 PY
 
 # Patch the pinned standalone Wayland keyboard after it is cloned by the
