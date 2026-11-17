@@ -5,13 +5,18 @@ pkgdesc="ZamarteOS touch-first Wayland shell and Fairphone 4 session"
 arch=('aarch64')
 url="https://github.com/MarekZamarte/zamarteos-repo"
 license=('custom')
-depends=('hyprland' 'quickshell' 'pam' 'epiphany')
+depends=('hyprland' 'quickshell' 'pam' 'epiphany' 'moarchy' 'networkmanager' 'bluez-utils' 'brightnessctl' 'pamixer')
 source=(
   'shell.qml'
   'hyprland.conf'
   'zamarteos-session'
   'zamarteos-shell'
   'zamarteos.desktop'
+  'zamarteos-open-app'
+  'zamarteos-phone.desktop'
+  'zamarteos-messages.desktop'
+  'zamarteos-contacts.desktop'
+  'zamarteos-files.desktop'
   'zamarteos-lock.pam'
   'zamarteos-firstboot-pin'
   'zamarteos-firstboot-pin.service'
@@ -19,12 +24,13 @@ source=(
   'getty-firstboot-pin.conf'
   'polish-letters.json'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
   set -x
   bash -n "$srcdir/zamarteos-session"
   bash -n "$srcdir/zamarteos-shell"
+  bash -n "$srcdir/zamarteos-open-app"
   bash -n "$srcdir/zamarteos-firstboot-pin"
   grep -q 'exec Hyprland --config /usr/share/zamarteos-shell/hyprland.conf' "$srcdir/zamarteos-session"
   grep -q 'exec qs -n -p /usr/share/zamarteos-shell' "$srcdir/zamarteos-shell"
@@ -34,6 +40,16 @@ check() {
   grep -q 'visible: root.homeOpen || root.drawerOpen || root.controlOpen' "$srcdir/shell.qml"
   grep -q 'id: drawerTitle' "$srcdir/shell.qml"
   grep -q 'id: controlTitle' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.phone/Phone.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.messages/Messages.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.files/Files.qml' "$srcdir/shell.qml"
+  grep -q 'item.warmUp()' "$srcdir/shell.qml"
+  grep -q 'target: "zamarteos-apps"' "$srcdir/shell.qml"
+  grep -q 'qs ipc call zamarteos-apps open' "$srcdir/zamarteos-open-app"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app phone' "$srcdir/zamarteos-phone.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app messages' "$srcdir/zamarteos-messages.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app contacts' "$srcdir/zamarteos-contacts.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app files' "$srcdir/zamarteos-files.desktop"
   test -x /usr/lib/qt6/bin/qmllint
   # Parse and lint the actual packaged QML with Qt's import metadata.
   # Quickshell-specific type warnings are retained in the log; syntax and
@@ -57,6 +73,11 @@ package() {
   install -Dm755 "$srcdir/zamarteos-session" "$pkgdir/usr/bin/zamarteos-session"
   install -Dm755 "$srcdir/zamarteos-shell" "$pkgdir/usr/bin/zamarteos-shell"
   install -Dm644 "$srcdir/zamarteos.desktop" "$pkgdir/usr/share/wayland-sessions/zamarteos.desktop"
+  install -Dm755 "$srcdir/zamarteos-open-app" "$pkgdir/usr/bin/zamarteos-open-app"
+  install -Dm644 "$srcdir/zamarteos-phone.desktop" "$pkgdir/usr/share/applications/zamarteos-phone.desktop"
+  install -Dm644 "$srcdir/zamarteos-messages.desktop" "$pkgdir/usr/share/applications/zamarteos-messages.desktop"
+  install -Dm644 "$srcdir/zamarteos-contacts.desktop" "$pkgdir/usr/share/applications/zamarteos-contacts.desktop"
+  install -Dm644 "$srcdir/zamarteos-files.desktop" "$pkgdir/usr/share/applications/zamarteos-files.desktop"
   install -Dm644 "$srcdir/zamarteos-lock.pam" "$pkgdir/etc/pam.d/zamarteos-lock"
   install -Dm755 "$srcdir/zamarteos-firstboot-pin" "$pkgdir/usr/lib/zamarteos/firstboot-pin"
   install -Dm644 "$srcdir/zamarteos-firstboot-pin.service" "$pkgdir/usr/lib/systemd/system/zamarteos-firstboot-pin.service"
