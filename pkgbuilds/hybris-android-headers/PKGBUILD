@@ -3,7 +3,7 @@
 # ANDROID_VERSION_MAJOR to enable its Android 10+ linker implementation.
 pkgname=hybris-android-headers
 pkgver=5.1.1_30
-pkgrel=2
+pkgrel=3
 pkgdesc="Android 11/API 30 headers for libhybris and FP4 Droid audio"
 arch=('aarch64')
 url="https://github.com/mickybart/gnulinux_support-common"
@@ -39,5 +39,37 @@ package() {
     -e 's/^#define ANDROID_VERSION_MINOR .*/#define ANDROID_VERSION_MINOR 0/' \
     -e 's/^#define ANDROID_VERSION_PATCH .*/#define ANDROID_VERSION_PATCH 0/' \
     "$version_header"
-  grep -q '^#define ANDROID_VERSION_MAJOR 11$' "$version_header"
+  grep -q '^#define ANDROID_VERSION_MAJOR 11}
+ "$version_header"
+
+  # The pinned Halium header snapshot omits this public NDK header. libhybris
+  # builds its ui compatibility library against ARect, so ship the upstream
+  # Android NDK declaration required by frameworks/native.
+  install -d "$pkgdir/opt/android/include/android"
+  cat > "$pkgdir/opt/android/include/android/rect.h" <<'EOF'
+/*
+ * Copyright (C) 2010 The Android Open Source Project
+ * Licensed under the Apache License, Version 2.0.
+ */
+#ifndef ANDROID_RECT_H
+#define ANDROID_RECT_H
+#include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+typedef struct ARect {
+#ifdef __cplusplus
+  typedef int32_t value_type;
+#endif
+  int32_t left;
+  int32_t top;
+  int32_t right;
+  int32_t bottom;
+} ARect;
+#ifdef __cplusplus
+}
+#endif
+#endif
+EOF
+  test -s "$pkgdir/opt/android/include/android/rect.h"
 }
