@@ -10,12 +10,6 @@ Scope {
     property var now: new Date()
     property bool drawerOpen: false
     property bool controlOpen: false
-    property bool contactsOpen: false
-    property string contactsReturnToPlugin: ""
-    property string contactName: ""
-    property string contactPhone: ""
-    property string contactsError: ""
-    property var contacts: []
     property bool homeOpen: true
     property string searchText: ""
     property string notice: ""
@@ -41,22 +35,6 @@ Scope {
     }
     property bool firstbootNoticeDismissed: firstbootNoticeState.text().trim() === "1"
 
-    FileView {
-        id: contactsStore
-        path: (Quickshell.env("HOME") || "/home/moarchy") + "/.local/share/moarchy-contacts/contacts.json"
-        watchChanges: false
-        printErrors: false
-        onLoaded: {
-            try {
-                const data = JSON.parse(text())
-                root.contacts = data && Array.isArray(data.contacts) ? data.contacts : []
-            } catch (error) {
-                root.contacts = []
-                root.contactsError = "Nie można odczytać bazy kontaktów."
-            }
-        }
-    }
-
     property string activePlugin: ""
 
     QtObject {
@@ -74,7 +52,8 @@ Scope {
             root.togglePlugin(pluginId, payload || "{}")
         }
         function openContacts() {
-            root.openContactsManager()
+            root.summonPlugin("moarchy.contacts",
+                              JSON.stringify({ returnTo: root.activePlugin }))
         }
     }
 
@@ -105,6 +84,96 @@ Scope {
         onLoaded: {
             item.shell = pluginShellApi
             item.manifest = ({ id: "moarchy.files", name: "Pliki" })
+        }
+    }
+    Loader {
+        id: contactsPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.contacts/Contacts.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.contacts", name: "Kontakty" })
+            if (typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+    Loader {
+        id: calculatorPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.calculator/Calculator.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.calculator", name: "Kalkulator" })
+            if (typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+    Loader {
+        id: calendarPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.calendar/Calendar.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.calendar", name: "Kalendarz" })
+            if (typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+    Loader {
+        id: clockPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.clock/Clock.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.clock", name: "Zegar" })
+            if (typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+    Loader {
+        id: editorPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.editor/Editor.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.editor", name: "Edytor tekstu" })
+            if (typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+    Loader {
+        id: weatherPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.weather/Weather.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.weather", name: "Pogoda" })
+            if (typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+    Loader {
+        id: mailPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.mail/Mail.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.mail", name: "Poczta" })
+            if (typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+    Loader {
+        id: keepPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.keep/Keep.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.keep", name: "Notatki" })
+            if (typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+    Loader {
+        id: vitalsPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.vitals/Vitals.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.vitals", name: "Monitor systemu" })
+            if (typeof item.warmUp === "function") item.warmUp()
         }
     }
 
@@ -138,27 +207,125 @@ Scope {
             }
         }
     }
+    Connections {
+        target: contactsPlugin.item
+        function onOpenedChanged() {
+            if (contactsPlugin.item && !contactsPlugin.item.opened &&
+                    root.activePlugin === "moarchy.contacts") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: calculatorPlugin.item
+        function onOpenedChanged() {
+            if (calculatorPlugin.item && !calculatorPlugin.item.opened &&
+                    root.activePlugin === "moarchy.calculator") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: calendarPlugin.item
+        function onOpenedChanged() {
+            if (calendarPlugin.item && !calendarPlugin.item.opened &&
+                    root.activePlugin === "moarchy.calendar") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: clockPlugin.item
+        function onOpenedChanged() {
+            if (clockPlugin.item && !clockPlugin.item.opened &&
+                    root.activePlugin === "moarchy.clock") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: editorPlugin.item
+        function onOpenedChanged() {
+            if (editorPlugin.item && !editorPlugin.item.opened &&
+                    root.activePlugin === "moarchy.editor") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: weatherPlugin.item
+        function onOpenedChanged() {
+            if (weatherPlugin.item && !weatherPlugin.item.opened &&
+                    root.activePlugin === "moarchy.weather") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: mailPlugin.item
+        function onOpenedChanged() {
+            if (mailPlugin.item && !mailPlugin.item.opened &&
+                    root.activePlugin === "moarchy.mail") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: keepPlugin.item
+        function onOpenedChanged() {
+            if (keepPlugin.item && !keepPlugin.item.opened &&
+                    root.activePlugin === "moarchy.keep") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: vitalsPlugin.item
+        function onOpenedChanged() {
+            if (vitalsPlugin.item && !vitalsPlugin.item.opened &&
+                    root.activePlugin === "moarchy.vitals") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
 
     function pluginItem(pluginId) {
         if (pluginId === "moarchy.phone") return phonePlugin.item
         if (pluginId === "moarchy.messages") return messagesPlugin.item
         if (pluginId === "moarchy.files") return filesPlugin.item
+        if (pluginId === "moarchy.contacts") return contactsPlugin.item
+        if (pluginId === "moarchy.calculator") return calculatorPlugin.item
+        if (pluginId === "moarchy.calendar") return calendarPlugin.item
+        if (pluginId === "moarchy.clock") return clockPlugin.item
+        if (pluginId === "moarchy.editor") return editorPlugin.item
+        if (pluginId === "moarchy.weather") return weatherPlugin.item
+        if (pluginId === "moarchy.mail") return mailPlugin.item
+        if (pluginId === "moarchy.keep") return keepPlugin.item
+        if (pluginId === "moarchy.vitals") return vitalsPlugin.item
         return null
     }
 
     function hidePlugin(pluginId) {
         const item = pluginItem(pluginId)
         if (!item) return
-        if (typeof item.close === "function") item.close()
-        if (pluginId === "moarchy.files" && item.appWindow)
-            item.appWindow.hide()
-        // An incoming call is not dismissible by the home button. Keep its
-        // window in front rather than hiding the call screen under the home UI.
-        if (pluginId === "moarchy.phone" && item.incoming && item.opened) {
+        // Never put the home screen over an incoming or active call.
+        if (pluginId === "moarchy.phone" && item.opened && (item.incoming || item.callUp)) {
+            showNotice("Najpierw zakończ obsługę połączenia.")
             activePlugin = pluginId
             homeOpen = false
             return
         }
+        if (typeof item.close === "function") item.close()
+        if (item.appWindow) item.appWindow.hide()
         if (activePlugin === pluginId) {
             activePlugin = ""
             homeOpen = true
@@ -171,12 +338,11 @@ Scope {
             showNotice("Ta funkcja nie jest dostępna w tym obrazie.")
             return false
         }
-        contactsOpen = false
         if (activePlugin && activePlugin !== pluginId) {
             const previousId = activePlugin
             const previous = pluginItem(previousId)
             if (previousId === "moarchy.phone" && previous &&
-                    previous.incoming && previous.opened) {
+                    previous.opened && (previous.incoming || previous.callUp)) {
                 showNotice("Najpierw zakończ obsługę połączenia przychodzącego.")
                 return false
             }
@@ -196,66 +362,6 @@ Scope {
         else summonPlugin(pluginId, payload)
     }
 
-    function openContactsManager() {
-        contactsReturnToPlugin = activePlugin
-        contactsOpen = true
-        homeOpen = false
-        drawerOpen = false
-        controlOpen = false
-    }
-
-    function closeContactsManager() {
-        contactsOpen = false
-        if (activePlugin)
-            homeOpen = false
-        else
-            homeOpen = true
-        contactsReturnToPlugin = ""
-    }
-
-    function saveContacts() {
-        contactsStore.setText(JSON.stringify({ contacts: contacts }, null, 2))
-        contactsError = ""
-        showNotice("Zapisano kontakty.")
-    }
-
-    function addContact() {
-        const name = contactName.trim()
-        const phone = contactPhone.trim()
-        const digits = phone.replace(/[^0-9]/g, "")
-        if (!name.length) {
-            contactsError = "Wpisz nazwę kontaktu."
-            return
-        }
-        if (digits.length < 3 || /[^0-9+*#() .\\-]/.test(phone)) {
-            contactsError = "Wpisz prawidłowy numer telefonu."
-            return
-        }
-        for (let i = 0; i < contacts.length; ++i) {
-            if (String(contacts[i].phone).replace(/[\\s().-]/g, "") === phone.replace(/[\\s().-]/g, "")) {
-                contactsError = "Ten numer jest już zapisany."
-                return
-            }
-        }
-        const next = contacts.slice()
-        next.push({ name: name, phone: phone })
-        next.sort(function(a, b) {
-            return String(a.name).toLocaleLowerCase().localeCompare(String(b.name).toLocaleLowerCase())
-        })
-        contacts = next
-        contactName = ""
-        contactPhone = ""
-        saveContacts()
-    }
-
-    function removeContact(index) {
-        if (index < 0 || index >= contacts.length) return
-        const next = contacts.slice()
-        next.splice(index, 1)
-        contacts = next
-        saveContacts()
-    }
-
     function showHome() {
         const phone = phonePlugin.item
         if (activePlugin === "moarchy.phone" && phone && phone.opened &&
@@ -263,7 +369,6 @@ Scope {
             showNotice("Najpierw zakończ obsługę połączenia.")
             return
         }
-        contactsOpen = false
         if (activePlugin) hidePlugin(activePlugin)
         homeOpen = true
         drawerOpen = false
@@ -469,7 +574,7 @@ Scope {
         if (joined.indexOf("messages") !== -1 || joined.indexOf("sms") !== -1)
             return summonPlugin("moarchy.messages", "{}")
         if (joined.indexOf("contacts") !== -1 || joined.indexOf("kontakty") !== -1)
-            return openContactsManager()
+            return summonPlugin("moarchy.contacts", "{}")
         if (joined.indexOf("files") !== -1 || joined.indexOf("pliki") !== -1)
             return summonPlugin("moarchy.files", "{}")
         const entries = DesktopEntries.applications.values
@@ -521,7 +626,7 @@ Scope {
             else if (app === "messages")
                 root.summonPlugin("moarchy.messages", "{}")
             else if (app === "contacts")
-                root.openContactsManager()
+                root.summonPlugin("moarchy.contacts", "{}")
             else if (app === "files")
                 root.summonPlugin("moarchy.files", "{}")
             else
@@ -659,7 +764,7 @@ Scope {
         anchors { top: true; bottom: true; left: true; right: true }
         // The home surface must be shown at login. Hide it only while a
         // launched application is in the foreground.
-        visible: root.homeOpen || root.drawerOpen || root.controlOpen || root.contactsOpen
+        visible: root.homeOpen || root.drawerOpen || root.controlOpen
         aboveWindows: root.drawerOpen || root.controlOpen || root.homeOpen || root.contactsOpen
         exclusiveZone: 0
         focusable: root.drawerOpen || root.controlOpen || root.homeOpen || root.contactsOpen
@@ -1131,204 +1236,6 @@ Scope {
         }
 
 
-        Rectangle {
-            id: contactsPage
-            anchors.fill: parent
-            visible: root.contactsOpen
-            z: 22
-            color: "#0d1622"
-
-            Column {
-                anchors.fill: parent
-                anchors.margins: 24
-                spacing: 14
-
-                Row {
-                    width: parent.width
-                    height: 52
-                    Text {
-                        width: parent.width - 62
-                        height: parent.height
-                        text: "Kontakty"
-                        color: "#f3f6fa"
-                        font.pixelSize: 27
-                        font.weight: Font.DemiBold
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    Rectangle {
-                        width: 48; height: 48; radius: 16; color: "#26394d"
-                        Text { anchors.centerIn: parent; text: "✕"; color: "#ffffff"; font.pixelSize: 20 }
-                        MouseArea { anchors.fill: parent; onClicked: root.closeContactsManager() }
-                    }
-                }
-
-                Text {
-                    text: "Nowy kontakt"
-                    color: "#a9d7c9"
-                    font.pixelSize: 14
-                    font.weight: Font.DemiBold
-                }
-
-                Rectangle {
-                    width: parent.width; height: 54; radius: 16
-                    color: "#192b3d"; border.width: 1; border.color: "#35516b"
-                    TextInput {
-                        id: contactNameInput
-                        anchors.fill: parent
-                        anchors.leftMargin: 16
-                        anchors.rightMargin: 12
-                        verticalAlignment: TextInput.AlignVCenter
-                        color: "#f3f6fa"
-                        font.pixelSize: 16
-                        text: root.contactName
-                        onTextChanged: root.contactName = text
-                    }
-                    Text {
-                        anchors.left: parent.left; anchors.leftMargin: 16
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Imię i nazwisko"
-                        color: "#71879d"
-                        font.pixelSize: 15
-                        visible: contactNameInput.text.length === 0
-                    }
-                }
-
-                Rectangle {
-                    width: parent.width; height: 54; radius: 16
-                    color: "#192b3d"; border.width: 1; border.color: "#35516b"
-                    TextInput {
-                        id: contactPhoneInput
-                        anchors.fill: parent
-                        anchors.leftMargin: 16
-                        anchors.rightMargin: 12
-                        verticalAlignment: TextInput.AlignVCenter
-                        color: "#f3f6fa"
-                        font.pixelSize: 16
-                        inputMethodHints: Qt.ImhDialableCharactersOnly
-                        text: root.contactPhone
-                        onTextChanged: root.contactPhone = text
-                        Keys.onReturnPressed: root.addContact()
-                    }
-                    Text {
-                        anchors.left: parent.left; anchors.leftMargin: 16
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Numer telefonu"
-                        color: "#71879d"
-                        font.pixelSize: 15
-                        visible: contactPhoneInput.text.length === 0
-                    }
-                }
-
-                Rectangle {
-                    width: parent.width; height: 52; radius: 16
-                    color: "#d7f0e6"
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Dodaj kontakt"
-                        color: "#142b2b"
-                        font.pixelSize: 15
-                        font.weight: Font.DemiBold
-                    }
-                    MouseArea { anchors.fill: parent; onClicked: root.addContact() }
-                }
-
-                Text {
-                    width: parent.width
-                    text: root.contactsError
-                    color: "#ff9a9a"
-                    wrapMode: Text.WordWrap
-                    font.pixelSize: 12
-                    visible: root.contactsError.length > 0
-                }
-
-                Row {
-                    width: parent.width
-                    height: 28
-                    Text {
-                        text: "Zapisane osoby"
-                        color: "#a9d7c9"
-                        font.pixelSize: 14
-                        font.weight: Font.DemiBold
-                    }
-                    Text {
-                        anchors.right: parent.right
-                        text: String(root.contacts.length)
-                        color: "#91a4ba"
-                        font.pixelSize: 13
-                    }
-                }
-
-                ListView {
-                    id: contactsList
-                    width: parent.width
-                    height: Math.max(100, parent.height - 290)
-                    clip: true
-                    spacing: 8
-                    model: root.contacts
-                    boundsBehavior: Flickable.StopAtBounds
-
-                    delegate: Rectangle {
-                        required property var modelData
-                        required property int index
-                        width: contactsList.width
-                        height: 72
-                        radius: 16
-                        color: "#192b3d"
-                        border.width: 1
-                        border.color: "#2e465d"
-
-                        Column {
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.leftMargin: 14
-                            anchors.rightMargin: 110
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 4
-                            Text {
-                                width: parent.width
-                                text: modelData.name
-                                color: "#edf3f8"
-                                font.pixelSize: 15
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
-                            }
-                            Text {
-                                width: parent.width
-                                text: modelData.phone
-                                color: "#91a4ba"
-                                font.pixelSize: 12
-                                elide: Text.ElideRight
-                            }
-                        }
-                        Rectangle {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 8
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 46; height: 46; radius: 14
-                            color: "#294157"
-                            Text { anchors.centerIn: parent; text: "☎"; color: "#ffffff"; font.pixelSize: 19 }
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    root.closeContactsManager()
-                                    root.summonPlugin("moarchy.phone",
-                                                      JSON.stringify({ dial: modelData.phone }))
-                                }
-                            }
-                        }
-                        Rectangle {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 60
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 42; height: 46; radius: 14
-                            color: "#573b42"
-                            Text { anchors.centerIn: parent; text: "×"; color: "#ffffff"; font.pixelSize: 22 }
-                            MouseArea { anchors.fill: parent; onClicked: root.removeContact(index) }
-                        }
-                    }
-                }
-            }
-        }
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom; anchors.bottomMargin: 22
