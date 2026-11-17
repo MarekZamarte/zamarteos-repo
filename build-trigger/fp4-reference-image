@@ -45,3 +45,5 @@ Build request 2026-11-15: rebuild FP4 reference image with exact-match caller ID
 Build request 2026-11-15: fix black-screen startup in ZamarteOS shell: show home panel by default, hide it only while an app is foregrounded, remove invalid right anchors from drawer/control header Rows, bump shell package release, and run full FP4 reference build plus package/image verification. Build only; never flash the phone.
 
 Build request 2026-11-17: build the latest ZamarteOS Pure FP4 branch after successful ARM64 package and overlay CI; include the full native app host, Settings and Themes, ZamarteOS app entries, Polish keyboard and spelling support, Q6Voice/VoLTE call-audio audit, image verifier, package manifest, provenance and SHA256 checksums. Build and audit only; do not flash the phone.
+
+Build request 2026-11-17: retry after staging Phone.qml modified by the ZamarteOS overlay; build and audit only, never flash.
