@@ -39,6 +39,7 @@ jobs:
           git -C moarchy-base diff --check
           test -d moarchy-base/pkgbuilds/hybris-android-headers
           test -d moarchy-base/pkgbuilds/libhybris-fp4
+          test -d moarchy-base/pkgbuilds/pulsecore-headers-fp4
           test -d moarchy-base/pkgbuilds/pulseaudio-modules-droid-fp4
           test -d moarchy-base/pkgbuilds/hidl-audio-fp4
           test -d moarchy-base/pkgbuilds/droid-config-fp4
@@ -52,7 +53,7 @@ jobs:
       - name: Build Sailfish FP4 audio packages only
         working-directory: moarchy-base
         env:
-          ONLY_REPO_PACKAGES: "hybris-android-headers libhybris-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4"
+          ONLY_REPO_PACKAGES: "hybris-android-headers libhybris-fp4 pulsecore-headers-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4"
           COMMIT: ${{ github.sha }}
           DIRTY: "0"
         run: |
@@ -72,7 +73,7 @@ jobs:
         run: |
           set -euxo pipefail
           test -s packages/.build-manifest
-          for name in hybris-android-headers libhybris-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4; do
+          for name in hybris-android-headers libhybris-fp4 pulsecore-headers-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4; do
             find packages -maxdepth 1 -type f -name "$name-*.pkg.tar.*" -print -quit | grep .
           done
           sha256sum -c <(awk '/^[0-9a-f]{64}  / { print }' packages/.build-manifest)
