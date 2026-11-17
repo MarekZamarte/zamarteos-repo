@@ -58,6 +58,7 @@ check() {
   grep -q 'item.warmUp()' "$srcdir/shell.qml"
   grep -q 'target: "zamarteos-apps"' "$srcdir/shell.qml"
   grep -q 'function refreshSettings()' "$srcdir/shell.qml"
+  grep -q 'indexOf("zamarteos-") === 0' "$srcdir/shell.qml"
   grep -q 'nmcli' "$srcdir/shell.qml"
   grep -q 'bluetoothctl' "$srcdir/shell.qml"
   grep -q 'brightnessctl' "$srcdir/shell.qml"
