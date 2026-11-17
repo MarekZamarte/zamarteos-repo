@@ -60,6 +60,7 @@ Scope {
         onLoaded: {
             item.shell = pluginShellApi
             item.manifest = ({ id: "moarchy.phone", name: "Telefon" })
+            item.warmUp()
         }
     }
     Loader {
@@ -69,6 +70,7 @@ Scope {
         onLoaded: {
             item.shell = pluginShellApi
             item.manifest = ({ id: "moarchy.messages", name: "Wiadomości" })
+            item.warmUp()
         }
     }
     Loader {
@@ -145,14 +147,15 @@ Scope {
             return false
         }
         if (activePlugin && activePlugin !== pluginId) {
-            const previous = pluginItem(activePlugin)
-            if (previous && typeof previous.close === "function") previous.close()
-            if (previous && previous.appWindow) previous.appWindow.hide()
-            if (activePlugin === "moarchy.phone" && previous &&
+            const previousId = activePlugin
+            const previous = pluginItem(previousId)
+            if (previousId === "moarchy.phone" && previous &&
                     previous.incoming && previous.opened) {
                 showNotice("Najpierw zakończ obsługę połączenia przychodzącego.")
                 return false
             }
+            if (previous && typeof previous.close === "function") previous.close()
+            if (previous && previous.appWindow) previous.appWindow.hide()
         }
         activePlugin = pluginId
         homeOpen = false
@@ -409,6 +412,23 @@ Scope {
             sessionLock.locked = true
         }
     }
+
+    IpcHandler {
+        target: "zamarteos-apps"
+        function open(app: string): void {
+            if (app === "phone")
+                root.summonPlugin("moarchy.phone", "{}")
+            else if (app === "messages")
+                root.summonPlugin("moarchy.messages", "{}")
+            else if (app === "contacts")
+                root.summonPlugin("moarchy.phone", "{\\"contacts\\":true}")
+            else if (app === "files")
+                root.summonPlugin("moarchy.files", "{}")
+            else
+                root.showNotice("Nieznana aplikacja ZamarteOS.")
+        }
+    }
+
 
     PamContext {
         id: pam
