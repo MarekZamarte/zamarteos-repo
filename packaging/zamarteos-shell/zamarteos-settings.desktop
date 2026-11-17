@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Ustawienia
+Comment=Ustawienia telefonu ZamarteOS
+Icon=preferences-system
+Exec=/usr/bin/zamarteos-open-app settings
+Terminal=false
+Categories=Settings;
