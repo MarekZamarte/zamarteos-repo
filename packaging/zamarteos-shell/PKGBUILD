@@ -1,5 +1,5 @@
 pkgname=zamarteos-shell
-pkgver=0.2.2
+pkgver=0.2.3
 pkgrel=1
 pkgdesc="ZamarteOS touch-first Wayland shell and Fairphone 4 session"
 arch=('aarch64')
@@ -23,8 +23,9 @@ source=(
   'moarchy-firstboot-pin.conf'
   'getty-firstboot-pin.conf'
   'polish-letters.json'
+  'contacts.json'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
   set -x
@@ -67,6 +68,8 @@ check() {
   grep -q 'Requires=zamarteos-firstboot-pin.service' "$srcdir/moarchy-firstboot-pin.conf"
   grep -q 'Requires=moarchy-firstboot.service' "$srcdir/getty-firstboot-pin.conf"
   python3 -m json.tool "$srcdir/polish-letters.json" >/dev/null
+  python3 -m json.tool "$srcdir/contacts.json" >/dev/null
+  grep -Fq '"contacts":[]' "$srcdir/contacts.json"
   for char in ą ć ę ł ń ó ś ź ż Ą Ć Ę Ł Ń Ó Ś Ź Ż; do
     grep -Fq "$char" "$srcdir/polish-letters.json"
   done
@@ -90,4 +93,5 @@ package() {
   install -Dm644 "$srcdir/getty-firstboot-pin.conf" "$pkgdir/usr/lib/systemd/system/getty@tty1.service.d/10-zamarteos-firstboot.conf"
   # useradd copies /etc/skel into the new phone account during image creation.
   install -Dm644 "$srcdir/polish-letters.json" "$pkgdir/etc/skel/.config/moarchy-keyboard/layouts/letters.json"
+  install -Dm600 "$srcdir/contacts.json" "$pkgdir/etc/skel/.local/share/moarchy-contacts/contacts.json"
 }
