@@ -661,7 +661,15 @@ Scope {
                 root.summonPlugin("moarchy.keep", "{}")
             else if (app === "vitals")
                 root.summonPlugin("moarchy.vitals", "{}")
-            else
+            else if (app === "camera")
+                root.launchByKeywords(["megapixels", "camera"], "Aparat")
+            else if (app === "internet")
+                root.launchByKeywords(["epiphany", "browser"], "Internet")
+            else if (app === "settings") {
+                root.controlOpen = true
+                root.homeOpen = false
+                root.refreshSettings()
+            } else
                 root.showNotice("Nieznana aplikacja ZamarteOS.")
         }
     }
@@ -799,7 +807,7 @@ Scope {
         visible: root.homeOpen || root.drawerOpen || root.controlOpen
         aboveWindows: root.drawerOpen || root.controlOpen || root.homeOpen
         exclusiveZone: 0
-        focusable: root.drawerOpen || root.controlOpen || root.homeOpen || root.contactsOpen
+        focusable: root.drawerOpen || root.controlOpen || root.homeOpen
         color: "#0b111b"
 
         Rectangle {
