@@ -11,3 +11,4 @@ Retry after correcting the PKGBUILD syntax and preserving android-config.h from 
 Retry after adding the missing Android hardware/gralloc.h declaration to libhybris ui compatibility headers.
 
 run=7 dependency-sync and compiler-diagnostic
+run=8 corrected overlay dependency patch
