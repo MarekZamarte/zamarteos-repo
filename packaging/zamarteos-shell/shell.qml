@@ -403,7 +403,7 @@ Scope {
             return
         }
         if (typeof item.close === "function") item.close()
-        if (item.appWindow) item.appWindow.hide()
+        if (typeof item.appWindow !== "undefined" && item.appWindow) item.appWindow.hide()
         if (activePlugin === pluginId) {
             activePlugin = ""
             homeOpen = true
@@ -425,7 +425,7 @@ Scope {
                 return false
             }
             if (previous && typeof previous.close === "function") previous.close()
-            if (previous && previous.appWindow) previous.appWindow.hide()
+            if (previous && typeof previous.appWindow !== "undefined" && previous.appWindow) previous.appWindow.hide()
         }
         activePlugin = pluginId
         homeOpen = false
