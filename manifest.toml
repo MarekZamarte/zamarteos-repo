@@ -14,13 +14,28 @@ kernel_commit = "5ba18a1da7133a04fa9bf5c1b5cde3e718d7c41b"
 kernel_version = "7.2.0"
 
 [telephony]
+# Retained only as a reference until Sailfish audio packages are integrated
+# into the image and the ModemManager call-state bridge is verified.
 daemon_repository = "https://gitlab.postmarketos.org/postmarketOS/q6voiced"
 daemon_ref = "0.3.1"
 voice_pcm_card = 0
 voice_pcm_device = 3
 voice_pcm_name = "VoiceMMode1"
 
+[sailfish_audio]
+pulseaudio_modules_repository = "https://github.com/mer-hybris/pulseaudio-modules-droid"
+pulseaudio_modules_commit = "345fda0dc86efb00c739b4b7ba760aa9e6d97693"
+libhybris_repository = "https://github.com/libhybris/libhybris"
+libhybris_commit = "7079712a42ea2754adf747e70c6cc75764c8596e"
+hidl_repository = "https://github.com/SailfishOS-for-the-fairphone-4/hidl_audio"
+hidl_commit = "5d2670e709511b87fcf596fa6dd3c1e7261434aa"
+device_config_repository = "https://github.com/SailfishOS-for-the-fairphone-4/droid-configs-FP4"
+device_config_commit = "48934cb6aadf06eaef138104914fe4421ab9cad3"
+audio_server = "pulseaudio"
+vendor_android_version = "11"
+
 [build]
 target_arch = "aarch64"
+install-first = "hybris-android-headers libhybris-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4"
 build_reference_image_only = true
 flash_device = false
