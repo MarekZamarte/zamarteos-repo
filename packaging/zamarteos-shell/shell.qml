@@ -577,6 +577,22 @@ Scope {
             return summonPlugin("moarchy.contacts", "{}")
         if (joined.indexOf("files") !== -1 || joined.indexOf("pliki") !== -1)
             return summonPlugin("moarchy.files", "{}")
+        if (joined.indexOf("calculator") !== -1 || joined.indexOf("kalkulator") !== -1)
+            return summonPlugin("moarchy.calculator", "{}")
+        if (joined.indexOf("calendar") !== -1 || joined.indexOf("kalendarz") !== -1)
+            return summonPlugin("moarchy.calendar", "{}")
+        if (joined.indexOf("clock") !== -1 || joined.indexOf("zegar") !== -1)
+            return summonPlugin("moarchy.clock", "{}")
+        if (joined.indexOf("editor") !== -1 || joined.indexOf("edytor") !== -1)
+            return summonPlugin("moarchy.editor", "{}")
+        if (joined.indexOf("weather") !== -1 || joined.indexOf("pogoda") !== -1)
+            return summonPlugin("moarchy.weather", "{}")
+        if (joined.indexOf("mail") !== -1 || joined.indexOf("poczta") !== -1)
+            return summonPlugin("moarchy.mail", "{}")
+        if (joined.indexOf("keep") !== -1 || joined.indexOf("notes") !== -1 || joined.indexOf("notatki") !== -1)
+            return summonPlugin("moarchy.keep", "{}")
+        if (joined.indexOf("vitals") !== -1 || joined.indexOf("monitor") !== -1)
+            return summonPlugin("moarchy.vitals", "{}")
         const entries = DesktopEntries.applications.values
         for (let i = 0; i < entries.length; ++i) {
             const entry = entries[i]
@@ -629,6 +645,22 @@ Scope {
                 root.summonPlugin("moarchy.contacts", "{}")
             else if (app === "files")
                 root.summonPlugin("moarchy.files", "{}")
+            else if (app === "calculator")
+                root.summonPlugin("moarchy.calculator", "{}")
+            else if (app === "calendar")
+                root.summonPlugin("moarchy.calendar", "{}")
+            else if (app === "clock")
+                root.summonPlugin("moarchy.clock", "{}")
+            else if (app === "editor")
+                root.summonPlugin("moarchy.editor", "{}")
+            else if (app === "weather")
+                root.summonPlugin("moarchy.weather", "{}")
+            else if (app === "mail")
+                root.summonPlugin("moarchy.mail", "{}")
+            else if (app === "keep")
+                root.summonPlugin("moarchy.keep", "{}")
+            else if (app === "vitals")
+                root.summonPlugin("moarchy.vitals", "{}")
             else
                 root.showNotice("Nieznana aplikacja ZamarteOS.")
         }
@@ -765,7 +797,7 @@ Scope {
         // The home surface must be shown at login. Hide it only while a
         // launched application is in the foreground.
         visible: root.homeOpen || root.drawerOpen || root.controlOpen
-        aboveWindows: root.drawerOpen || root.controlOpen || root.homeOpen || root.contactsOpen
+        aboveWindows: root.drawerOpen || root.controlOpen || root.homeOpen
         exclusiveZone: 0
         focusable: root.drawerOpen || root.controlOpen || root.homeOpen || root.contactsOpen
         color: "#0b111b"
@@ -883,7 +915,10 @@ Scope {
                             { title: "Wiadomości", subtitle: "SMS i rozmowy", symbol: "✉", words: ["messages", "chatty", "sms", "messaging"] },
                             { title: "Kontakty", subtitle: "Osoby i numery", symbol: "♙", words: ["contacts", "address book", "kontakty"] },
                             { title: "Internet", subtitle: "Przeglądarka WWW", symbol: "◎", words: ["epiphany", "web browser", "browser", "przeglądarka"] },
-                            { title: "Pliki", subtitle: "Pamięć telefonu", symbol: "▤", words: ["files", "file manager", "pliki"] }
+                            { title: "Pliki", subtitle: "Pamięć telefonu", symbol: "▤", words: ["files", "file manager", "pliki"] },
+                            { title: "Aparat", subtitle: "Zdjęcia i wideo", symbol: "▣", words: ["megapixels", "camera", "aparat"] },
+                            { title: "Kalendarz", subtitle: "Terminy i wydarzenia", symbol: "▦", words: ["calendar", "kalendarz"] },
+                            { title: "Pogoda", subtitle: "Prognoza na tydzień", symbol: "☼", words: ["weather", "pogoda"] }
                         ]
                         delegate: Rectangle {
                             id: appDelegate
