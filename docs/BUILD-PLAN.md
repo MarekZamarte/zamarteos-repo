@@ -57,9 +57,11 @@ wpisy aplikacji ZamarteOS uruchamiają te moduły przez IPC powłoki. Telefon i
 Wiadomości są ładowane od początku sesji, aby nasłuch ModemManager działał
 również przy zamkniętych oknach.
 
-Centrum ustawień odczytuje i zmienia Wi-Fi, dane komórkowe, Bluetooth,
-jasność ekranu i głośność multimediów przez nmcli, bluetoothctl,
-brightnessctl i pamixer. Wyświetla również stan baterii i wersję jądra.
+Centrum ustawień odczytuje i zmienia Wi-Fi i Bluetooth, jasność ekranu
+oraz głośność multimediów przez nmcli, bluetoothctl, brightnessctl
+i pamixer. Stan radia komórkowego jest tylko odczytywany — powłoka nie
+wyłącza modemu, aby nie przerwać połączeń. Panel wyświetla również stan
+baterii i wersję jądra.
 Aparat uruchamia natywny Megapixels, a Internet — Epiphany. Kontakty używają
 wspólnej lokalnej bazy z Telefonem i Wiadomościami.
 
