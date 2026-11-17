@@ -5,3 +5,5 @@ Retry after fixing ARM64 dependency order, libhybris header include path and Pul
 Retry: correct Android 11 API 30 metadata so libhybris enables Android Q linker support.
 
 Retry after adding missing Android NDK android/rect.h to the pinned headers package.
+
+Retry after correcting the PKGBUILD syntax and preserving android-config.h from the header snapshot.
