@@ -99,6 +99,10 @@ check() {
   grep -q 'file:///usr/share/moarchy/plugins/moarchy.mail/Mail.qml' "$srcdir/shell.qml"
   grep -q 'file:///usr/share/moarchy/plugins/moarchy.keep/Keep.qml' "$srcdir/shell.qml"
   grep -q 'file:///usr/share/moarchy/plugins/moarchy.vitals/Vitals.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.settings/Settings.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.themes/Themes.qml' "$srcdir/shell.qml"
+  grep -q 'pluginId === "moarchy.app-drawer"' "$srcdir/shell.qml"
+  grep -q 'pluginId === "moarchy.control-center"' "$srcdir/shell.qml"
   grep -q 'target: "zamarteos-apps"' "$srcdir/shell.qml"
   test -x /usr/lib/qt6/bin/qmllint
   # Parse and lint the actual packaged QML with Qt's import metadata.
