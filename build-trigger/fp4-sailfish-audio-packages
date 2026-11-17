@@ -9,3 +9,5 @@ Retry after adding missing Android NDK android/rect.h to the pinned headers pack
 Retry after correcting the PKGBUILD syntax and preserving android-config.h from the header snapshot.
 
 Retry after adding the missing Android hardware/gralloc.h declaration to libhybris ui compatibility headers.
+
+run=7 dependency-sync and compiler-diagnostic
