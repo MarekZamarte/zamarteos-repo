@@ -128,7 +128,11 @@ jobs:
             moarchy.weather/Weather.qml \
             moarchy.mail/Mail.qml \
             moarchy.keep/Keep.qml \
-            moarchy.vitals/Vitals.qml; do
+            moarchy.vitals/Vitals.qml \
+            moarchy.settings/Settings.qml \
+            moarchy.settings/Pages.js \
+            moarchy.settings/Guards.js \
+            moarchy.themes/Themes.qml; do
             test -s "moarchy-base/default/omarchy/plugins/$plugin_file"
           done
           grep -Fq 'function openContacts()' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
