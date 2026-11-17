@@ -1,0 +1,33 @@
+# Private PulseAudio core headers for out-of-tree modules (same PA ABI as the phone).
+pkgname=pulsecore-headers-fp4
+pkgver=17.0
+pkgrel=1
+pkgdesc="PulseAudio 17.0 private headers and pkg-config metadata for Droid modules"
+arch=('any')
+url="https://github.com/pulseaudio/pulseaudio"
+license=('LGPL-2.1-or-later')
+makedepends=('git')
+source=("pulseaudio::git+https://github.com/pulseaudio/pulseaudio.git#tag=v17.0")
+sha256sums=('SKIP')
+
+package() {
+  cd "$srcdir/pulseaudio"
+  install -d "$pkgdir/usr/include/pulsecore"
+  find src/pulsecore -type f -name '*.h' -print0 | while IFS= read -r -d '' f; do
+    rel="${f#src/pulsecore/}"
+    install -D -m644 "$f" "$pkgdir/usr/include/pulsecore/$rel"
+  done
+  install -d "$pkgdir/usr/lib/pkgconfig"
+  cat > "$pkgdir/usr/lib/pkgconfig/pulsecore.pc" <<'PC'
+prefix=/usr
+includedir=${prefix}/include
+
+Name: pulsecore
+Description: PulseAudio private core headers (17.0)
+Version: 17.0
+Cflags: -I${includedir} -I${includedir}/pulsecore
+Libs:
+PC
+  test -s "$pkgdir/usr/lib/pkgconfig/pulsecore.pc"
+  test -s "$pkgdir/usr/include/pulsecore/module.h"
+}
