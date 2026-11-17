@@ -12,3 +12,4 @@ Retry after adding the missing Android hardware/gralloc.h declaration to libhybr
 
 run=7 dependency-sync and compiler-diagnostic
 run=8 corrected overlay dependency patch
+run=9 close heredoc in overlay
