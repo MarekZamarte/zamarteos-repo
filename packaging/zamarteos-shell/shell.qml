@@ -40,15 +40,50 @@ Scope {
     QtObject {
         id: pluginShellApi
         function isPluginOpen(pluginId) {
+            if (pluginId === "moarchy.app-drawer") return root.drawerOpen
+            if (pluginId === "moarchy.control-center") return root.controlOpen
             return root.activePlugin === pluginId
         }
         function hide(pluginId) {
+            if (pluginId === "moarchy.app-drawer") {
+                root.drawerOpen = false
+                if (!root.activePlugin) root.homeOpen = true
+                return
+            }
+            if (pluginId === "moarchy.control-center") {
+                root.controlOpen = false
+                if (!root.activePlugin) root.homeOpen = true
+                return
+            }
             root.hidePlugin(pluginId)
         }
         function summon(pluginId, payload) {
+            if (pluginId === "moarchy.app-drawer") {
+                root.controlOpen = false
+                root.drawerOpen = true
+                root.homeOpen = false
+                return
+            }
+            if (pluginId === "moarchy.control-center") {
+                root.drawerOpen = false
+                root.controlOpen = true
+                root.homeOpen = false
+                root.refreshSettings()
+                return
+            }
             root.summonPlugin(pluginId, payload || "{}")
         }
         function toggle(pluginId, payload) {
+            if (pluginId === "moarchy.app-drawer") {
+                if (root.drawerOpen) hide(pluginId)
+                else summon(pluginId, payload)
+                return
+            }
+            if (pluginId === "moarchy.control-center") {
+                if (root.controlOpen) hide(pluginId)
+                else summon(pluginId, payload)
+                return
+            }
             root.togglePlugin(pluginId, payload || "{}")
         }
         function openContacts() {
@@ -187,6 +222,16 @@ Scope {
             if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
+    Loader {
+        id: themesPlugin
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.themes/Themes.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.themes", name: "Motywy" })
+        })
+        onLoaded: {
+            if (item && typeof item.warmUp === "function") item.warmUp()
+        }
+    }
 
     Connections {
         target: phonePlugin.item
@@ -318,6 +363,16 @@ Scope {
             }
         }
     }
+    Connections {
+        target: themesPlugin.item
+        function onOpenedChanged() {
+            if (themesPlugin.item && !themesPlugin.item.opened &&
+                    root.activePlugin === "moarchy.themes") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
 
     function pluginItem(pluginId) {
         if (pluginId === "moarchy.phone") return phonePlugin.item
@@ -333,6 +388,7 @@ Scope {
         if (pluginId === "moarchy.keep") return keepPlugin.item
         if (pluginId === "moarchy.vitals") return vitalsPlugin.item
         if (pluginId === "moarchy.settings") return settingsPlugin.item
+        if (pluginId === "moarchy.themes") return themesPlugin.item
         return null
     }
 
