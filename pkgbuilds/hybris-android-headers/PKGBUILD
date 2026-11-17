@@ -1,0 +1,24 @@
+# Pinned AOSP/Hybris headers used by libhybris and Droid audio modules.
+pkgname=hybris-android-headers
+pkgver=5.1.1_30
+pkgrel=1
+pkgdesc="Android 11-compatible header bundle for libhybris builds"
+arch=('aarch64')
+url="https://github.com/mickybart/gnulinux_support-common"
+license=('custom')
+makedepends=('libarchive' 'make')
+options=('!strip')
+source=('gls-common::git+https://github.com/mickybart/gnulinux_support-common#commit=d02ca07c443cebf183d8c8bc49b8bd06c49b41b')
+sha256sums=('SKIP')
+
+prepare() {
+  mkdir -p "$srcdir/headers"
+  bsdtar -xpf "$srcdir/gls-common/aur-blob/$pkgname/android-headers-$pkgver.tgz" -C "$srcdir/headers"
+}
+
+package() {
+  cd "$srcdir/headers"
+  install -d "$pkgdir/opt/android"
+  make DESTDIR="$pkgdir" PREFIX=/opt/android INCLUDEDIR=/opt/android/include PKGCONFIGDIR=/usr/lib/pkgconfig install
+  sed -i 's|Cflags:.*|Cflags: -I${includedir}|' "$pkgdir/usr/lib/pkgconfig/android-headers.pc"
+}
