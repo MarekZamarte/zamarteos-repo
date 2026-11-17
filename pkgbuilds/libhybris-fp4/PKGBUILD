@@ -1,0 +1,33 @@
+# ARM64 libhybris build for the Fairphone 4 Sailfish audio HAL.
+pkgname=libhybris-fp4
+pkgver=0.0.5.57
+pkgrel=1
+pkgdesc="libhybris Android hardware compatibility layer for ZamarteOS FP4"
+arch=('aarch64')
+url="https://github.com/libhybris/libhybris"
+license=('Apache-2.0')
+depends=('glibc' 'hybris-android-headers' 'wayland')
+makedepends=('autoconf' 'automake' 'libtool' 'make' 'gcc' 'pkgconf' 'wayland' 'hybris-android-headers')
+provides=('libhybris' 'libhardware')
+conflicts=('libhybris')
+source=("libhybris::git+https://github.com/libhybris/libhybris#commit=7079712a42ea2754adf747e70c6cc75764c8596e")
+sha256sums=('SKIP')
+
+build() {
+  cd "$srcdir/libhybris/hybris"
+  ./autogen.sh --enable-arch=arm64 --prefix=/opt/android/hybris --with-android-headers=/opt/android/include --enable-wayland
+  make
+}
+
+package() {
+  cd "$srcdir/libhybris/hybris"
+  make -j1 DESTDIR="$pkgdir" install
+  install -d "$pkgdir/usr/lib"
+  if [ -d "$pkgdir/opt/android/hybris/lib/pkgconfig" ]; then
+    mv "$pkgdir/opt/android/hybris/lib/pkgconfig" "$pkgdir/usr/lib/pkgconfig"
+  fi
+  # Expose the HAL compatibility libraries through the normal runtime linker path.
+  find "$pkgdir/opt/android/hybris/lib" -maxdepth 1 -type f -name '*.so*' -printf '%f\n' 2>/dev/null | while read -r f; do
+    [ -e "$pkgdir/usr/lib/$f" ] || ln -s "/opt/android/hybris/lib/$f" "$pkgdir/usr/lib/$f"
+  done
+}
