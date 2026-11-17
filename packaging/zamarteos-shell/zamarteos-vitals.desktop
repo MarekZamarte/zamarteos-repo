@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Monitor systemu
+Comment=Procesor, pamięć i procesy
+Icon=utilities-system-monitor
+Exec=/usr/bin/zamarteos-open-app vitals
+Terminal=false
+Categories=System;Monitor;
