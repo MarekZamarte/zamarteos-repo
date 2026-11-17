@@ -16,6 +16,69 @@ done
 rm -rf "$ROOT/pkgbuilds/zamarteos-shell"
 cp -a "$HERE/packaging/zamarteos-shell" "$ROOT/pkgbuilds/zamarteos-shell"
 
+# Copy the separately buildable Sailfish FP4 audio stack recipes into the
+# pinned Moarchy tree. These packages are built and audited before any image
+# switch; they are deliberately not added to moarchy-meta yet.
+for audio_pkg in hybris-android-headers libhybris-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4; do
+  test -f "$HERE/pkgbuilds/$audio_pkg/PKGBUILD" || {
+    echo "Missing Sailfish audio package recipe: $audio_pkg" >&2
+    exit 1
+  }
+  rm -rf "$ROOT/pkgbuilds/$audio_pkg"
+  cp -a "$HERE/pkgbuilds/$audio_pkg" "$ROOT/pkgbuilds/$audio_pkg"
+done
+
+# Let the pinned package builder build only the explicitly selected in-repo
+# recipes for the dedicated Sailfish-audio CI job. The normal reference-image
+# workflow remains unchanged and still builds the complete package set.
+python3 - "$ROOT/docker/build-packages.sh" <<'PY'
+from pathlib import Path
+import sys
+
+p = Path(sys.argv[1])
+s = p.read_text()
+marker = "produced=()\n"
+helper = marker + '''
+only_repo_package() {
+  [ -z "${ONLY_REPO_PACKAGES:-}" ] && return 0
+  case " ${ONLY_REPO_PACKAGES} " in
+    *" $1 "*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+'''
+if "only_repo_package()" not in s:
+    if marker not in s:
+        raise SystemExit("Cannot find package manifest initialization")
+    s = s.replace(marker, helper, 1)
+
+s = s.replace('''for component in $(manifest_components); do
+''', '''for component in $(manifest_components); do
+  if [ -n "${ONLY_REPO_PACKAGES:-}" ]; then
+    echo "==> $component -- component builds disabled for focused audio-package job"
+    continue
+  fi
+''', 1)
+s = s.replace('''for pkg in $packages; do
+''', '''for pkg in $packages; do
+  if [ -n "${ONLY_REPO_PACKAGES:-}" ]; then
+    echo "==> $pkg -- AUR builds disabled for focused audio-package job"
+    continue
+  fi
+''', 1)
+s = s.replace('''  for _first in $(manifest_get build install-first 2>/dev/null); do
+    _fd=''', '''  for _first in $(manifest_get build install-first 2>/dev/null); do
+    only_repo_package "$_first" || continue
+    _fd=''', 1)
+s = s.replace('''    p=$(basename "$d")
+    # Two reasons to pass over a package here''', '''    p=$(basename "$d")
+    only_repo_package "$p" || continue
+    # Two reasons to pass over a package here''', 1)
+if "only_repo_package \"$p\" || continue" not in s:
+    raise SystemExit("Could not install focused package filter in in-repo loop")
+p.write_text(s)
+PY
+
 # The native phone plugin is kept loaded by ZamarteOS so incoming calls are
 # detected while the keypad is closed. Support opening its Contacts tab from
 # the ZamarteOS application drawer; the upstream plugin already owns the
