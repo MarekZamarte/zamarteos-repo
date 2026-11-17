@@ -3,3 +3,5 @@ Build the pinned Sailfish FP4 audio compatibility packages only. This workflow d
 Retry after fixing ARM64 dependency order, libhybris header include path and PulseAudio private headers.
 
 Retry: correct Android 11 API 30 metadata so libhybris enables Android Q linker support.
+
+Retry after adding missing Android NDK android/rect.h to the pinned headers package.
