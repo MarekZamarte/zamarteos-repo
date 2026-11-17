@@ -59,121 +59,122 @@ Scope {
 
     Loader {
         id: phonePlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.phone/Phone.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.phone/Phone.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.phone", name: "Telefon" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.phone", name: "Telefon" })
-            item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: messagesPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.messages/Messages.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.messages/Messages.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.messages", name: "Wiadomości" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.messages", name: "Wiadomości" })
-            item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: filesPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.files/Files.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.files/Files.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.files", name: "Pliki" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.files", name: "Pliki" })
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: contactsPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.contacts/Contacts.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.contacts/Contacts.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.contacts", name: "Kontakty" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.contacts", name: "Kontakty" })
-            if (typeof item.warmUp === "function") item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: calculatorPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.calculator/Calculator.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.calculator/Calculator.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.calculator", name: "Kalkulator" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.calculator", name: "Kalkulator" })
-            if (typeof item.warmUp === "function") item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: calendarPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.calendar/Calendar.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.calendar/Calendar.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.calendar", name: "Kalendarz" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.calendar", name: "Kalendarz" })
-            if (typeof item.warmUp === "function") item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: clockPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.clock/Clock.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.clock/Clock.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.clock", name: "Zegar" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.clock", name: "Zegar" })
-            if (typeof item.warmUp === "function") item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: editorPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.editor/Editor.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.editor/Editor.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.editor", name: "Edytor tekstu" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.editor", name: "Edytor tekstu" })
-            if (typeof item.warmUp === "function") item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: weatherPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.weather/Weather.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.weather/Weather.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.weather", name: "Pogoda" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.weather", name: "Pogoda" })
-            if (typeof item.warmUp === "function") item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: mailPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.mail/Mail.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.mail/Mail.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.mail", name: "Poczta" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.mail", name: "Poczta" })
-            if (typeof item.warmUp === "function") item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: keepPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.keep/Keep.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.keep/Keep.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.keep", name: "Notatki" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.keep", name: "Notatki" })
-            if (typeof item.warmUp === "function") item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
     Loader {
         id: vitalsPlugin
-        active: true
-        source: "file:///usr/share/moarchy/plugins/moarchy.vitals/Vitals.qml"
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.vitals/Vitals.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.vitals", name: "Monitor systemu" })
+        })
         onLoaded: {
-            item.shell = pluginShellApi
-            item.manifest = ({ id: "moarchy.vitals", name: "Monitor systemu" })
-            if (typeof item.warmUp === "function") item.warmUp()
+            if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
 
