@@ -63,7 +63,7 @@ check() {
   grep -q 'bluetoothctl' "$srcdir/shell.qml"
   grep -q 'brightnessctl' "$srcdir/shell.qml"
   grep -q 'pamixer' "$srcdir/shell.qml"
-  grep -q 'qs ipc call zamarteos-apps open' "$srcdir/zamarteos-open-app"
+  grep -q 'qs -p /usr/share/zamarteos-shell ipc call zamarteos-apps open' "$srcdir/zamarteos-open-app"
   grep -q 'Exec=/usr/bin/zamarteos-open-app phone' "$srcdir/zamarteos-phone.desktop"
   grep -q 'Exec=/usr/bin/zamarteos-open-app messages' "$srcdir/zamarteos-messages.desktop"
   grep -q 'Exec=/usr/bin/zamarteos-open-app contacts' "$srcdir/zamarteos-contacts.desktop"
