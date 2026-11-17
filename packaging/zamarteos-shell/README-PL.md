@@ -1,4 +1,4 @@
-# Powłoka ZamarteOS Pure — etap 0.2
+# Powłoka ZamarteOS Pure — etap 0.2.2
 
 ## Cel
 
@@ -10,15 +10,23 @@ powiadomienia, centrum sterowania, ustawienia, menu i aplikacje ZamarteOS.
 Sailfish OS nie jest wymaganym elementem docelowego systemu. Bazą jest
 natywny userspace Arch Linux ARM z własną sesją Wayland ZamarteOS.
 
-## Co zapewnia ta powłoka na obecnym etapie
+## Co działa w kodzie powłoki na tym etapie
 
 - własna sesja Hyprland/Wayland uruchamiana z tty1;
-- ekran główny i zegar;
-- szuflada aplikacji z wyszukiwaniem;
-- pasek ZamarteOS i wejście do centrum sterowania;
+- ekran główny, szuflada aplikacji i wyszukiwanie wpisów .desktop;
+- hostowanie natywnych modułów Phone, Messages i Files z przypiętej bazy FP4;
+- osobne pozycje Telefon, Wiadomości, Kontakty i Pliki w menu aplikacji;
+- moduły Telefonu i Wiadomości są ładowane przy starcie sesji i wywołują
+  warmUp(), aby nasłuch ModemManager nie zależał od otwartego okna;
+- Centrum telefonu odczytuje i zmienia Wi-Fi, dane komórkowe, Bluetooth,
+  jasność ekranu i głośność multimediów przez nmcli, bluetoothctl,
+  brightnessctl i pamixer; wyświetla też odczyt baterii i wersję jądra;
 - blokada sesji z uwierzytelnianiem PAM;
-- polski locale i polski układ klawiatury;
-- uruchamianie zainstalowanych aplikacji Linux przez ich desktop entries.
+- polski locale i polski układ klawiatury.
+
+Połączenia i SMS korzystają z ModemManager. Moduł Telefonu korzysta z
+callaudiod/Q6Voice oraz istniejącego routingu FP4; ta zmiana nie modyfikuje
+modemu ani ścieżki audio rozmów.
 
 ## Zaplecze techniczne, które pozostaje
 
@@ -30,32 +38,19 @@ osobno i ma być w całości ZamarteOS.
 
 ## Co nie jest jeszcze ukończone
 
-Sama powłoka i jej kafelki nie oznaczają, że wszystkie aplikacje są gotowe.
-Telefon, Kontakty, SMS, aparat, galeria, ustawienia i inne programy muszą
-być dostarczone jako prawdziwe aplikacje lub poprawnie zintegrowane z
-natywnymi aplikacjami Linux. Nieaktywne funkcje mają pozostać ukryte.
-Menu ustawień nie może udawać, że zmieniło ustawienie, jeśli nie wywołało
-odpowiedniej usługi systemowej.
-
-## Budowanie pakietu
-
-W środowisku Arch Linux ARM zgodnym z przypiętą bazą FP4:
-
-    cd pkgbuilds/zamarteos-shell
-    makepkg -si
-
-## Integracja
-
-Skrypt scripts/apply-zamarteos-overlay.sh instaluje powłokę i kieruje
-uruchomienie tty1 do sesji ZamarteOS. Pozostawia techniczne usługi i
-sprzętową bazę FP4. Nie flashuje telefonu.
+Ta powłoka nie oznacza, że wszystkie aplikacje są gotowe. Aparat, galeria,
+kalendarz, pełne ustawienia systemowe, aktualizacje i kopie zapasowe
+wymagają dalszej integracji. Nieaktywne funkcje mają pozostać ukryte.
+Każda nowa kontrolka ma wywoływać prawdziwą usługę, a nie zmieniać tylko
+wygląd przełącznika.
 
 ## Testowanie
 
-Najpierw sprawdzić pakiet, obraz referencyjny, logi i weryfikator CI.
-Następnie przeprowadzić testy na fizycznym FP4: start, blokada, dotyk,
-przewijanie, klawiatura polska, uruchamianie aplikacji, połączenia,
-dźwięk rozmów, SMS, sieć, aparat, bateria i uśpienie.
+CI sprawdza budowanie pakietu ARM64, qmllint i integrację z przypiętą bazą.
+To nie jest jeszcze test uruchomienia na fizycznym Fairphone 4. Na telefonie
+trzeba sprawdzić uruchomienie modułów, nasłuch połączeń w tle, identyfikację
+dzwoniącego, dźwięk rozmowy, SMS, sieć, Bluetooth, jasność, głośność,
+klawiaturę polską, blokadę, aparat, baterię i uśpienie.
 
 Obraz nie jest gotowy do flashowania tylko dlatego, że CI zbudowało pakiet
 lub przeszły kontrole statyczne. Flashowanie wymaga osobnej decyzji.
