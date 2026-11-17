@@ -16,6 +16,34 @@ done
 rm -rf "$ROOT/pkgbuilds/zamarteos-shell"
 cp -a "$HERE/packaging/zamarteos-shell" "$ROOT/pkgbuilds/zamarteos-shell"
 
+# The native phone plugin is kept loaded by ZamarteOS so incoming calls are
+# detected while the keypad is closed. Support opening its Contacts tab from
+# the ZamarteOS application drawer; the upstream plugin already owns the
+# contacts data and call UI.
+python3 - "$ROOT/default/omarchy/plugins/moarchy.phone/Phone.qml" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+needle = '''      if (payload.dial) {
+        root.typed = Numbers.dialable(payload.dial)
+        root.page = 0
+      }
+'''
+replacement = '''      if (payload.contacts) root.page = 2
+      if (payload.dial) {
+        root.typed = Numbers.dialable(payload.dial)
+        root.page = 0
+      }
+'''
+if replacement not in source:
+    if needle not in source:
+        raise SystemExit("Phone.qml open() payload block changed; refusing to patch Contacts blindly")
+    source = source.replace(needle, replacement, 1)
+    path.write_text(source)
+PY
+
 # Patch the pinned standalone Wayland keyboard after it is cloned by the
 # upstream package builder. The patch is kept in this repository and applied
 # only to the exact keyboard commit pinned by the base manifest.
