@@ -1,8 +1,10 @@
-# Pinned AOSP/Hybris headers used by libhybris and Droid audio modules.
+# Android 11 (API 30) header metadata for the FP4 vendor HAL.
+# The bundled header snapshot contains 5.1.1 declarations; libhybris uses
+# ANDROID_VERSION_MAJOR to enable its Android 10+ linker implementation.
 pkgname=hybris-android-headers
 pkgver=5.1.1_30
-pkgrel=1
-pkgdesc="Android 11-compatible header bundle for libhybris builds"
+pkgrel=2
+pkgdesc="Android 11/API 30 headers for libhybris and FP4 Droid audio"
 arch=('aarch64')
 url="https://github.com/mickybart/gnulinux_support-common"
 license=('custom')
@@ -21,4 +23,21 @@ package() {
   install -d "$pkgdir/opt/android"
   make DESTDIR="$pkgdir" PREFIX=/opt/android INCLUDEDIR=/opt/android/include PKGCONFIGDIR=/usr/lib/pkgconfig install
   sed -i 's|Cflags:.*|Cflags: -I${includedir}|' "$pkgdir/usr/lib/pkgconfig/android-headers.pc"
+
+  # This snapshot's header ABI is labelled 5.1.1, but the FP4 vendor blobs
+  # target Android 11/API 30. libhybris checks these macros to enable
+  # HAS_ANDROID_10_0_0 and WANT_LINKER_Q. Without this, hooks.c references
+  # LINKER_VERSION_DEFAULT/LINKER_NAME_DEFAULT without their definitions.
+  local version_header="$pkgdir/opt/android/include/android-version.h"
+  test -f "$version_header" || {
+    echo "ERROR: android-version.h was not installed at the expected path" >&2
+    find "$pkgdir/opt/android" -name android-version.h -print >&2
+    return 1
+  }
+  sed -i \
+    -e 's/^#define ANDROID_VERSION_MAJOR .*/#define ANDROID_VERSION_MAJOR 11/' \
+    -e 's/^#define ANDROID_VERSION_MINOR .*/#define ANDROID_VERSION_MINOR 0/' \
+    -e 's/^#define ANDROID_VERSION_PATCH .*/#define ANDROID_VERSION_PATCH 0/' \
+    "$version_header"
+  grep -q '^#define ANDROID_VERSION_MAJOR 11$' "$version_header"
 }
