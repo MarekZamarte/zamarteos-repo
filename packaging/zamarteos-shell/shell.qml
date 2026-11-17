@@ -35,6 +35,138 @@ Scope {
     }
     property bool firstbootNoticeDismissed: firstbootNoticeState.text().trim() === "1"
 
+    property string activePlugin: ""
+
+    QtObject {
+        id: pluginShellApi
+        function isPluginOpen(pluginId) {
+            return root.activePlugin === pluginId
+        }
+        function hide(pluginId) {
+            root.hidePlugin(pluginId)
+        }
+        function summon(pluginId, payload) {
+            root.summonPlugin(pluginId, payload || "{}")
+        }
+        function toggle(pluginId, payload) {
+            root.togglePlugin(pluginId, payload || "{}")
+        }
+    }
+
+    Loader {
+        id: phonePlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.phone/Phone.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.phone", name: "Telefon" })
+        }
+    }
+    Loader {
+        id: messagesPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.messages/Messages.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.messages", name: "Wiadomości" })
+        }
+    }
+    Loader {
+        id: filesPlugin
+        active: true
+        source: "file:///usr/share/moarchy/plugins/moarchy.files/Files.qml"
+        onLoaded: {
+            item.shell = pluginShellApi
+            item.manifest = ({ id: "moarchy.files", name: "Pliki" })
+        }
+    }
+
+    Connections {
+        target: phonePlugin.item
+        function onOpenedChanged() {
+            if (phonePlugin.item && !phonePlugin.item.opened &&
+                    root.activePlugin === "moarchy.phone") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: messagesPlugin.item
+        function onOpenedChanged() {
+            if (messagesPlugin.item && !messagesPlugin.item.opened &&
+                    root.activePlugin === "moarchy.messages") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: filesPlugin.item
+        function onOpenedChanged() {
+            if (filesPlugin.item && !filesPlugin.item.opened &&
+                    root.activePlugin === "moarchy.files") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+
+    function pluginItem(pluginId) {
+        if (pluginId === "moarchy.phone") return phonePlugin.item
+        if (pluginId === "moarchy.messages") return messagesPlugin.item
+        if (pluginId === "moarchy.files") return filesPlugin.item
+        return null
+    }
+
+    function hidePlugin(pluginId) {
+        const item = pluginItem(pluginId)
+        if (!item) return
+        if (typeof item.close === "function") item.close()
+        if (pluginId === "moarchy.files" && item.appWindow)
+            item.appWindow.hide()
+        // An incoming call is not dismissible by the home button. Keep its
+        // window in front rather than hiding the call screen under the home UI.
+        if (pluginId === "moarchy.phone" && item.incoming && item.opened) {
+            activePlugin = pluginId
+            homeOpen = false
+            return
+        }
+        if (activePlugin === pluginId) {
+            activePlugin = ""
+            homeOpen = true
+        }
+    }
+
+    function summonPlugin(pluginId, payload) {
+        const item = pluginItem(pluginId)
+        if (!item || typeof item.open !== "function") {
+            showNotice("Ta funkcja nie jest dostępna w tym obrazie.")
+            return false
+        }
+        if (activePlugin && activePlugin !== pluginId) {
+            const previous = pluginItem(activePlugin)
+            if (previous && typeof previous.close === "function") previous.close()
+            if (previous && previous.appWindow) previous.appWindow.hide()
+            if (activePlugin === "moarchy.phone" && previous &&
+                    previous.incoming && previous.opened) {
+                showNotice("Najpierw zakończ obsługę połączenia przychodzącego.")
+                return false
+            }
+        }
+        activePlugin = pluginId
+        homeOpen = false
+        drawerOpen = false
+        controlOpen = false
+        item.open(payload || "{}")
+        return true
+    }
+
+    function togglePlugin(pluginId, payload) {
+        if (activePlugin === pluginId) hidePlugin(pluginId)
+        else summonPlugin(pluginId, payload)
+    }
+
     property string wifiState: "nieodczytany"
     property string wwanState: "nieodczytany"
     property string bluetoothState: "nieodczytany"
@@ -228,6 +360,15 @@ Scope {
     }
 
     function launchByKeywords(keywords, label) {
+        const joined = keywords.join(" ").toLowerCase()
+        if (joined.indexOf("phone") !== -1 || joined.indexOf("telefon") !== -1)
+            return summonPlugin("moarchy.phone", "{}")
+        if (joined.indexOf("messages") !== -1 || joined.indexOf("sms") !== -1)
+            return summonPlugin("moarchy.messages", "{}")
+        if (joined.indexOf("contacts") !== -1 || joined.indexOf("kontakty") !== -1)
+            return summonPlugin("moarchy.phone", "{\\"contacts\\":true}")
+        if (joined.indexOf("files") !== -1 || joined.indexOf("pliki") !== -1)
+            return summonPlugin("moarchy.files", "{}")
         const entries = DesktopEntries.applications.values
         for (let i = 0; i < entries.length; ++i) {
             const entry = entries[i]
