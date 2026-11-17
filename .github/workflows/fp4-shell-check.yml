@@ -132,7 +132,7 @@ jobs:
             test -s "moarchy-base/default/omarchy/plugins/$plugin_file"
           done
           grep -Fq 'function openContacts()' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
-          grep -Fq 'root.openContactsManager()' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -Fq 'root.summonPlugin("moarchy.contacts"' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -Fq 'contacts.json' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
           grep -q 'qmllint --ignore-settings' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
           grep -Fq 'words: ["contacts", "address book", "kontakty"]' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
