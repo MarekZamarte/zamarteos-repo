@@ -1,4 +1,4 @@
-# Powłoka ZamarteOS Pure — etap 0.2.2
+# Powłoka ZamarteOS Pure — etap 0.2.3
 
 ## Cel
 
@@ -15,7 +15,7 @@ natywny userspace Arch Linux ARM z własną sesją Wayland ZamarteOS.
 - własna sesja Hyprland/Wayland uruchamiana z tty1;
 - ekran główny, szuflada aplikacji i wyszukiwanie wpisów .desktop;
 - hostowanie natywnych modułów Phone, Messages i Files z przypiętej bazy FP4;
-- osobne pozycje Telefon, Wiadomości, Kontakty i Pliki w menu aplikacji;
+- osobne pozycje Telefon, Wiadomości, Kontakty i Pliki w menu aplikacji;\n- edytowalna baza kontaktów wspólna z Telefonem i Wiadomościami (dodawanie, usuwanie i wybieranie numeru);
 - moduły Telefonu i Wiadomości są ładowane przy starcie sesji i wywołują
   warmUp(), aby nasłuch ModemManager nie zależał od otwartego okna;
 - Centrum telefonu odczytuje i zmienia Wi-Fi, dane komórkowe, Bluetooth,
