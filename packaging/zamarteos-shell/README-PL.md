@@ -1,70 +1,61 @@
-# Powłoka ZamarteOS Pure — etap 0.1.1
+# Powłoka ZamarteOS Pure — etap 0.2
 
-To jest własna powłoka Quickshell/QML i sesja Wayland dla obrazu testowego
-Fairphone 4. Sesja zastępuje uruchamianie powłoki Moarchy/Omarchy na tty1,
-pozostawiając kernel, sterowniki, modem i usługi sprzętowe z bazy FP4.
+## Cel
 
-## Funkcje prototypu
-- ekran główny z dużym zegarem i datą;
-- kafelki Telefon, Wiadomości, Aparat i Pliki;
-- szuflada aplikacji oparta na zainstalowanych plikach .desktop;
-- wyszukiwanie aplikacji i ich ikon;
-- pasek ZamarteOS dostępny nad uruchomionymi oknami;
-- centrum telefonu z polskim menu: sieć, dźwięk, wyświetlacz i tapety, bateria, aplikacje, prywatność, język oraz informacje o systemie;
-- blokada sesji Wayland przez WlSessionLock;
-- sprawdzanie hasła konta przez PAM i osobny profil /etc/pam.d/zamarteos-lock.
+ZamarteOS Pure ma zastąpić cały system widoczny dla użytkownika na
+Fairphone 4. Nie jest aplikacją Sailfish Silica, motywem ani samym launcherem.
+Docelowo użytkownik ma widzieć własny ekran blokady, pulpit, pasek stanu,
+powiadomienia, centrum sterowania, ustawienia, menu i aplikacje ZamarteOS.
+
+Sailfish OS nie jest wymaganym elementem docelowego systemu. Bazą jest
+natywny userspace Arch Linux ARM z własną sesją Wayland ZamarteOS.
+
+## Co zapewnia ta powłoka na obecnym etapie
+
+- własna sesja Hyprland/Wayland uruchamiana z tty1;
+- ekran główny i zegar;
+- szuflada aplikacji z wyszukiwaniem;
+- pasek ZamarteOS i wejście do centrum sterowania;
+- blokada sesji z uwierzytelnianiem PAM;
+- polski locale i polski układ klawiatury;
+- uruchamianie zainstalowanych aplikacji Linux przez ich desktop entries.
+
+## Zaplecze techniczne, które pozostaje
+
+Powłoka nie zastępuje i nie usuwa kernela, firmware, sterowników,
+modemu, usług IMS/VoLTE, Q6Voice/q6voiced, NetworkManager, PipeWire,
+WirePlumber, D-Bus, systemd ani obsługi sprzętu FP4. Te komponenty są
+niezbędne do działania telefonu. Interfejs użytkownika jest budowany
+osobno i ma być w całości ZamarteOS.
+
+## Co nie jest jeszcze ukończone
+
+Sama powłoka i jej kafelki nie oznaczają, że wszystkie aplikacje są gotowe.
+Telefon, Kontakty, SMS, aparat, galeria, ustawienia i inne programy muszą
+być dostarczone jako prawdziwe aplikacje lub poprawnie zintegrowane z
+natywnymi aplikacjami Linux. Nieaktywne funkcje mają pozostać ukryte.
+Menu ustawień nie może udawać, że zmieniło ustawienie, jeśli nie wywołało
+odpowiedniej usługi systemowej.
 
 ## Budowanie pakietu
 
-W środowisku Arch Linux ARM z repozytoriami używanymi przez obraz FP4:
+W środowisku Arch Linux ARM zgodnym z przypiętą bazą FP4:
 
     cd pkgbuilds/zamarteos-shell
     makepkg -si
 
-## Integracja z bazą FP4
+## Integracja
 
-W CI skrypt scripts/apply-zamarteos-overlay.sh:
-- kopiuje pakiet do pkgbuilds/;
-- dodaje zamarteos-shell do zależności moarchy-meta;
-- kieruje istniejący start powłoki na katalog /usr/share/zamarteos-shell;
-- kieruje moarchy-lock do IPC nowej powłoki.
-
-Nie zmienia konfiguracji modemu, kernela ani firmware. Nie flashuje telefonu.
+Skrypt scripts/apply-zamarteos-overlay.sh instaluje powłokę i kieruje
+uruchomienie tty1 do sesji ZamarteOS. Pozostawia techniczne usługi i
+sprzętową bazę FP4. Nie flashuje telefonu.
 
 ## Testowanie
 
-Najpierw uruchom powłokę w istniejącej sesji Wayland:
+Najpierw sprawdzić pakiet, obraz referencyjny, logi i weryfikator CI.
+Następnie przeprowadzić testy na fizycznym FP4: start, blokada, dotyk,
+przewijanie, klawiatura polska, uruchamianie aplikacji, połączenia,
+dźwięk rozmów, SMS, sieć, aparat, bateria i uśpienie.
 
-    qs -n -p /usr/share/zamarteos-shell
-
-Nie uruchamiaj tego polecenia na obecnym Ubuntu Touch — pakiet jest budowany
-dla Arch Linux ARM / bazy FP4, a nie dla Ubuntu Touch.
-
-Blokada wymaga działającego PAM, aktywnej sesji Quickshell i hasła użytkownika.
-Nie instaluj obrazu na telefonie, dopóki CI nie zbuduje pakietu i obrazu
-referencyjnego, a blokada nie przejdzie testu na urządzeniu.
-
-To nadal prototyp. CI ma sprawdzać, czy obraz uruchamia własną sesję
-ZamarteOS zamiast natywnej powłoki Moarchy. Nie jest to jeszcze wydanie
-ZamarteOS ani obraz gotowy do flashowania; potrzebne są testy na fizycznym FP4.
-
-## Klawiatura ekranowa — polskie znaki
-
-Obraz używa osobnego klienta klawiatury ekranowej Wayland (moarchy-keyboard),
-który ZamarteOS rozszerza o polski układ i lokalne sugestie pisowni.
-Znaki ą ć ę ł ń ó ś ź ż oraz wielkie Ą Ć Ę Ł Ń Ó Ś Ź Ż są dostępne
-po przytrzymaniu odpowiednich klawiszy literowych. Układ jest instalowany
-do `/etc/skel/.config/moarchy-keyboard/layouts/letters.json`, więc trafia
-do katalogu domowego podczas tworzenia konta w obrazie.
-
-Podczas wpisywania błędnego słowa klawiatura może pokazać do trzech propozycji
-korekty z lokalnego słownika Hunspell. Nie zastępuje tekstu automatycznie.
-Pasek nie pokazuje się w polach haseł/PIN-u, terminalu ani polach numerycznych.
-To pierwsza wersja korekty pisowni; przewidywanie następnego słowa na podstawie
-kontekstu rozmowy nie jest jeszcze zaimplementowane.
-
-Test akceptacyjny na telefonie: otworzyć pole tekstowe w Wiadomościach,
-przytrzymać kolejno a, c, e, l, n, o, s i z, wybrać polskie warianty,
-wpisać „Zażółć gęślą jaźń” oraz wersję z wielkimi literami, a następnie
-sprawdzić, czy tekst trafia poprawnie do aplikacji. To nie jest jeszcze
-potwierdzony test sprzętowy — CI sprawdza obecność i poprawność pliku układu.
+Obraz nie jest gotowy do flashowania tylko dlatego, że CI zbudowało pakiet
+lub przeszły kontrole statyczne. Flashowanie wymaga osobnej decyzji.
