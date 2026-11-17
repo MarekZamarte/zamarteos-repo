@@ -12,7 +12,8 @@ Nie dostarczamy Android userspace ani usług Google.
 
 - Powłoka ZamarteOS Pure jest integrowana z przypiętą bazą sprzętową FP4.
 - Host aplikacji podłącza natywne moduły Telefon, Wiadomości, Kontakty, Pliki,
-  Kalkulator, Kalendarz, Zegar, Edytor, Pogoda, Poczta, Notatki i Monitor.
+  Kalkulator, Kalendarz, Zegar, Edytor, Pogoda, Poczta, Notatki, Monitor
+  oraz pełne Ustawienia i wybór motywu.
 - Centrum ustawień ma prawdziwe sterowanie Wi-Fi, Bluetooth, jasnością i głośnością multimediów; stan radia
   komórkowego jest tylko odczytywany, aby nie wyłączyć modemu.
 - Aparat uruchamia Megapixels, a przeglądarka uruchamia Epiphany.
