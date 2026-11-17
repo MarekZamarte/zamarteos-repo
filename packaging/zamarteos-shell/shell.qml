@@ -594,6 +594,10 @@ Scope {
             const entry = entries[i]
             if (!isVisibleApp(entry))
                 continue
+            // ZamarteOS launcher entries route back through this shell; do not
+            // match them while searching for the underlying native app.
+            if ((entry.id || "").toLowerCase().indexOf("zamarteos-") === 0)
+                continue
             const haystack = ((entry.name || "") + " " + (entry.genericName || "") + " " + (entry.id || "")).toLowerCase()
             for (let j = 0; j < keywords.length; ++j) {
                 if (haystack.indexOf(keywords[j]) !== -1)
