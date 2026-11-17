@@ -40,12 +40,12 @@ PY
 
 build() {
   cd "$srcdir/libhybris/hybris"
-  export CPPFLAGS="-I/opt/android/include \${CPPFLAGS:-}"
+  export CPPFLAGS="-I/opt/android/include ${CPPFLAGS:-}"
   echo "==> libhybris compiler environment"
   gcc --version
-  printf 'CC=%s\nCFLAGS=%s\nCPPFLAGS=%s\nLDFLAGS=%s\n' "\${CC:-gcc}" "\${CFLAGS:-}" "\${CPPFLAGS:-}" "\${LDFLAGS:-}"
+  printf 'CC=%s\nCFLAGS=%s\nCPPFLAGS=%s\nLDFLAGS=%s\n' "${CC:-gcc}" "${CFLAGS:-}" "${CPPFLAGS:-}" "${LDFLAGS:-}"
   printf 'int main(void) { return 0; }\n' > /tmp/zamarteos-cc-test.c
-  gcc \${CFLAGS:-} \${CPPFLAGS:-} /tmp/zamarteos-cc-test.c \${LDFLAGS:-} -o /tmp/zamarteos-cc-test || {
+  gcc ${CFLAGS:-} ${CPPFLAGS:-} /tmp/zamarteos-cc-test.c ${LDFLAGS:-} -o /tmp/zamarteos-cc-test || {
     echo "ERROR: standalone ARM64 compiler/linker preflight failed" >&2
     return 1
   }
