@@ -231,6 +231,34 @@ Scope {
         }
     }
 
+    Loader {
+        id: wifiPlugin
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.wifi/Wifi.qml", {
+            shell: pluginShellApi
+        })
+        onLoaded: {
+            if (item && typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+    Loader {
+        id: bluetoothPlugin
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.bluetooth/Bluetooth.qml", {
+            shell: pluginShellApi
+        })
+        onLoaded: {
+            if (item && typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+    Loader {
+        id: simPlugin
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.sim/Sim.qml", {
+            shell: pluginShellApi
+        })
+        onLoaded: {
+            if (item && typeof item.warmUp === "function") item.warmUp()
+        }
+    }
+
     Connections {
         target: phonePlugin.item
         function onOpenedChanged() {
@@ -372,6 +400,37 @@ Scope {
         }
     }
 
+    Connections {
+        target: wifiPlugin.item
+        function onOpenedChanged() {
+            if (wifiPlugin.item && !wifiPlugin.item.opened &&
+                    root.activePlugin === "moarchy.wifi") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: bluetoothPlugin.item
+        function onOpenedChanged() {
+            if (bluetoothPlugin.item && !bluetoothPlugin.item.opened &&
+                    root.activePlugin === "moarchy.bluetooth") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+    Connections {
+        target: simPlugin.item
+        function onOpenedChanged() {
+            if (simPlugin.item && !simPlugin.item.opened &&
+                    root.activePlugin === "moarchy.sim") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
+
     function pluginItem(pluginId) {
         if (pluginId === "moarchy.phone") return phonePlugin.item
         if (pluginId === "moarchy.messages") return messagesPlugin.item
@@ -387,6 +446,9 @@ Scope {
         if (pluginId === "moarchy.vitals") return vitalsPlugin.item
         if (pluginId === "moarchy.settings") return settingsPlugin.item
         if (pluginId === "moarchy.themes") return themesPlugin.item
+        if (pluginId === "moarchy.wifi") return wifiPlugin.item
+        if (pluginId === "moarchy.bluetooth") return bluetoothPlugin.item
+        if (pluginId === "moarchy.sim") return simPlugin.item
         return null
     }
 
@@ -438,6 +500,16 @@ Scope {
         else summonPlugin(pluginId, payload)
     }
 
+    function canOpenHomeOverlay() {
+        const phone = phonePlugin.item
+        if (activePlugin === "moarchy.phone" && phone && phone.opened &&
+                (phone.incoming || phone.callUp)) {
+            showNotice("Najpierw zakończ obsługę połączenia.")
+            return false
+        }
+        return true
+    }
+
     function showHome() {
         const phone = phonePlugin.item
         if (activePlugin === "moarchy.phone" && phone && phone.opened &&
@@ -459,6 +531,7 @@ Scope {
     property bool volumeMuted: false
     property string batteryInfo: "Odczytuję stan baterii…"
     property string kernelInfo: "Odczytuję wersję jądra…"
+    property bool batteryPercentShown: true
 
     function refreshSettings() {
         wifiQuery.running = true
@@ -469,6 +542,7 @@ Scope {
         muteQuery.running = true
         batteryQuery.running = true
         kernelQuery.running = true
+        batteryPercentFlagQuery.running = true
     }
 
     function setWifi(enabled) {
@@ -559,6 +633,22 @@ Scope {
         id: kernelQuery
         command: ["uname", "-r"]
         stdout: StdioCollector { onStreamFinished: root.kernelInfo = this.text.trim() }
+    }
+
+    Process {
+        id: batteryPercentFlagQuery
+        command: ["sh", "-c", "if [ -e \"$HOME/.config/omarchy/flags/battery-percentage-off\" ]; then echo off; else echo on; fi"]
+        stdout: StdioCollector { onStreamFinished: root.batteryPercentShown = this.text.trim() !== "off" }
+    }
+    Timer {
+        interval: 60000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            if (!batteryQuery.running) batteryQuery.running = true
+            if (!batteryPercentFlagQuery.running) batteryPercentFlagQuery.running = true
+        }
     }
     Process {
         id: wifiAction
@@ -711,6 +801,14 @@ Scope {
     }
 
     IpcHandler {
+        target: "bar"
+        function syncFlags(): string {
+            batteryPercentFlagQuery.running = true
+            return "ok"
+        }
+    }
+
+    IpcHandler {
         target: "zamarteos-apps"
         function open(app: string): void {
             if (app === "phone")
@@ -741,8 +839,15 @@ Scope {
                 root.launchByKeywords(["megapixels", "camera"], "Aparat")
             else if (app === "internet")
                 root.launchByKeywords(["epiphany", "browser"], "Internet")
+
             else if (app === "settings")
                 root.summonPlugin("moarchy.settings", "{}")
+            else if (app === "wifi")
+                root.summonPlugin("moarchy.wifi", JSON.stringify({ returnTo: "moarchy.settings", page: "net" }))
+            else if (app === "bluetooth")
+                root.summonPlugin("moarchy.bluetooth", JSON.stringify({ returnTo: "moarchy.settings", page: "net" }))
+            else if (app === "sim")
+                root.summonPlugin("moarchy.sim", JSON.stringify({ returnTo: "moarchy.settings", page: "net" }))
             else
                 root.showNotice("Nieznana aplikacja ZamarteOS.")
         }
@@ -1409,6 +1514,15 @@ Scope {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
+                visible: root.batteryPercentShown && root.batteryInfo.indexOf("%") > 0
+                text: root.batteryInfo.split(" ")[0]
+                color: "#a9d7c9"
+                font.pixelSize: 12
+                font.weight: Font.DemiBold
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
                 text: Qt.formatDateTime(root.now, "HH:mm")
                 color: "#d7e3ed"
                 font.pixelSize: 15
@@ -1432,6 +1546,7 @@ Scope {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
+                        if (!root.canOpenHomeOverlay()) return
                         root.homeOpen = false
                         root.controlOpen = false
                         root.drawerOpen = !root.drawerOpen
@@ -1446,9 +1561,11 @@ Scope {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
+                        if (!root.canOpenHomeOverlay()) return
                         root.homeOpen = false
                         root.drawerOpen = false
                         root.controlOpen = !root.controlOpen
+                        if (root.controlOpen) root.refreshSettings()
                     }
                 }
             }
