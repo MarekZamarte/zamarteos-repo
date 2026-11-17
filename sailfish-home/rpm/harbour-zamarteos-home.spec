@@ -26,6 +26,7 @@ Niezależna aplikacja Sailfish Silica prezentująca prototyp ekranu głównego Z
 
 %install
 %qmake5_install
+install -D -m 0644 icons/harbour-zamarteos-home.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/harbour-zamarteos-home.svg
 desktop-file-install --delete-original --dir %{buildroot}%{_datadir}/applications %{buildroot}%{_datadir}/applications/*.desktop
 
 %files
