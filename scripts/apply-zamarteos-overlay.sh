@@ -97,22 +97,24 @@ s = s.replace('''    p=$(basename "$d")
 if "only_repo_package \"$p\" || continue" not in s:
     raise SystemExit("Could not install focused package filter in in-repo loop")
 # install-first packages bypass the normal dependency synchronizer upstream.
-# Run the same declared-dependency installation before building selected audio
-# packages, so their makedepends are present in the isolated ARM64 builder.
-needle = '''    if ! already_built "$_fd"; then
-      try_makepkg "$_fd" "\${FORCE[@]}" --nodeps --noconfirm --nocheck
-'''
-replacement = '''    if ! already_built "$_fd"; then
-      sync_deps "$_fd"
-      try_makepkg "$_fd" "\${FORCE[@]}" --nodeps --noconfirm --nocheck
-'''
-if replacement not in s:
-    if needle not in s:
-        raise SystemExit("Could not find install-first build block for dependency sync")
-    s = s.replace(needle, replacement, 1)
+# Install declared dependencies for selected packages before makepkg runs.
+python3 - "$ROOT/docker/build-packages.sh" <<'PY'
+from pathlib import Path
+import re, sys
+
+p = Path(sys.argv[1])
+s = p.read_text()
+pattern = r'(?m)^([ \t]*)try_makepkg "\$_fd".*--nodeps --noconfirm --nocheck[ \t]*$'
+m = re.search(pattern, s)
+if not m:
+    if 'sync_deps "$_fd"' not in s:
+        raise SystemExit("Could not locate install-first package build command")
+else:
+    line = m.group(0)
+    replacement = m.group(1) + 'sync_deps "$_fd"\n' + line
+    s = s[:m.start()] + replacement + s[m.end():]
     p.write_text(s)
 PY
-
 # The native phone plugin is kept loaded by ZamarteOS so incoming calls are
 # detected while the keypad is closed. Support opening its Contacts tab from
 # the ZamarteOS application drawer; the upstream plugin already owns the
