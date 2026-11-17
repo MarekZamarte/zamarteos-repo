@@ -96,7 +96,21 @@ s = s.replace('''    p=$(basename "$d")
     # Two reasons to pass over a package here''', 1)
 if "only_repo_package \"$p\" || continue" not in s:
     raise SystemExit("Could not install focused package filter in in-repo loop")
-p.write_text(s)
+# install-first packages bypass the normal dependency synchronizer upstream.
+# Run the same declared-dependency installation before building selected audio
+# packages, so their makedepends are present in the isolated ARM64 builder.
+needle = '''    if ! already_built "$_fd"; then
+      try_makepkg "$_fd" "\${FORCE[@]}" --nodeps --noconfirm --nocheck
+'''
+replacement = '''    if ! already_built "$_fd"; then
+      sync_deps "$_fd"
+      try_makepkg "$_fd" "\${FORCE[@]}" --nodeps --noconfirm --nocheck
+'''
+if replacement not in s:
+    if needle not in s:
+        raise SystemExit("Could not find install-first build block for dependency sync")
+    s = s.replace(needle, replacement, 1)
+    p.write_text(s)
 PY
 
 # The native phone plugin is kept loaded by ZamarteOS so incoming calls are
