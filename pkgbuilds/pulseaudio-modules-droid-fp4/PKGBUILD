@@ -6,8 +6,8 @@ pkgdesc="PulseAudio Droid HAL modules for Fairphone 4 (Android 11 vendor HAL)"
 arch=('aarch64')
 url="https://github.com/mer-hybris/pulseaudio-modules-droid"
 license=('LGPL-2.1-or-later')
-depends=('pulseaudio' 'libhybris-fp4' 'alsa-lib' 'expat' 'systemd-libs' 'libltdl')
-makedepends=('meson' 'ninja' 'pkgconf' 'hybris-android-headers' 'pulseaudio' 'libhybris-fp4')
+depends=('pulseaudio' 'libhybris-fp4' 'hybris-android-headers' 'pulsecore-headers-fp4' 'alsa-lib' 'expat' 'systemd-libs' 'libltdl')
+makedepends=('meson' 'ninja' 'pkgconf' 'hybris-android-headers' 'pulsecore-headers-fp4' 'pulseaudio' 'libhybris-fp4')
 source=("pulseaudio-modules-droid::git+https://github.com/mer-hybris/pulseaudio-modules-droid#commit=345fda0dc86efb00c739b4b7ba760aa9e6d97693")
 sha256sums=('SKIP')
 
