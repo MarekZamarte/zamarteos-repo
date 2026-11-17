@@ -1,6 +1,6 @@
 pkgname=zamarteos-shell
-pkgver=0.2.1
-pkgrel=2
+pkgver=0.2.2
+pkgrel=1
 pkgdesc="ZamarteOS touch-first Wayland shell and Fairphone 4 session"
 arch=('aarch64')
 url="https://github.com/MarekZamarte/zamarteos-repo"
@@ -45,6 +45,11 @@ check() {
   grep -q 'file:///usr/share/moarchy/plugins/moarchy.files/Files.qml' "$srcdir/shell.qml"
   grep -q 'item.warmUp()' "$srcdir/shell.qml"
   grep -q 'target: "zamarteos-apps"' "$srcdir/shell.qml"
+  grep -q 'function refreshSettings()' "$srcdir/shell.qml"
+  grep -q 'nmcli' "$srcdir/shell.qml"
+  grep -q 'bluetoothctl' "$srcdir/shell.qml"
+  grep -q 'brightnessctl' "$srcdir/shell.qml"
+  grep -q 'pamixer' "$srcdir/shell.qml"
   grep -q 'qs ipc call zamarteos-apps open' "$srcdir/zamarteos-open-app"
   grep -q 'Exec=/usr/bin/zamarteos-open-app phone' "$srcdir/zamarteos-phone.desktop"
   grep -q 'Exec=/usr/bin/zamarteos-open-app messages' "$srcdir/zamarteos-messages.desktop"
