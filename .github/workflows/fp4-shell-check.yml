@@ -115,6 +115,10 @@ jobs:
           grep -q 'target: "zamarteos-apps"' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -q 'item.warmUp()' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -Fq 'if (payload.contacts) root.page = 2' moarchy-base/default/omarchy/plugins/moarchy.phone/Phone.qml
+          grep -Fq 'root.shell.openContacts()' moarchy-base/default/omarchy/plugins/moarchy.phone/Phone.qml
+          grep -Fq 'function openContacts()' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -Fq 'root.openContactsManager()' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -Fq 'contacts.json' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
           grep -q 'qmllint --ignore-settings' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
           grep -Fq 'words: ["contacts", "address book", "kontakty"]' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -Fq 'words: ["epiphany", "web browser", "browser", "przeglądarka"]' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
