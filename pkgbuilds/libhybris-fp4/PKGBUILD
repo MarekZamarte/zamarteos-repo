@@ -15,6 +15,7 @@ sha256sums=('SKIP')
 
 build() {
   cd "$srcdir/libhybris/hybris"
+  export CPPFLAGS="-I/opt/android/include ${CPPFLAGS:-}"
   ./autogen.sh --enable-arch=arm64 --prefix=/opt/android/hybris --with-android-headers=/opt/android/include --enable-wayland
   make
 }
