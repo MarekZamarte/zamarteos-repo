@@ -55,6 +55,6 @@ ZamarteOS shell separately. Flashing is a later, explicit step.
 
 ## Latest repository changes
 
-The shell now provides Phone, Messages, Contacts, Files and Internet quick-launch tiles. The shell package declares the ARM64 Epiphany browser as a dependency, and app search also matches desktop-entry IDs. The ARM64 package check is being extended to run Qt `qmllint` against the packaged `shell.qml`; this check remains pending until the new CI run passes. The Epiphany dependency and browser launcher also need confirmation in that build. Package presence and static image verification do not prove that the GUI or applications work at runtime.
+The ZamarteOS shell now hosts the pinned FP4 base's Phone, Messages, Contacts, Files, Calculator, Calendar, Clock, Editor, Weather, Mail, Keep and Vitals modules. It provides ZamarteOS desktop entries for these apps, shared contacts storage, and real controls for Wi-Fi, mobile data, Bluetooth, brightness and multimedia volume. Camera launches Megapixels and Internet launches Epiphany. Phone and Messages are loaded from session start so their ModemManager listeners remain active while their windows are closed.
 
 The next physical-device acceptance run must cover: first boot and PIN lock/unlock, touch and vertical scrolling, top-edge control-centre gesture, volume keys, launching Phone/Messages/Contacts/Files/browser, incoming caller ID, outgoing call progress/ringback, microphone uplink, earpiece and loudspeaker audio. Do not alter modem configuration or existing audio routing while diagnosing ringback.
