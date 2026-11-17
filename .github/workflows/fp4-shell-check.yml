@@ -112,6 +112,9 @@ jobs:
           grep -q 'XF86AudioRaiseVolume' moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
           grep -q 'XF86AudioLowerVolume' moarchy-base/pkgbuilds/zamarteos-shell/hyprland.conf
           grep -q 'target: "zamarteos-lock"' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -q 'target: "zamarteos-apps"' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -q 'item.warmUp()' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
+          grep -Fq 'if (payload.contacts) root.page = 2' moarchy-base/default/omarchy/plugins/moarchy.phone/Phone.qml
           grep -q 'qmllint --ignore-settings' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
           grep -Fq 'words: ["contacts", "address book", "kontakty"]' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -Fq 'words: ["epiphany", "web browser", "browser", "przeglądarka"]' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
