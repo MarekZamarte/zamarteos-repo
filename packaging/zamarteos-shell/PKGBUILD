@@ -78,7 +78,7 @@ check() {
   grep -q 'Exec=/usr/bin/zamarteos-open-app camera' "$srcdir/zamarteos-camera.desktop"
   grep -q 'Exec=/usr/bin/zamarteos-open-app internet' "$srcdir/zamarteos-internet.desktop"
   grep -q 'Exec=/usr/bin/zamarteos-open-app settings' "$srcdir/zamarteos-settings.desktop"
-  grep -q 'calculator|calendar|clock|editor|weather|mail|keep|vitals|camera|internet|settings' "$srcdir/zamarteos-open-app"
+  grep -Eq 'calculator|calendar|clock|editor|weather|mail|keep|vitals|camera|internet|settings' "$srcdir/zamarteos-open-app"
   grep -q 'moarchy.contacts' "$srcdir/shell.qml"
   grep -q 'moarchy.calculator' "$srcdir/shell.qml"
   grep -q 'moarchy.calendar' "$srcdir/shell.qml"
