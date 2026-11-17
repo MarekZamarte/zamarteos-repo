@@ -1,7 +1,7 @@
 # ARM64 libhybris build for the Fairphone 4 Sailfish audio HAL.
 pkgname=libhybris-fp4
 pkgver=0.0.5.57
-pkgrel=2
+pkgrel=3
 pkgdesc="libhybris Android hardware compatibility layer for ZamarteOS FP4"
 arch=('aarch64')
 url="https://github.com/libhybris/libhybris"
@@ -41,10 +41,26 @@ PY
 build() {
   cd "$srcdir/libhybris/hybris"
   export CPPFLAGS="-I/opt/android/include \${CPPFLAGS:-}"
-  ./autogen.sh --enable-arch=arm64 --prefix=/opt/android/hybris --with-android-headers=/opt/android/include --enable-wayland
+  echo "==> libhybris compiler environment"
+  gcc --version
+  printf 'CC=%s\nCFLAGS=%s\nCPPFLAGS=%s\nLDFLAGS=%s\n' "\${CC:-gcc}" "\${CFLAGS:-}" "\${CPPFLAGS:-}" "\${LDFLAGS:-}"
+  printf 'int main(void) { return 0; }\n' > /tmp/zamarteos-cc-test.c
+  gcc \${CFLAGS:-} \${CPPFLAGS:-} /tmp/zamarteos-cc-test.c \${LDFLAGS:-} -o /tmp/zamarteos-cc-test || {
+    echo "ERROR: standalone ARM64 compiler/linker preflight failed" >&2
+    return 1
+  }
+  if ! ./autogen.sh --enable-arch=arm64 --prefix=/opt/android/hybris --with-android-headers=/opt/android/include --enable-wayland; then
+    echo "ERROR: libhybris configure failed; preserving config.log" >&2
+    if [ -f config.log ]; then
+      cp config.log /out/libhybris-config.log
+      tail -n 160 config.log
+    else
+      echo "config.log was not created" >&2
+    fi
+    return 1
+  fi
   make
 }
-
 package() {
   cd "$srcdir/libhybris/hybris"
   make -j1 DESTDIR="$pkgdir" install
