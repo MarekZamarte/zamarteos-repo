@@ -19,7 +19,7 @@ cp -a "$HERE/packaging/zamarteos-shell" "$ROOT/pkgbuilds/zamarteos-shell"
 # Copy the separately buildable Sailfish FP4 audio stack recipes into the
 # pinned Moarchy tree. These packages are built and audited before any image
 # switch; they are deliberately not added to moarchy-meta yet.
-for audio_pkg in hybris-android-headers libhybris-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4; do
+for audio_pkg in hybris-android-headers libhybris-fp4 pulsecore-headers-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4; do
   test -f "$HERE/pkgbuilds/$audio_pkg/PKGBUILD" || {
     echo "Missing Sailfish audio package recipe: $audio_pkg" >&2
     exit 1
@@ -31,6 +31,26 @@ done
 # Let the pinned package builder build only the explicitly selected in-repo
 # recipes for the dedicated Sailfish-audio CI job. The normal reference-image
 # workflow remains unchanged and still builds the complete package set.
+# The upstream manifest already has an install-first list for the
+# modem/kernel helper tools. Extend that exact list so ARM64 audio packages are
+# built and installed in dependency order before the alphabetic package walk.
+python3 - "$ROOT/manifest.toml" <<'PY'
+from pathlib import Path
+import re, sys
+p = Path(sys.argv[1])
+s = p.read_text()
+extra = "hybris-android-headers libhybris-fp4 pulsecore-headers-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4"
+pattern = r'(?m)^install-first[ \\t]*=[ \\t]*"([^"]*)"'
+m = re.search(pattern, s)
+if not m:
+    raise SystemExit("Base manifest [build] install-first key missing")
+items = m.group(1).split()
+for item in extra.split():
+    if item not in items:
+        items.append(item)
+s = s[:m.start(1)] + " ".join(items) + s[m.end(1):]
+p.write_text(s)
+PY
 python3 - "$ROOT/docker/build-packages.sh" <<'PY'
 from pathlib import Path
 import sys
