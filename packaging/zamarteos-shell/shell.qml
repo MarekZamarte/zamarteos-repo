@@ -398,9 +398,6 @@ Scope {
     function setWifi(enabled) {
         wifiAction.exec(["nmcli", "radio", "wifi", enabled ? "on" : "off"])
     }
-    function setMobileData(enabled) {
-        wwanAction.exec(["nmcli", "radio", "wwan", enabled ? "on" : "off"])
-    }
     function setBluetooth(enabled) {
         bluetoothAction.exec(["bluetoothctl", "power", enabled ? "on" : "off"])
     }
@@ -426,7 +423,13 @@ Scope {
     Process {
         id: wwanQuery
         command: ["nmcli", "-t", "-f", "WWAN", "radio"]
-        stdout: StdioCollector { onStreamFinished: root.wwanState = this.text.trim() }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const state = this.text.trim()
+                root.wwanState = state === "enabled" ? "włączone"
+                    : state === "disabled" ? "wyłączone" : "niedostępne"
+            }
+        }
     }
     Process {
         id: bluetoothQuery
@@ -485,13 +488,6 @@ Scope {
         id: wifiAction
         onExited: (exitCode, exitStatus) => {
             root.showNotice(exitCode === 0 ? "Zmieniono stan Wi-Fi." : "Nie udało się zmienić Wi-Fi.")
-            root.refreshSettings()
-        }
-    }
-    Process {
-        id: wwanAction
-        onExited: (exitCode, exitStatus) => {
-            root.showNotice(exitCode === 0 ? "Zmieniono stan danych komórkowych." : "Nie udało się zmienić danych komórkowych.")
             root.refreshSettings()
         }
     }
@@ -1145,7 +1141,7 @@ Scope {
                     Repeater {
                         model: [
                             { title: "Wi-Fi", state: root.wifiState, action: "wifi" },
-                            { title: "Dane komórkowe", state: root.wwanState, action: "wwan" },
+                            { title: "Radio komórkowe", state: root.wwanState, action: "wwan" },
                             { title: "Bluetooth", state: root.bluetoothState, action: "bluetooth" }
                         ]
                         delegate: Rectangle {
@@ -1165,7 +1161,7 @@ Scope {
                                     if (modelData.action === "wifi")
                                         root.setWifi(root.wifiState !== "enabled")
                                     else if (modelData.action === "wwan")
-                                        root.setMobileData(root.wwanState !== "enabled")
+                                        root.showNotice("Nie wyłączam modemu z tego panelu, aby nie przerwać połączeń telefonicznych.")
                                     else
                                         root.setBluetooth(root.bluetoothState !== "włączony")
                                 }
