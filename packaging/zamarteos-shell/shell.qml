@@ -35,6 +35,155 @@ Scope {
     }
     property bool firstbootNoticeDismissed: firstbootNoticeState.text().trim() === "1"
 
+    property string wifiState: "nieodczytany"
+    property string wwanState: "nieodczytany"
+    property string bluetoothState: "nieodczytany"
+    property int brightnessPercent: -1
+    property int volumePercent: -1
+    property bool volumeMuted: false
+    property string batteryInfo: "Odczytuję stan baterii…"
+    property string kernelInfo: "Odczytuję wersję jądra…"
+
+    function refreshSettings() {
+        wifiQuery.running = true
+        wwanQuery.running = true
+        bluetoothQuery.running = true
+        brightnessQuery.running = true
+        volumeQuery.running = true
+        muteQuery.running = true
+        batteryQuery.running = true
+        kernelQuery.running = true
+    }
+
+    function setWifi(enabled) {
+        wifiAction.exec(["nmcli", "radio", "wifi", enabled ? "on" : "off"])
+    }
+    function setMobileData(enabled) {
+        wwanAction.exec(["nmcli", "radio", "wwan", enabled ? "on" : "off"])
+    }
+    function setBluetooth(enabled) {
+        bluetoothAction.exec(["bluetoothctl", "power", enabled ? "on" : "off"])
+    }
+    function changeBrightness(delta) {
+        if (brightnessPercent < 0) { showNotice("Nie można odczytać jasności ekranu."); return }
+        const next = Math.max(1, Math.min(100, brightnessPercent + delta))
+        brightnessAction.exec(["brightnessctl", "set", String(next) + "%"])
+    }
+    function changeVolume(delta) {
+        if (volumePercent < 0) { showNotice("Nie można odczytać głośności."); return }
+        const next = Math.max(0, Math.min(100, volumePercent + delta))
+        volumeAction.exec(["pamixer", "--set-volume", String(next)])
+    }
+    function toggleMute() {
+        muteAction.exec(["pamixer", "--toggle-mute"])
+    }
+
+    Process {
+        id: wifiQuery
+        command: ["nmcli", "-t", "-f", "WIFI", "radio"]
+        stdout: StdioCollector { onStreamFinished: root.wifiState = this.text.trim() }
+    }
+    Process {
+        id: wwanQuery
+        command: ["nmcli", "-t", "-f", "WWAN", "radio"]
+        stdout: StdioCollector { onStreamFinished: root.wwanState = this.text.trim() }
+    }
+    Process {
+        id: bluetoothQuery
+        command: ["bluetoothctl", "show"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const output = this.text
+                if (output.indexOf("No default controller available") !== -1)
+                    root.bluetoothState = "brak adaptera"
+                else if (output.indexOf("Powered: yes") !== -1)
+                    root.bluetoothState = "włączony"
+                else if (output.indexOf("Powered: no") !== -1)
+                    root.bluetoothState = "wyłączony"
+                else
+                    root.bluetoothState = "niedostępny"
+            }
+        }
+    }
+    Process {
+        id: brightnessQuery
+        command: ["brightnessctl", "-m"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const fields = this.text.trim().split(",")
+                root.brightnessPercent = fields.length >= 5
+                    ? parseInt(fields[4].replace("%", "")) : -1
+            }
+        }
+    }
+    Process {
+        id: volumeQuery
+        command: ["pamixer", "--get-volume"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const value = parseInt(this.text.trim())
+                root.volumePercent = isNaN(value) ? -1 : value
+            }
+        }
+    }
+    Process {
+        id: muteQuery
+        command: ["pamixer", "--get-mute"]
+        stdout: StdioCollector { onStreamFinished: root.volumeMuted = this.text.trim() === "true" }
+    }
+    Process {
+        id: batteryQuery
+        command: ["sh", "-c", "for b in /sys/class/power_supply/BAT*; do [ -r \"$b/capacity\" ] || continue; c=$(cat \"$b/capacity\"); s=$(cat \"$b/status\" 2>/dev/null); printf '%s%% • %s\\n' \"$c\" \"$s\"; exit 0; done; printf 'Brak danych baterii\\n'"]
+        stdout: StdioCollector { onStreamFinished: root.batteryInfo = this.text.trim() }
+    }
+    Process {
+        id: kernelQuery
+        command: ["uname", "-r"]
+        stdout: StdioCollector { onStreamFinished: root.kernelInfo = this.text.trim() }
+    }
+    Process {
+        id: wifiAction
+        onExited: (exitCode, exitStatus) => {
+            root.showNotice(exitCode === 0 ? "Zmieniono stan Wi-Fi." : "Nie udało się zmienić Wi-Fi.")
+            root.refreshSettings()
+        }
+    }
+    Process {
+        id: wwanAction
+        onExited: (exitCode, exitStatus) => {
+            root.showNotice(exitCode === 0 ? "Zmieniono stan danych komórkowych." : "Nie udało się zmienić danych komórkowych.")
+            root.refreshSettings()
+        }
+    }
+    Process {
+        id: bluetoothAction
+        onExited: (exitCode, exitStatus) => {
+            root.showNotice(exitCode === 0 ? "Wysłano polecenie do Bluetooth." : "Nie udało się zmienić Bluetooth.")
+            root.refreshSettings()
+        }
+    }
+    Process {
+        id: brightnessAction
+        onExited: (exitCode, exitStatus) => {
+            root.showNotice(exitCode === 0 ? "Zmieniono jasność ekranu." : "Nie udało się zmienić jasności.")
+            root.refreshSettings()
+        }
+    }
+    Process {
+        id: volumeAction
+        onExited: (exitCode, exitStatus) => {
+            root.showNotice(exitCode === 0 ? "Zmieniono głośność multimediów." : "Nie udało się zmienić głośności.")
+            root.refreshSettings()
+        }
+    }
+    Process {
+        id: muteAction
+        onExited: (exitCode, exitStatus) => {
+            root.showNotice(exitCode === 0 ? "Zmieniono wyciszenie multimediów." : "Nie udało się zmienić wyciszenia.")
+            root.refreshSettings()
+        }
+    }
+
     function showNotice(message) {
         notice = message
         noticeTimer.restart()
@@ -416,7 +565,7 @@ Scope {
                             text: "☷   Centrum telefonu"
                             color: "#edf3f8"; font.pixelSize: 15; font.weight: Font.DemiBold
                         }
-                        MouseArea { anchors.fill: parent; onClicked: root.controlOpen = true }
+                        MouseArea { anchors.fill: parent; onClicked: { root.controlOpen = true; root.refreshSettings() } }
                     }
                 }
 
@@ -576,46 +725,140 @@ Scope {
                     }
                 }
                 Text {
-                    text: "USTAWIENIA SYSTEMOWE"; color: "#8ea4ba"
-                    font.pixelSize: 12; font.weight: Font.DemiBold; font.letterSpacing: 1.5
+                    text: "ŁĄCZNOŚĆ"
+                    color: "#8ea4ba"; font.pixelSize: 12
+                    font.weight: Font.DemiBold; font.letterSpacing: 1.5
                 }
-                Repeater {
-                    model: [
-                        { title: "Sieć i połączenia", subtitle: "Wi-Fi, Bluetooth, sieć komórkowa", words: ["network", "connections", "wifi", "sieć"] },
-                        { title: "Dźwięk i wibracje", subtitle: "Głośność, dzwonek, urządzenia audio", words: ["sound", "audio", "volume", "dźwięk"] },
-                        { title: "Wyświetlacz i tapety", subtitle: "Jasność, ekran, wygląd systemu", words: ["display", "appearance", "wallpaper", "wyświetlacz"] },
-                        { title: "Bateria i zasilanie", subtitle: "Stan baterii i oszczędzanie energii", words: ["power", "battery", "bateria"] },
-                        { title: "Aplikacje", subtitle: "Zainstalowane programy i uprawnienia", words: ["applications", "software", "apps", "aplikacje"] },
-                        { title: "Prywatność i bezpieczeństwo", subtitle: "Blokada ekranu i ochrona danych", words: ["privacy", "security", "lock", "bezpieczeństwo"] },
-                        { title: "Język i region", subtitle: "Polski język i formaty regionalne", words: ["language", "locale", "region", "język"] },
-                        { title: "Informacje o systemie", subtitle: "Wersja ZamarteOS i urządzenie", words: ["about", "system information", "informacje"] }
-                    ]
-                    delegate: Rectangle {
-                        required property var modelData
-                        width: parent.width; height: 66; radius: 18
-                        color: "#192b3d"; border.width: 1; border.color: "#2e465d"
-                        Column {
-                            anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: 16; spacing: 3
-                            Text {
-                                text: modelData.title; color: "#edf3f8"
-                                font.pixelSize: 15; font.weight: Font.DemiBold
+                Grid {
+                    width: parent.width
+                    columns: 2
+                    spacing: 12
+                    Repeater {
+                        model: [
+                            { title: "Wi-Fi", state: root.wifiState, action: "wifi" },
+                            { title: "Dane komórkowe", state: root.wwanState, action: "wwan" },
+                            { title: "Bluetooth", state: root.bluetoothState, action: "bluetooth" }
+                        ]
+                        delegate: Rectangle {
+                            required property var modelData
+                            width: (controlColumn.width - 12) / 2
+                            height: 88; radius: 18
+                            color: "#192b3d"; border.width: 1; border.color: "#2e465d"
+                            Column {
+                                anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
+                                anchors.leftMargin: 14; spacing: 5
+                                Text { text: modelData.title; color: "#edf3f8"; font.pixelSize: 15; font.weight: Font.DemiBold }
+                                Text { text: modelData.state; color: "#a9d7c9"; font.pixelSize: 12 }
                             }
-                            Text {
-                                text: modelData.subtitle; color: "#91a4ba"; font.pixelSize: 11
-                                elide: Text.ElideRight; width: controlCenter.width - 92
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    if (modelData.action === "wifi")
+                                        root.setWifi(root.wifiState !== "enabled")
+                                    else if (modelData.action === "wwan")
+                                        root.setMobileData(root.wwanState !== "enabled")
+                                    else
+                                        root.setBluetooth(root.bluetoothState !== "włączony")
+                                }
                             }
-                        }
-                        Text {
-                            anchors.right: parent.right; anchors.rightMargin: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "›"; color: "#a9d7c9"; font.pixelSize: 25
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: root.launchByKeywords(modelData.words, modelData.title)
                         }
                     }
+                }
+                Text {
+                    text: "EKRAN I DŹWIĘK"
+                    color: "#8ea4ba"; font.pixelSize: 12
+                    font.weight: Font.DemiBold; font.letterSpacing: 1.5
+                }
+                Rectangle {
+                    width: parent.width; height: 88; radius: 18
+                    color: "#192b3d"; border.width: 1; border.color: "#2e465d"
+                    Row {
+                        anchors.fill: parent; anchors.margins: 14; spacing: 10
+                        Column {
+                            width: parent.width - 116
+                            anchors.verticalCenter: parent.verticalCenter; spacing: 5
+                            Text { text: "Jasność ekranu"; color: "#edf3f8"; font.pixelSize: 15; font.weight: Font.DemiBold }
+                            Text { text: root.brightnessPercent >= 0 ? root.brightnessPercent + "%" : "brak odczytu"; color: "#a9d7c9"; font.pixelSize: 12 }
+                        }
+                        Rectangle {
+                            width: 48; height: 48; radius: 15; color: "#294157"
+                            anchors.verticalCenter: parent.verticalCenter
+                            Text { anchors.centerIn: parent; text: "−"; color: "#ffffff"; font.pixelSize: 25 }
+                            MouseArea { anchors.fill: parent; onClicked: root.changeBrightness(-10) }
+                        }
+                        Rectangle {
+                            width: 48; height: 48; radius: 15; color: "#294157"
+                            anchors.verticalCenter: parent.verticalCenter
+                            Text { anchors.centerIn: parent; text: "+"; color: "#ffffff"; font.pixelSize: 25 }
+                            MouseArea { anchors.fill: parent; onClicked: root.changeBrightness(10) }
+                        }
+                    }
+                }
+                Rectangle {
+                    width: parent.width; height: 88; radius: 18
+                    color: "#192b3d"; border.width: 1; border.color: "#2e465d"
+                    Row {
+                        anchors.fill: parent; anchors.margins: 14; spacing: 10
+                        Column {
+                            width: parent.width - 174
+                            anchors.verticalCenter: parent.verticalCenter; spacing: 5
+                            Text { text: "Głośność multimediów"; color: "#edf3f8"; font.pixelSize: 15; font.weight: Font.DemiBold }
+                            Text { text: root.volumePercent >= 0 ? root.volumePercent + "%" + (root.volumeMuted ? " • wyciszone" : "") : "brak odczytu"; color: "#a9d7c9"; font.pixelSize: 12 }
+                        }
+                        Rectangle {
+                            width: 42; height: 48; radius: 15; color: "#294157"
+                            anchors.verticalCenter: parent.verticalCenter
+                            Text { anchors.centerIn: parent; text: "−"; color: "#ffffff"; font.pixelSize: 25 }
+                            MouseArea { anchors.fill: parent; onClicked: root.changeVolume(-5) }
+                        }
+                        Rectangle {
+                            width: 42; height: 48; radius: 15; color: root.volumeMuted ? "#8b5b55" : "#294157"
+                            anchors.verticalCenter: parent.verticalCenter
+                            Text { anchors.centerIn: parent; text: root.volumeMuted ? "×" : "♪"; color: "#ffffff"; font.pixelSize: 21 }
+                            MouseArea { anchors.fill: parent; onClicked: root.toggleMute() }
+                        }
+                        Rectangle {
+                            width: 42; height: 48; radius: 15; color: "#294157"
+                            anchors.verticalCenter: parent.verticalCenter
+                            Text { anchors.centerIn: parent; text: "+"; color: "#ffffff"; font.pixelSize: 25 }
+                            MouseArea { anchors.fill: parent; onClicked: root.changeVolume(5) }
+                        }
+                    }
+                }
+                Text {
+                    text: "URZĄDZENIE"
+                    color: "#8ea4ba"; font.pixelSize: 12
+                    font.weight: Font.DemiBold; font.letterSpacing: 1.5
+                }
+                Rectangle {
+                    width: parent.width; height: 76; radius: 18
+                    color: "#192b3d"; border.width: 1; border.color: "#2e465d"
+                    Column {
+                        anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
+                        anchors.leftMargin: 16; spacing: 5
+                        Text { text: "Bateria"; color: "#edf3f8"; font.pixelSize: 15; font.weight: Font.DemiBold }
+                        Text { text: root.batteryInfo; color: "#a9d7c9"; font.pixelSize: 12 }
+                    }
+                }
+                Rectangle {
+                    width: parent.width; height: 76; radius: 18
+                    color: "#192b3d"; border.width: 1; border.color: "#2e465d"
+                    Column {
+                        anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
+                        anchors.leftMargin: 16; spacing: 5
+                        Text { text: "Jądro Linux"; color: "#edf3f8"; font.pixelSize: 15; font.weight: Font.DemiBold }
+                        Text { text: root.kernelInfo; color: "#a9d7c9"; font.pixelSize: 12 }
+                    }
+                }
+                Rectangle {
+                    width: parent.width; height: 56; radius: 18
+                    color: "#26394d"
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Odśwież stan urządzenia"
+                        color: "#ffffff"; font.pixelSize: 14; font.weight: Font.DemiBold
+                    }
+                    MouseArea { anchors.fill: parent; onClicked: root.refreshSettings() }
                 }
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
