@@ -1,5 +1,5 @@
 pkgname=zamarteos-shell
-pkgver=0.2.3
+pkgver=0.2.4
 pkgrel=1
 pkgdesc="ZamarteOS touch-first Wayland shell and Fairphone 4 session"
 arch=('aarch64')
@@ -17,6 +17,17 @@ source=(
   'zamarteos-messages.desktop'
   'zamarteos-contacts.desktop'
   'zamarteos-files.desktop'
+  'zamarteos-calculator.desktop'
+  'zamarteos-calendar.desktop'
+  'zamarteos-clock.desktop'
+  'zamarteos-editor.desktop'
+  'zamarteos-weather.desktop'
+  'zamarteos-mail.desktop'
+  'zamarteos-keep.desktop'
+  'zamarteos-vitals.desktop'
+  'zamarteos-camera.desktop'
+  'zamarteos-internet.desktop'
+  'zamarteos-settings.desktop'
   'zamarteos-lock.pam'
   'zamarteos-firstboot-pin'
   'zamarteos-firstboot-pin.service'
@@ -25,7 +36,7 @@ source=(
   'polish-letters.json'
   'contacts.json'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
   set -x
@@ -56,6 +67,27 @@ check() {
   grep -q 'Exec=/usr/bin/zamarteos-open-app messages' "$srcdir/zamarteos-messages.desktop"
   grep -q 'Exec=/usr/bin/zamarteos-open-app contacts' "$srcdir/zamarteos-contacts.desktop"
   grep -q 'Exec=/usr/bin/zamarteos-open-app files' "$srcdir/zamarteos-files.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app calculator' "$srcdir/zamarteos-calculator.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app calendar' "$srcdir/zamarteos-calendar.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app clock' "$srcdir/zamarteos-clock.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app editor' "$srcdir/zamarteos-editor.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app weather' "$srcdir/zamarteos-weather.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app mail' "$srcdir/zamarteos-mail.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app keep' "$srcdir/zamarteos-keep.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app vitals' "$srcdir/zamarteos-vitals.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app camera' "$srcdir/zamarteos-camera.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app internet' "$srcdir/zamarteos-internet.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app settings' "$srcdir/zamarteos-settings.desktop"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.contacts/Contacts.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.calculator/Calculator.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.calendar/Calendar.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.clock/Clock.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.editor/Editor.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.weather/Weather.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.mail/Mail.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.keep/Keep.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.vitals/Vitals.qml' "$srcdir/shell.qml"
+  grep -q 'target: "zamarteos-apps"' "$srcdir/shell.qml"
   test -x /usr/lib/qt6/bin/qmllint
   # Parse and lint the actual packaged QML with Qt's import metadata.
   # Quickshell-specific type warnings are retained in the log; syntax and
@@ -86,6 +118,17 @@ package() {
   install -Dm644 "$srcdir/zamarteos-messages.desktop" "$pkgdir/usr/share/applications/zamarteos-messages.desktop"
   install -Dm644 "$srcdir/zamarteos-contacts.desktop" "$pkgdir/usr/share/applications/zamarteos-contacts.desktop"
   install -Dm644 "$srcdir/zamarteos-files.desktop" "$pkgdir/usr/share/applications/zamarteos-files.desktop"
+  install -Dm644 "$srcdir/zamarteos-calculator.desktop" "$pkgdir/usr/share/applications/zamarteos-calculator.desktop"
+  install -Dm644 "$srcdir/zamarteos-calendar.desktop" "$pkgdir/usr/share/applications/zamarteos-calendar.desktop"
+  install -Dm644 "$srcdir/zamarteos-clock.desktop" "$pkgdir/usr/share/applications/zamarteos-clock.desktop"
+  install -Dm644 "$srcdir/zamarteos-editor.desktop" "$pkgdir/usr/share/applications/zamarteos-editor.desktop"
+  install -Dm644 "$srcdir/zamarteos-weather.desktop" "$pkgdir/usr/share/applications/zamarteos-weather.desktop"
+  install -Dm644 "$srcdir/zamarteos-mail.desktop" "$pkgdir/usr/share/applications/zamarteos-mail.desktop"
+  install -Dm644 "$srcdir/zamarteos-keep.desktop" "$pkgdir/usr/share/applications/zamarteos-keep.desktop"
+  install -Dm644 "$srcdir/zamarteos-vitals.desktop" "$pkgdir/usr/share/applications/zamarteos-vitals.desktop"
+  install -Dm644 "$srcdir/zamarteos-camera.desktop" "$pkgdir/usr/share/applications/zamarteos-camera.desktop"
+  install -Dm644 "$srcdir/zamarteos-internet.desktop" "$pkgdir/usr/share/applications/zamarteos-internet.desktop"
+  install -Dm644 "$srcdir/zamarteos-settings.desktop" "$pkgdir/usr/share/applications/zamarteos-settings.desktop"
   install -Dm644 "$srcdir/zamarteos-lock.pam" "$pkgdir/etc/pam.d/zamarteos-lock"
   install -Dm755 "$srcdir/zamarteos-firstboot-pin" "$pkgdir/usr/lib/zamarteos/firstboot-pin"
   install -Dm644 "$srcdir/zamarteos-firstboot-pin.service" "$pkgdir/usr/lib/systemd/system/zamarteos-firstboot-pin.service"
