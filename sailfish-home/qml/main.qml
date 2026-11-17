@@ -3,16 +3,70 @@ import Sailfish.Silica 1.0
 
 ApplicationWindow {
     id: app
+
     initialPage: Component {
         Page {
             id: home
             allowedOrientations: Orientation.Portrait
+
             property string statusText: "Gotowy"
             property string currentTime: Qt.formatTime(new Date(), "HH:mm")
             property string currentDate: Qt.formatDate(new Date(), "dddd, d MMMM yyyy")
-            property string weatherText: "Wpisz miejscowość i pobierz prognozę."
+            property string weatherText: "Wpisz miejscowość, aby pobrać aktualną pogodę."
             property string forecastText: ""
             property bool weatherLoading: false
+            property int weatherRequestId: 0
+            property var activeWeatherRequest: null
+
+            function setStatus(message) {
+                statusText = message
+            }
+
+            function normalizedNumber(value) {
+                return value.replace(/[^0-9+*#]/g, "")
+            }
+
+            function startCall() {
+                var number = normalizedNumber(phoneField.text)
+                if (number.length < 3) {
+                    setStatus("Wpisz prawidłowy numer telefonu.")
+                    return
+                }
+                var opened = Qt.openUrlExternally("tel:" + number)
+                setStatus(opened
+                          ? "Przekazano numer do systemowej aplikacji Telefon."
+                          : "System nie przyjął polecenia połączenia.")
+            }
+
+            function startSms() {
+                var number = normalizedNumber(smsField.text)
+                if (number.length < 3) {
+                    setStatus("Wpisz numer odbiorcy SMS.")
+                    return
+                }
+                var opened = Qt.openUrlExternally("sms:" + number)
+                setStatus(opened
+                          ? "Przekazano numer do systemowej aplikacji Wiadomości."
+                          : "System nie przyjął polecenia SMS.")
+            }
+
+            function openWebSearch() {
+                var query = webField.text.trim()
+                if (query.length === 0) {
+                    setStatus("Wpisz adres strony lub szukaną frazę.")
+                    return
+                }
+
+                var url = query.indexOf("://") >= 0
+                        ? query
+                        : (query.indexOf(".") >= 0 && query.indexOf(" ") < 0
+                           ? "https://" + query
+                           : "https://duckduckgo.com/?q=" + encodeURIComponent(query))
+                var opened = Qt.openUrlExternally(url)
+                setStatus(opened
+                          ? "Przekazano stronę do domyślnej przeglądarki."
+                          : "Nie udało się otworzyć przeglądarki.")
+            }
 
             function weatherDescription(code) {
                 if (code === 0) return "Bezchmurnie"
@@ -29,6 +83,14 @@ ApplicationWindow {
                 return "Warunki zmienne"
             }
 
+            function failWeather(message) {
+                weatherLoading = false
+                activeWeatherRequest = null
+                weatherTimeout.stop()
+                weatherText = message
+                forecastText = ""
+            }
+
             function loadWeather() {
                 var place = cityField.text.trim()
                 if (place.length < 2) {
@@ -37,79 +99,108 @@ ApplicationWindow {
                     return
                 }
 
+                weatherRequestId += 1
+                var requestId = weatherRequestId
                 weatherLoading = true
-                weatherText = "Szukam miejscowości…"
+                weatherText = "Łączenie z usługą pogodową…"
                 forecastText = ""
 
                 var geo = new XMLHttpRequest()
+                activeWeatherRequest = geo
+                weatherTimeout.restart()
+
                 geo.onreadystatechange = function() {
-                    if (geo.readyState !== XMLHttpRequest.DONE)
+                    if (requestId !== home.weatherRequestId
+                            || geo.readyState !== XMLHttpRequest.DONE)
                         return
+
                     if (geo.status !== 200) {
-                        weatherText = "Nie udało się pobrać lokalizacji. Sprawdź internet."
-                        weatherLoading = false
+                        home.failWeather("Nie można pobrać lokalizacji. Sprawdź połączenie z internetem.")
                         return
                     }
 
-                    var locations
+                    var locations = null
                     try {
                         locations = JSON.parse(geo.responseText).results
-                    } catch (e) {
-                        locations = null
-                    }
-                    if (!locations || locations.length === 0) {
-                        weatherText = "Nie znaleziono miejscowości."
-                        weatherLoading = false
+                    } catch (error) {
+                        home.failWeather("Usługa lokalizacji zwróciła nieprawidłowe dane.")
                         return
                     }
 
-                    var loc = locations[0]
-                    fetchForecast(loc.latitude, loc.longitude, loc.name, loc.country)
+                    if (!locations || locations.length === 0) {
+                        home.failWeather("Nie znaleziono takiej miejscowości.")
+                        return
+                    }
+
+                    var location = locations[0]
+                    home.fetchForecast(requestId, location.latitude,
+                                       location.longitude, location.name,
+                                       location.country)
                 }
+
                 geo.open("GET", "https://geocoding-api.open-meteo.com/v1/search?name="
                          + encodeURIComponent(place) + "&count=1&language=pl&format=json")
                 geo.send()
             }
 
-            function fetchForecast(latitude, longitude, place, country) {
+            function fetchForecast(requestId, latitude, longitude, place, country) {
+                if (requestId !== weatherRequestId)
+                    return
+
                 var request = new XMLHttpRequest()
+                activeWeatherRequest = request
+                weatherTimeout.restart()
+
                 request.onreadystatechange = function() {
-                    if (request.readyState !== XMLHttpRequest.DONE)
+                    if (requestId !== home.weatherRequestId
+                            || request.readyState !== XMLHttpRequest.DONE)
                         return
-                    weatherLoading = false
+
+                    weatherTimeout.stop()
+                    home.activeWeatherRequest = null
+                    home.weatherLoading = false
+
                     if (request.status !== 200) {
-                        weatherText = "Nie udało się pobrać prognozy."
-                        forecastText = ""
+                        home.weatherText = "Nie udało się pobrać prognozy. Sprawdź internet."
+                        home.forecastText = ""
                         return
                     }
 
-                    var data
+                    var data = null
                     try {
                         data = JSON.parse(request.responseText)
-                    } catch (e) {
-                        weatherText = "Otrzymano nieprawidłowe dane pogody."
-                        forecastText = ""
+                    } catch (error) {
+                        home.weatherText = "Otrzymano nieprawidłowe dane pogody."
+                        home.forecastText = ""
+                        return
+                    }
+
+                    if (!data.current || !data.daily) {
+                        home.weatherText = "Usługa pogodowa nie zwróciła aktualnych danych."
+                        home.forecastText = ""
                         return
                     }
 
                     var current = data.current
-                    var daily = data.daily
-                    weatherText = place + ", " + country + "\\n"
+                    home.weatherText = place + ", " + country + "\n"
                             + Math.round(current.temperature_2m) + " °C • "
-                            + weatherDescription(current.weather_code) + "\\n"
-                            + "Odczuwalna: " + Math.round(current.apparent_temperature)
-                            + " °C • Wiatr: " + Math.round(current.wind_speed_10m) + " km/h"
-                    if (daily && daily.time && daily.time.length > 0) {
-                        var lines = []
+                            + home.weatherDescription(current.weather_code) + "\n"
+                            + "Odczuwalna: "
+                            + Math.round(current.apparent_temperature) + " °C • Wiatr: "
+                            + Math.round(current.wind_speed_10m) + " km/h"
+
+                    var daily = data.daily
+                    var lines = []
+                    if (daily.time && daily.time.length > 0) {
                         for (var i = 0; i < daily.time.length; i++) {
                             var date = daily.time[i].split("-")
                             lines.push(date[2] + "." + date[1] + ": "
-                                       + weatherDescription(daily.weather_code[i]) + ", "
+                                       + home.weatherDescription(daily.weather_code[i]) + ", "
                                        + Math.round(daily.temperature_2m_min[i]) + "° / "
                                        + Math.round(daily.temperature_2m_max[i]) + "°")
                         }
-                        forecastText = lines.join("\\n")
                     }
+                    home.forecastText = lines.join("\n")
                 }
 
                 var url = "https://api.open-meteo.com/v1/forecast?latitude="
@@ -131,6 +222,18 @@ ApplicationWindow {
                 }
             }
 
+            Timer {
+                id: weatherTimeout
+                interval: 15000
+                repeat: false
+                onTriggered: {
+                    if (home.activeWeatherRequest) {
+                        home.activeWeatherRequest.abort()
+                        home.failWeather("Przekroczono czas oczekiwania na internet (15 s).")
+                    }
+                }
+            }
+
             SilicaFlickable {
                 anchors.fill: parent
                 contentHeight: contentColumn.height + Theme.paddingLarge
@@ -143,12 +246,12 @@ ApplicationWindow {
 
                     PageHeader {
                         title: "ZamarteOS"
-                        description: "Panel dla Fairphone 4"
+                        description: "Panel narzędziowy • Fairphone 4"
                     }
 
                     Rectangle {
                         width: parent.width - 2 * Theme.horizontalPageMargin
-                        height: 154
+                        height: 142
                         anchors.horizontalCenter: parent.horizontalCenter
                         radius: Theme.paddingLarge
                         color: "#142b3a"
@@ -178,14 +281,67 @@ ApplicationWindow {
                         }
                     }
 
+                    SectionHeader { text: "Telefon" }
+
+                    TextField {
+                        id: phoneField
+                        width: parent.width - 2 * Theme.horizontalPageMargin
+                        x: Theme.horizontalPageMargin
+                        label: "Numer telefonu"
+                        placeholderText: "+48 000 000 000"
+                        inputMethodHints: Qt.ImhDialableCharactersOnly
+                        EnterKey.onClicked: home.startCall()
+                    }
+
+                    Button {
+                        text: "Zadzwoń"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onClicked: home.startCall()
+                    }
+
+                    SectionHeader { text: "Wiadomości SMS" }
+
+                    TextField {
+                        id: smsField
+                        width: parent.width - 2 * Theme.horizontalPageMargin
+                        x: Theme.horizontalPageMargin
+                        label: "Numer odbiorcy"
+                        placeholderText: "+48 000 000 000"
+                        inputMethodHints: Qt.ImhDialableCharactersOnly
+                        EnterKey.onClicked: home.startSms()
+                    }
+
+                    Button {
+                        text: "Napisz SMS"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onClicked: home.startSms()
+                    }
+
+                    SectionHeader { text: "Internet" }
+
+                    TextField {
+                        id: webField
+                        width: parent.width - 2 * Theme.horizontalPageMargin
+                        x: Theme.horizontalPageMargin
+                        label: "Adres strony lub wyszukiwanie"
+                        placeholderText: "np. duckduckgo.com"
+                        EnterKey.onClicked: home.openWebSearch()
+                    }
+
+                    Button {
+                        text: "Otwórz w przeglądarce"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onClicked: home.openWebSearch()
+                    }
+
                     SectionHeader { text: "Pogoda" }
 
                     TextField {
                         id: cityField
                         width: parent.width - 2 * Theme.horizontalPageMargin
                         x: Theme.horizontalPageMargin
-                        placeholderText: "Wpisz miejscowość"
                         label: "Miejscowość"
+                        placeholderText: "Wpisz nazwę miejscowości"
                         EnterKey.onClicked: home.loadWeather()
                     }
 
@@ -217,81 +373,13 @@ ApplicationWindow {
                     Label {
                         x: Theme.horizontalPageMargin
                         width: parent.width - 2 * Theme.horizontalPageMargin
-                        text: "Dane pogodowe: Open-Meteo. Do wyszukania wysyłana jest tylko nazwa miejscowości."
+                        text: "Pogoda: Open-Meteo. Wysyłana jest tylko nazwa wpisanej miejscowości."
                         color: Theme.secondaryColor
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.fontSizeTiny
                     }
 
-                    SectionHeader { text: "Szybki dostęp" }
-
-                    Grid {
-                        width: parent.width - 2 * Theme.horizontalPageMargin
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        columns: 2
-                        spacing: Theme.paddingMedium
-
-                        Repeater {
-                            model: [
-                                { name: "Telefon", symbol: "☎", detail: "Połączenia", action: "tel:" },
-                                { name: "Wiadomości", symbol: "✉", detail: "Nowy SMS", action: "sms:" },
-                                { name: "Internet", symbol: "⌘", detail: "Przeglądarka", action: "https://example.com" },
-                                { name: "Kontakty", symbol: "♙", detail: "Kontakty systemowe", action: "" },
-                                { name: "Aparat", symbol: "◎", detail: "Zdjęcia", action: "" },
-                                { name: "Ustawienia", symbol: "⚙", detail: "Ustawienia systemu", action: "" }
-                            ]
-
-                            delegate: BackgroundItem {
-                                width: (parent.width - Theme.paddingMedium) / 2
-                                height: 112
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: Theme.paddingMedium
-                                    color: highlighted ? "#24505b" : "#182d3b"
-                                    border.color: "#315b68"
-                                    border.width: 1
-                                }
-
-                                Column {
-                                    anchors.centerIn: parent
-                                    spacing: Theme.paddingSmall
-                                    Label {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: modelData.symbol
-                                        color: "#63c4c0"
-                                        font.pixelSize: Theme.fontSizeExtraLarge
-                                    }
-                                    Label {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: modelData.name
-                                        color: "#ffffff"
-                                        font.pixelSize: Theme.fontSizeSmall
-                                    }
-                                    Label {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: modelData.detail
-                                        color: "#a9c8ce"
-                                        font.pixelSize: Theme.fontSizeTiny
-                                    }
-                                }
-
-                                onClicked: {
-                                    if (modelData.action !== "") {
-                                        var ok = Qt.openUrlExternally(modelData.action)
-                                        home.statusText = ok
-                                            ? modelData.name + " — przekazano do systemu"
-                                            : "Nie udało się otworzyć: " + modelData.name
-                                    } else {
-                                        home.statusText = modelData.name
-                                            + " — integracja wymaga sprawdzenia na telefonie"
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    SectionHeader { text: "Stan panelu" }
+                    SectionHeader { text: "Status" }
 
                     Label {
                         x: Theme.horizontalPageMargin
@@ -305,7 +393,7 @@ ApplicationWindow {
                     Label {
                         x: Theme.horizontalPageMargin
                         width: parent.width - 2 * Theme.horizontalPageMargin
-                        text: "Panel działa jako osobna aplikacja. Nie zastępuje Lipstick i nie zmienia modemu, dźwięku rozmów ani usług telefonicznych."
+                        text: "To niezależna aplikacja. Nie zastępuje ekranu systemowego Sailfish OS ani nie zmienia modemu, sterowników i dźwięku rozmów."
                         color: Theme.secondaryColor
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.fontSizeTiny
