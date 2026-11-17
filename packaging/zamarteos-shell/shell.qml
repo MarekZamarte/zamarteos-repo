@@ -177,6 +177,16 @@ Scope {
             if (item && typeof item.warmUp === "function") item.warmUp()
         }
     }
+    Loader {
+        id: settingsPlugin
+        Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.settings/Settings.qml", {
+            shell: pluginShellApi,
+            manifest: ({ id: "moarchy.settings", name: "Ustawienia" })
+        })
+        onLoaded: {
+            if (item && typeof item.warmUp === "function") item.warmUp()
+        }
+    }
 
     Connections {
         target: phonePlugin.item
@@ -298,6 +308,16 @@ Scope {
             }
         }
     }
+    Connections {
+        target: settingsPlugin.item
+        function onOpenedChanged() {
+            if (settingsPlugin.item && !settingsPlugin.item.opened &&
+                    root.activePlugin === "moarchy.settings") {
+                root.activePlugin = ""
+                root.homeOpen = true
+            }
+        }
+    }
 
     function pluginItem(pluginId) {
         if (pluginId === "moarchy.phone") return phonePlugin.item
@@ -312,6 +332,7 @@ Scope {
         if (pluginId === "moarchy.mail") return mailPlugin.item
         if (pluginId === "moarchy.keep") return keepPlugin.item
         if (pluginId === "moarchy.vitals") return vitalsPlugin.item
+        if (pluginId === "moarchy.settings") return settingsPlugin.item
         return null
     }
 
@@ -666,11 +687,9 @@ Scope {
                 root.launchByKeywords(["megapixels", "camera"], "Aparat")
             else if (app === "internet")
                 root.launchByKeywords(["epiphany", "browser"], "Internet")
-            else if (app === "settings") {
-                root.controlOpen = true
-                root.homeOpen = false
-                root.refreshSettings()
-            } else
+            else if (app === "settings")
+                root.summonPlugin("moarchy.settings", "{}")
+            else
                 root.showNotice("Nieznana aplikacja ZamarteOS.")
         }
     }
