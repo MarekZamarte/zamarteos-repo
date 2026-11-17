@@ -183,6 +183,22 @@ if insert not in s:
     p.write_text(s)
 PY
 
+# Add the build-only dependencies required by the Sailfish Droid HAL package
+# compilation. This affects the isolated builder, not the phone rootfs.
+python3 - "$ROOT/docker/Dockerfile.builder" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+s = p.read_text()
+old = "alsa-lib feedbackd"
+new = "alsa-lib feedbackd wayland pulseaudio expat libltdl systemd-libs"
+if new not in s:
+    if old not in s:
+        raise SystemExit("Dockerfile.builder dependency anchor changed")
+    s = s.replace(old, new, 1)
+    p.write_text(s)
+PY
+
 # Caller ID must never identify somebody by a coincidental suffix match.
 # The pinned phone and SMS plugins share this helper; compare the complete
 # normalized number (or exact sender word), not only its last nine digits.
