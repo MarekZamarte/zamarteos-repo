@@ -1,24 +1,25 @@
-# ZamarteOS Home — natywna aplikacja Sailfish
+# ZamarteOS Home — panel narzędziowy Sailfish
 
-Niezależna aplikacja Qt Quick / Sailfish Silica dla Fairphone 4 z Sailfish OS 5.0.0.72.
+Natywna aplikacja Qt Quick / Sailfish Silica dla Fairphone 4 z Sailfish OS 5.0.
 
-## Co zawiera
-- natywny ekran Silica z panelem daty i zegara odświeżanym co sekundę;
-- kafelki szybkiego dostępu;
-- przekazywanie standardowych schematów `tel:`, `sms:` i `https:` do obsługi przez system;
-- komunikat stanu dla funkcji, których integracja wymaga potwierdzenia na urządzeniu;
-- wpis aplikacji i ikonę SVG instalowane do standardowych katalogów Sailfish OS.
+## Funkcje zaimplementowane w kodzie
+
+- zegar i data;
+- rozpoczęcie połączenia przez systemowy handler `tel:<numer>`;
+- rozpoczęcie tworzenia SMS przez systemowy handler `sms:<numer>`;
+- otwieranie adresu WWW lub wyszukiwanie w DuckDuckGo w domyślnej przeglądarce;
+- pobieranie aktualnej pogody i prognozy 3-dniowej z Open-Meteo;
+- komunikaty błędów sieci oraz limit 15 sekund dla żądań pogodowych.
+
+Aplikacja deklaruje uprawnienie Sailjail `Internet`, wymagane przez zapytania pogodowe. Nie wymaga usług Google.
+
+## Ważne ograniczenia
+
+- To panel narzędziowy uruchamiany jako zwykła aplikacja Sailfish. Nie zastępuje Lipstick ani systemowego ekranu głównego.
+- Telefon i SMS są przekazywane do systemowych handlerów URL. To system Sailfish wykonuje właściwe połączenie lub otwiera kompozytor wiadomości.
+- Kontakty, aparat i ustawienia nie są pokazywane jako działające skróty, ponieważ nie zostały jeszcze podłączone do sprawdzonych API urządzenia.
+- Samo zbudowanie RPM nie potwierdza działania na telefonie. Wymagane są testy połączenia, SMS, przeglądarki i dostępu do internetu na fizycznym FP4.
 
 ## Budowanie
-Projekt używa qmake i biblioteki SailfishApp. Należy budować go w Sailfish SDK na celu `aarch64` zgodnym z Sailfish OS 5.0.0.72. Oficjalna dokumentacja opisuje użycie `sfdk` i wybór celu ARM64:
-https://docs.sailfishos.org/Tools/Sailfish_SDK/Building_packages/
 
-## Ograniczenia — uczciwy status
-- Źródła nie zostały jeszcze skompilowane w Sailfish SDK.
-- Nie wykonano testu uruchomienia na Fairphone 4.
-- Telefon, wiadomości i przeglądarka korzystają ze standardowego przekazywania URL; działanie zależy od zarejestrowanych handlerów w systemie.
-- Kontakty, aparat i ustawienia są na razie kafelkami informacyjnymi — ich bezpieczne uruchamianie wymaga weryfikacji rzeczywistych usług na urządzeniu.
-- To nie jest zamiennik Lipstick ani kompletna powłoka systemowa.
-
-## Bezpieczeństwo
-Aplikacja nie ingeruje w Lipstick, modem, sterowniki, stos audio ani usługi telefoniczne. Nie instaluje Androida ani usług Google.
+Projekt używa qmake i biblioteki SailfishApp. Należy budować w Sailfish SDK na celu ARM64 zgodnym z Sailfish OS 5.0.
