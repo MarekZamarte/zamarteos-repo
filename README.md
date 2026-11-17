@@ -1,36 +1,31 @@
-# ZamarteOS Pure — Fairphone 4
+# ZamarteOS
 
-Natywny system Linux dla Fairphone 4 (SM7225), bez Androida jako systemu użytkownika, bez Halium, Ubuntu Touch i Lomiri.
+**ZamarteOS Pure dla Fairphone 4** — samodzielny system Linux ARM64 z własną
+powłoką Wayland i aplikacjami ZamarteOS.
 
-## Założenia
-- Arch Linux ARM / aarch64 jako baza użytkowa.
-- Linux dla SM6350/SM7225 z obsługą Fairphone 4.
-- Hyprland jako kompozytor; docelowo własna powłoka ZamarteOS w Quickshell/QML.
-- ModemManager, Q6Voice i q6voiced dla dźwięku rozmów.
-- Własny ekran główny, centrum sterowania i aplikacje ZamarteOS.
-- Firmware Qualcomm pozostaje ukrytą warstwą sprzętową, jeśli jest niezbędny.
+Sailfish OS nie jest docelowym interfejsem ani wymaganym systemem bazowym.
+Zachowujemy techniczne komponenty potrzebne do obsługi FP4: kernel, firmware,
+sterowniki, modem, IMS/Q6Voice, routing dźwięku rozmów, sieć, baterię i dotyk.
+Nie dostarczamy Android userspace ani usług Google.
 
-Androidowy format `boot.img` jest wyłącznie formatem startowym wymaganym przez bootloader FP4. Nie oznacza instalacji Androida.
+## Stan projektu
 
-## Stan
-- [x] Wybrana baza sprzętowa FP4 z udokumentowanym testem dźwięku rozmów.
-- [x] Utworzona osobna gałąź rozwojowa.
-- [x] Powtarzalny build referencyjnej bazy FP4 w GitHub Actions (obraz referencyjny nr 43; nie jest wydaniem).
-- [x] Pierwszy prototyp powłoki QML: ekran główny, szuflada aplikacji i centrum telefonu.
-- [x] Kompilacja pakietu powłoki QML/PAM w ARM64 CI; dodano kontrolę `qmllint` do kolejnego przebiegu CI.
-- [x] Przygotowany skrypt integrujący własną powłokę i blokadę z sesją obrazu FP4.
-- [ ] Doprowadzenie powłoki do poziomu codziennego użycia: pełna klawiatura ekranowa, gesty, blokada, powiadomienia i działające centrum ustawień.
-- [ ] Test uruchomienia, blokady i odblokowania na fizycznym FP4.
-- [ ] Potwierdzenie działania Telefonu, SMS, Kontaktów, Plików i przeglądarki oraz testy fizycznego telefonu.
-- [ ] Obraz do wgrania dopiero po testach.
+- Powłoka ZamarteOS Pure jest integrowana z przypiętą bazą sprzętową FP4.
+- Host aplikacji podłącza natywne moduły Telefon, Wiadomości, Kontakty, Pliki,
+  Kalkulator, Kalendarz, Zegar, Edytor, Pogoda, Poczta, Notatki i Monitor.
+- Centrum ustawień ma prawdziwe sterowanie Wi-Fi, danymi komórkowymi,
+  Bluetooth, jasnością i głośnością multimediów.
+- Aparat uruchamia Megapixels, a przeglądarka uruchamia Epiphany.
+- Kompilacja i statyczne testy CI nie potwierdzają jeszcze działania
+  na fizycznym telefonie. Wymagane są testy rozmów, dźwięku, SMS, aparatu,
+  sieci, baterii, dotyku i uśpienia na Fairphone 4.
 
-**Bezpieczeństwo:** żaden skrypt w tym repozytorium nie flashuje telefonu. Obraz nr 43 jest bazą referencyjną opartą na sprzętowej bazie Moarchy z powłoką ZamarteOS; nie jest wydaniem i nie wolno go instalować przed testami na fizycznym FP4.
+## Dokumentacja
 
-Szczegóły: [plan budowy](docs/BUILD-PLAN.md) i [status FP4](docs/FP4-STATUS.md).
+- [Plan architektury i etapów](docs/BUILD-PLAN.md)
+- [Stan sprzętu FP4 i kryteria dźwięku połączeń](docs/FP4-STATUS.md)
+- [Opis powłoki ZamarteOS po polsku](packaging/zamarteos-shell/README-PL.md)
+- [PR ZamarteOS Pure FP4](https://github.com/MarekZamarte/zamarteos-repo/pull/1)
 
-
-## Ostatnia kontrola
-
-- Powłoka ma szybkie kafelki Telefonu, Wiadomości, Kontaktów, Plików i Internetu. Do pakietu powłoki dodano zależność od przeglądarki Epiphany dla ARM64, a wyszukiwarka sprawdza także identyfikator wpisu aplikacji.
-- Kolejny przebieg ARM64 CI uruchomi `qmllint` na rzeczywistym pliku `shell.qml`; do czasu zielonego wyniku kontrola nie jest uznana za zaliczoną. Zależność Epiphany i kafelek przeglądarki także wymagają potwierdzenia w nowym buildzie.
-- Obecność wpisów .desktop i pakietów nie jest dowodem działania aplikacji. Testy dotyku, gestów, połączeń, Caller ID, ringback i audio wymagają fizycznego FP4.
+Żaden workflow nie flashuje telefonu. Obraz testowy nie jest wydaniem do
+instalacji, dopóki CI i testy sprzętowe nie przejdą.
