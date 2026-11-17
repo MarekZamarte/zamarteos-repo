@@ -1,6 +1,6 @@
 Name: harbour-zamarteos-home
-Summary: Natywny ekran ZamarteOS dla Sailfish OS
-Version: 0.1
+Summary: Panel narzędziowy ZamarteOS dla Sailfish OS
+Version: 0.2
 Release: 1
 Group: Applications
 License: MIT
@@ -15,7 +15,7 @@ BuildRequires: pkgconfig(Qt5Quick)
 BuildRequires: desktop-file-utils
 
 %description
-Niezależna aplikacja Sailfish Silica prezentująca prototyp ekranu głównego ZamarteOS.
+Natywny panel narzędziowy Sailfish Silica: połączenia, SMS, przeglądarka i pogoda.
 
 %prep
 %autosetup -n %{name}-%{version}
