@@ -52,7 +52,7 @@ i testu regresji.
 
 Powłoka ZamarteOS jest uruchamiana jako własna sesja Wayland z tty1. Hostuje
 natywne moduły przypiętej bazy FP4: Phone, Messages, Contacts, Files,
-Calculator, Calendar, Clock, Editor, Weather, Mail, Keep i Vitals. Osobne
+Calculator, Calendar, Clock, Editor, Weather, Mail, Keep, Vitals, Settings i Themes. Osobne
 wpisy aplikacji ZamarteOS uruchamiają te moduły przez IPC powłoki. Telefon i
 Wiadomości są ładowane od początku sesji, aby nasłuch ModemManager działał
 również przy zamkniętych oknach.
