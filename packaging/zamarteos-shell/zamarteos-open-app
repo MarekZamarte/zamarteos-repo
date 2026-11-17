@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+case "${1:-}" in
+  phone|messages|contacts|files) app="$1" ;;
+  *) echo "Unknown ZamarteOS app: ${1:-}" >&2; exit 2 ;;
+esac
+exec qs ipc call zamarteos-apps open "$app"
