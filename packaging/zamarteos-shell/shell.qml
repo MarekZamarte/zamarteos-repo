@@ -43,7 +43,7 @@ Scope {
 
     FileView {
         id: contactsStore
-        path: "/home/moarchy/.local/share/moarchy-contacts/contacts.json"
+        path: (Quickshell.env("HOME") || "/home/moarchy") + "/.local/share/moarchy-contacts/contacts.json"
         watchChanges: false
         printErrors: false
         onLoaded: {
@@ -72,6 +72,9 @@ Scope {
         }
         function toggle(pluginId, payload) {
             root.togglePlugin(pluginId, payload || "{}")
+        }
+        function openContacts() {
+            root.openContactsManager()
         }
     }
 
@@ -1394,11 +1397,7 @@ Scope {
                 Text { anchors.centerIn: parent; text: "⌂"; color: "#e8f1f6"; font.pixelSize: 22 }
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: {
-                        root.drawerOpen = false
-                        root.controlOpen = false
-                        root.homeOpen = true
-                    }
+                    onClicked: root.showHome()
                 }
             }
 
