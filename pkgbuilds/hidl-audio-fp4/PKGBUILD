@@ -1,0 +1,19 @@
+# Fairphone 4 HIDL audio compatibility library from the Sailfish FP4 adaptation.
+pkgname=hidl-audio-fp4
+pkgver=0.1
+pkgrel=1
+pkgdesc="Sailfish Fairphone 4 HIDL audio compatibility library"
+arch=('aarch64')
+url="https://github.com/SailfishOS-for-the-fairphone-4/hidl_audio"
+license=('MIT')
+depends=('pulseaudio-modules-droid-fp4')
+source=("hidl-audio::git+https://github.com/SailfishOS-for-the-fairphone-4/hidl_audio#commit=5d2670e709511b87fcf596fa6dd3c1e7261434aa")
+sha256sums=('SKIP')
+
+package() {
+  cd "$srcdir/hidl-audio"
+  install -Dm755 binaries/audio.hidl_compat.default.so "$pkgdir/usr/libexec/droid-hybris/system/lib64/hw/audio.hidl_compat.default.so"
+  install -d "$pkgdir/usr/libexec/droid-hybris/system/lib64"
+  ln -s /apex/com.android.vndk.v30/lib64/libaudioroute.so "$pkgdir/usr/libexec/droid-hybris/system/lib64/libaudioroute.so"
+  test -s "$pkgdir/usr/libexec/droid-hybris/system/lib64/hw/audio.hidl_compat.default.so"
+}
