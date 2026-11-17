@@ -10,6 +10,12 @@ Scope {
     property var now: new Date()
     property bool drawerOpen: false
     property bool controlOpen: false
+    property bool contactsOpen: false
+    property string contactsReturnToPlugin: ""
+    property string contactName: ""
+    property string contactPhone: ""
+    property string contactsError: ""
+    property var contacts: []
     property bool homeOpen: true
     property string searchText: ""
     property string notice: ""
@@ -34,6 +40,22 @@ Scope {
         return match ? match[1] : ""
     }
     property bool firstbootNoticeDismissed: firstbootNoticeState.text().trim() === "1"
+
+    FileView {
+        id: contactsStore
+        path: "/home/moarchy/.local/share/moarchy-contacts/contacts.json"
+        watchChanges: false
+        printErrors: false
+        onLoaded: {
+            try {
+                const data = JSON.parse(text())
+                root.contacts = data && Array.isArray(data.contacts) ? data.contacts : []
+            } catch (error) {
+                root.contacts = []
+                root.contactsError = "Nie można odczytać bazy kontaktów."
+            }
+        }
+    }
 
     property string activePlugin: ""
 
@@ -146,6 +168,7 @@ Scope {
             showNotice("Ta funkcja nie jest dostępna w tym obrazie.")
             return false
         }
+        contactsOpen = false
         if (activePlugin && activePlugin !== pluginId) {
             const previousId = activePlugin
             const previous = pluginItem(previousId)
@@ -168,6 +191,80 @@ Scope {
     function togglePlugin(pluginId, payload) {
         if (activePlugin === pluginId) hidePlugin(pluginId)
         else summonPlugin(pluginId, payload)
+    }
+
+    function openContactsManager() {
+        contactsReturnToPlugin = activePlugin
+        contactsOpen = true
+        homeOpen = false
+        drawerOpen = false
+        controlOpen = false
+    }
+
+    function closeContactsManager() {
+        contactsOpen = false
+        if (activePlugin)
+            homeOpen = false
+        else
+            homeOpen = true
+        contactsReturnToPlugin = ""
+    }
+
+    function saveContacts() {
+        contactsStore.setText(JSON.stringify({ contacts: contacts }, null, 2))
+        contactsError = ""
+        showNotice("Zapisano kontakty.")
+    }
+
+    function addContact() {
+        const name = contactName.trim()
+        const phone = contactPhone.trim()
+        const digits = phone.replace(/[^0-9]/g, "")
+        if (!name.length) {
+            contactsError = "Wpisz nazwę kontaktu."
+            return
+        }
+        if (digits.length < 3 || /[^0-9+*#() .\\-]/.test(phone)) {
+            contactsError = "Wpisz prawidłowy numer telefonu."
+            return
+        }
+        for (let i = 0; i < contacts.length; ++i) {
+            if (String(contacts[i].phone).replace(/[\\s().-]/g, "") === phone.replace(/[\\s().-]/g, "")) {
+                contactsError = "Ten numer jest już zapisany."
+                return
+            }
+        }
+        const next = contacts.slice()
+        next.push({ name: name, phone: phone })
+        next.sort(function(a, b) {
+            return String(a.name).toLocaleLowerCase().localeCompare(String(b.name).toLocaleLowerCase())
+        })
+        contacts = next
+        contactName = ""
+        contactPhone = ""
+        saveContacts()
+    }
+
+    function removeContact(index) {
+        if (index < 0 || index >= contacts.length) return
+        const next = contacts.slice()
+        next.splice(index, 1)
+        contacts = next
+        saveContacts()
+    }
+
+    function showHome() {
+        const phone = phonePlugin.item
+        if (activePlugin === "moarchy.phone" && phone && phone.opened &&
+                (phone.incoming || phone.callUp)) {
+            showNotice("Najpierw zakończ obsługę połączenia.")
+            return
+        }
+        contactsOpen = false
+        if (activePlugin) hidePlugin(activePlugin)
+        homeOpen = true
+        drawerOpen = false
+        controlOpen = false
     }
 
     property string wifiState: "nieodczytany"
@@ -559,10 +656,10 @@ Scope {
         anchors { top: true; bottom: true; left: true; right: true }
         // The home surface must be shown at login. Hide it only while a
         // launched application is in the foreground.
-        visible: root.homeOpen || root.drawerOpen || root.controlOpen
-        aboveWindows: root.drawerOpen || root.controlOpen || root.homeOpen
+        visible: root.homeOpen || root.drawerOpen || root.controlOpen || root.contactsOpen
+        aboveWindows: root.drawerOpen || root.controlOpen || root.homeOpen || root.contactsOpen
         exclusiveZone: 0
-        focusable: root.drawerOpen || root.controlOpen || root.homeOpen
+        focusable: root.drawerOpen || root.controlOpen || root.homeOpen || root.contactsOpen
         color: "#0b111b"
 
         Rectangle {
@@ -1030,6 +1127,205 @@ Scope {
             }
         }
 
+
+        Rectangle {
+            id: contactsPage
+            anchors.fill: parent
+            visible: root.contactsOpen
+            z: 22
+            color: "#0d1622"
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 24
+                spacing: 14
+
+                Row {
+                    width: parent.width
+                    height: 52
+                    Text {
+                        width: parent.width - 62
+                        height: parent.height
+                        text: "Kontakty"
+                        color: "#f3f6fa"
+                        font.pixelSize: 27
+                        font.weight: Font.DemiBold
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    Rectangle {
+                        width: 48; height: 48; radius: 16; color: "#26394d"
+                        Text { anchors.centerIn: parent; text: "✕"; color: "#ffffff"; font.pixelSize: 20 }
+                        MouseArea { anchors.fill: parent; onClicked: root.closeContactsManager() }
+                    }
+                }
+
+                Text {
+                    text: "Nowy kontakt"
+                    color: "#a9d7c9"
+                    font.pixelSize: 14
+                    font.weight: Font.DemiBold
+                }
+
+                Rectangle {
+                    width: parent.width; height: 54; radius: 16
+                    color: "#192b3d"; border.width: 1; border.color: "#35516b"
+                    TextInput {
+                        id: contactNameInput
+                        anchors.fill: parent
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 12
+                        verticalAlignment: TextInput.AlignVCenter
+                        color: "#f3f6fa"
+                        font.pixelSize: 16
+                        text: root.contactName
+                        onTextChanged: root.contactName = text
+                    }
+                    Text {
+                        anchors.left: parent.left; anchors.leftMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Imię i nazwisko"
+                        color: "#71879d"
+                        font.pixelSize: 15
+                        visible: contactNameInput.text.length === 0
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width; height: 54; radius: 16
+                    color: "#192b3d"; border.width: 1; border.color: "#35516b"
+                    TextInput {
+                        id: contactPhoneInput
+                        anchors.fill: parent
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 12
+                        verticalAlignment: TextInput.AlignVCenter
+                        color: "#f3f6fa"
+                        font.pixelSize: 16
+                        inputMethodHints: Qt.ImhDialableCharactersOnly
+                        text: root.contactPhone
+                        onTextChanged: root.contactPhone = text
+                        Keys.onReturnPressed: root.addContact()
+                    }
+                    Text {
+                        anchors.left: parent.left; anchors.leftMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Numer telefonu"
+                        color: "#71879d"
+                        font.pixelSize: 15
+                        visible: contactPhoneInput.text.length === 0
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width; height: 52; radius: 16
+                    color: "#d7f0e6"
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Dodaj kontakt"
+                        color: "#142b2b"
+                        font.pixelSize: 15
+                        font.weight: Font.DemiBold
+                    }
+                    MouseArea { anchors.fill: parent; onClicked: root.addContact() }
+                }
+
+                Text {
+                    width: parent.width
+                    text: root.contactsError
+                    color: "#ff9a9a"
+                    wrapMode: Text.WordWrap
+                    font.pixelSize: 12
+                    visible: root.contactsError.length > 0
+                }
+
+                Row {
+                    width: parent.width
+                    height: 28
+                    Text {
+                        text: "Zapisane osoby"
+                        color: "#a9d7c9"
+                        font.pixelSize: 14
+                        font.weight: Font.DemiBold
+                    }
+                    Text {
+                        anchors.right: parent.right
+                        text: String(root.contacts.length)
+                        color: "#91a4ba"
+                        font.pixelSize: 13
+                    }
+                }
+
+                ListView {
+                    id: contactsList
+                    width: parent.width
+                    height: Math.max(100, parent.height - 290)
+                    clip: true
+                    spacing: 8
+                    model: root.contacts
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    delegate: Rectangle {
+                        required property var modelData
+                        required property int index
+                        width: contactsList.width
+                        height: 72
+                        radius: 16
+                        color: "#192b3d"
+                        border.width: 1
+                        border.color: "#2e465d"
+
+                        Column {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 110
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 4
+                            Text {
+                                width: parent.width
+                                text: modelData.name
+                                color: "#edf3f8"
+                                font.pixelSize: 15
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                width: parent.width
+                                text: modelData.phone
+                                color: "#91a4ba"
+                                font.pixelSize: 12
+                                elide: Text.ElideRight
+                            }
+                        }
+                        Rectangle {
+                            anchors.right: parent.right
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 46; height: 46; radius: 14
+                            color: "#294157"
+                            Text { anchors.centerIn: parent; text: "☎"; color: "#ffffff"; font.pixelSize: 19 }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    root.closeContactsManager()
+                                    root.summonPlugin("moarchy.phone",
+                                                      JSON.stringify({ dial: modelData.phone }))
+                                }
+                            }
+                        }
+                        Rectangle {
+                            anchors.right: parent.right
+                            anchors.rightMargin: 60
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 42; height: 46; radius: 14
+                            color: "#573b42"
+                            Text { anchors.centerIn: parent; text: "×"; color: "#ffffff"; font.pixelSize: 22 }
+                            MouseArea { anchors.fill: parent; onClicked: root.removeContact(index) }
+                        }
+                    }
+                }
+            }
+        }
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom; anchors.bottomMargin: 22
