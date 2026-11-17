@@ -7,3 +7,5 @@ Retry: correct Android 11 API 30 metadata so libhybris enables Android Q linker 
 Retry after adding missing Android NDK android/rect.h to the pinned headers package.
 
 Retry after correcting the PKGBUILD syntax and preserving android-config.h from the header snapshot.
+
+Retry after adding the missing Android hardware/gralloc.h declaration to libhybris ui compatibility headers.
