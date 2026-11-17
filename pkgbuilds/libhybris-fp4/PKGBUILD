@@ -1,21 +1,46 @@
 # ARM64 libhybris build for the Fairphone 4 Sailfish audio HAL.
 pkgname=libhybris-fp4
 pkgver=0.0.5.57
-pkgrel=1
+pkgrel=2
 pkgdesc="libhybris Android hardware compatibility layer for ZamarteOS FP4"
 arch=('aarch64')
 url="https://github.com/libhybris/libhybris"
 license=('Apache-2.0')
 depends=('glibc' 'hybris-android-headers' 'wayland')
 makedepends=('autoconf' 'automake' 'libtool' 'make' 'gcc' 'pkgconf' 'wayland' 'hybris-android-headers')
-provides=('libhybris' 'libhardware')
-conflicts=('libhybris')
 source=("libhybris::git+https://github.com/libhybris/libhybris#commit=7079712a42ea2754adf747e70c6cc75764c8596e")
 sha256sums=('SKIP')
 
+prepare() {
+  cd "$srcdir/libhybris"
+  # ui_compatibility_layer.h declares Android 10+ gralloc APIs using
+  # buffer_handle_t and ARect, but the public header does not include the
+  # Android HAL headers that define those types. Make it self-contained.
+  python3 - <<'PY'
+from pathlib import Path
+p = Path("hybris/include/hybris/ui/ui_compatibility_layer.h")
+s = p.read_text()
+needle = "#include <unistd.h>\n"
+addition = """#include <unistd.h>
+
+#if ANDROID_VERSION_MAJOR >= 10
+#include <hardware/gralloc.h>
+#include <android/rect.h>
+#endif
+"""
+if addition not in s:
+    if needle not in s:
+        raise SystemExit("ui_compatibility_layer.h include anchor changed")
+    s = s.replace(needle, addition, 1)
+p.write_text(s)
+PY
+  grep -Fq '#include <hardware/gralloc.h>' hybris/include/hybris/ui/ui_compatibility_layer.h
+  grep -Fq '#include <android/rect.h>' hybris/include/hybris/ui/ui_compatibility_layer.h
+}
+
 build() {
   cd "$srcdir/libhybris/hybris"
-  export CPPFLAGS="-I/opt/android/include ${CPPFLAGS:-}"
+  export CPPFLAGS="-I/opt/android/include \${CPPFLAGS:-}"
   ./autogen.sh --enable-arch=arm64 --prefix=/opt/android/hybris --with-android-headers=/opt/android/include --enable-wayland
   make
 }
@@ -31,4 +56,10 @@ package() {
   find "$pkgdir/opt/android/hybris/lib" -maxdepth 1 -type f -name '*.so*' -printf '%f\n' 2>/dev/null | while read -r f; do
     [ -e "$pkgdir/usr/lib/$f" ] || ln -s "/opt/android/hybris/lib/$f" "$pkgdir/usr/lib/$f"
   done
+  # The Droid audio module's Meson build resolves libhardware via pkg-config.
+  test -s "$pkgdir/usr/lib/pkgconfig/libhardware.pc" || {
+    echo "ERROR: libhybris did not install libhardware.pc" >&2
+    find "$pkgdir" -iname '*hardware*.pc' -print >&2
+    return 1
+  }
 }
