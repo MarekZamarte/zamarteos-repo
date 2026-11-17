@@ -215,8 +215,7 @@ Scope {
     Loader {
         id: settingsPlugin
         Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.settings/Settings.qml", {
-            shell: pluginShellApi,
-            manifest: ({ id: "moarchy.settings", name: "Ustawienia" })
+            shell: pluginShellApi
         })
         onLoaded: {
             if (item && typeof item.warmUp === "function") item.warmUp()
@@ -225,8 +224,7 @@ Scope {
     Loader {
         id: themesPlugin
         Component.onCompleted: setSource("file:///usr/share/moarchy/plugins/moarchy.themes/Themes.qml", {
-            shell: pluginShellApi,
-            manifest: ({ id: "moarchy.themes", name: "Motywy" })
+            shell: pluginShellApi
         })
         onLoaded: {
             if (item && typeof item.warmUp === "function") item.warmUp()
