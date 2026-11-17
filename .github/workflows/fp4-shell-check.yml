@@ -116,6 +116,21 @@ jobs:
           grep -q 'item.warmUp()' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -Fq 'if (payload.contacts) root.page = 2' moarchy-base/default/omarchy/plugins/moarchy.phone/Phone.qml
           grep -Fq 'root.shell.openContacts()' moarchy-base/default/omarchy/plugins/moarchy.phone/Phone.qml
+          for plugin_file in \
+            moarchy.phone/Phone.qml \
+            moarchy.messages/Messages.qml \
+            moarchy.contacts/Contacts.qml \
+            moarchy.files/Files.qml \
+            moarchy.calculator/Calculator.qml \
+            moarchy.calendar/Calendar.qml \
+            moarchy.clock/Clock.qml \
+            moarchy.editor/Editor.qml \
+            moarchy.weather/Weather.qml \
+            moarchy.mail/Mail.qml \
+            moarchy.keep/Keep.qml \
+            moarchy.vitals/Vitals.qml; do
+            test -s "moarchy-base/default/omarchy/plugins/$plugin_file"
+          done
           grep -Fq 'function openContacts()' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -Fq 'root.openContactsManager()' moarchy-base/pkgbuilds/zamarteos-shell/shell.qml
           grep -Fq 'contacts.json' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
