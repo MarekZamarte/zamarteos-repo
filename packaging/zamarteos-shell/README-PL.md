@@ -14,7 +14,7 @@ natywny userspace Arch Linux ARM z własną sesją Wayland ZamarteOS.
 
 - własna sesja Hyprland/Wayland uruchamiana z tty1;
 - ekran główny, szuflada aplikacji i wyszukiwanie wpisów .desktop;
-- hostowanie natywnych modułów Phone, Messages, Contacts, Files, Calculator, Calendar, Clock, Editor, Weather, Mail, Keep i Vitals z przypiętej bazy FP4;
+- hostowanie natywnych modułów Phone, Messages, Contacts, Files, Calculator, Calendar, Clock, Editor, Weather, Mail, Keep, Vitals, Settings i Themes z przypiętej bazy FP4;
 - osobne pozycje Telefon, Wiadomości, Kontakty i Pliki w menu aplikacji;\n- pełny moduł Kontakty z edycją danych, współdzielony z Telefonem i Wiadomościami;
 - moduły Telefonu i Wiadomości są ładowane przy starcie sesji i wywołują
   warmUp(), aby nasłuch ModemManager nie zależał od otwartego okna;
