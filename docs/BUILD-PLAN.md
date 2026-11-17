@@ -50,19 +50,26 @@ i testu regresji.
 
 ## Obecna implementacja i ograniczenia
 
-Katalog packaging/zamarteos-shell zawiera początkową własną sesję Wayland:
-ekran główny, szufladę aplikacji, wyszukiwanie, pasek, centrum sterowania,
-blokadę PAM i polskie ustawienia. Skrypt overlay kieruje tty1 do sesji
-ZamarteOS zamiast do powłoki upstream.
+Powłoka ZamarteOS jest uruchamiana jako własna sesja Wayland z tty1. Hostuje
+natywne moduły przypiętej bazy FP4: Phone, Messages, Contacts, Files,
+Calculator, Calendar, Clock, Editor, Weather, Mail, Keep i Vitals. Osobne
+wpisy aplikacji ZamarteOS uruchamiają te moduły przez IPC powłoki. Telefon i
+Wiadomości są ładowane od początku sesji, aby nasłuch ModemManager działał
+również przy zamkniętych oknach.
 
-To jest początek zastąpienia warstwy użytkowej, a nie ukończony system.
-Menu ustawień i kafelki muszą być stopniowo podłączone do prawdziwych
-aplikacji i usług. Testy statyczne nie potwierdzają działania na telefonie.
+Centrum ustawień odczytuje i zmienia Wi-Fi, dane komórkowe, Bluetooth,
+jasność ekranu i głośność multimediów przez nmcli, bluetoothctl,
+brightnessctl i pamixer. Wyświetla również stan baterii i wersję jądra.
+Aparat uruchamia natywny Megapixels, a Internet — Epiphany. Kontakty używają
+wspólnej lokalnej bazy z Telefonem i Wiadomościami.
 
-Osobny prototyp Sailfish Silica w katalogu sailfish-home/ nie jest
-docelową architekturą ZamarteOS Pure i nie może być traktowany jako zamiennik
-systemu ani jako wydanie końcowe. Nie rozwijamy go zamiast pełnej powłoki
-Pure.
+To jest działający kod integracyjny i nadal etap rozwojowy, a nie gotowe
+wydanie systemu. Galeria, pełna warstwa ustawień, powiadomienia, aktualizacje
+i kopie zapasowe wymagają dalszej pracy. Testy statyczne nie potwierdzają
+działania na fizycznym telefonie.
+
+Osobny prototyp Sailfish Silica został zamknięty i nie jest celem ZamarteOS
+Pure. Nie rozwijamy aplikacji Sailfish zamiast pełnego systemu Pure.
 
 ## Milestone 1 — powtarzalna baza sprzętowa
 
@@ -76,10 +83,18 @@ natywną powłokę Moarchy zamiast sesji ZamarteOS.
 
 ## Milestone 2 — kompletna powłoka ZamarteOS
 
-Dokończyć ekran główny, blokadę, pasek stanu, powiadomienia, szybkie
-ustawienia, centrum sterowania, menu aplikacji i ustawienia. Każdy przycisk
-musi mieć działającą akcję. Wdrożyć polską klawiaturę i sprawdzić polskie
-znaki oraz podpowiedzi na ekranie telefonu.
+Dokończyć pasek stanu, powiadomienia, pełne centrum sterowania i wszystkie
+ustawienia. Każdy widoczny przycisk musi wykonywać rzeczywistą akcję.
+Wdrożyć polską klawiaturę i sprawdzić polskie znaki oraz podpowiedzi na
+ekranie telefonu. Utrzymać priorytet ekranu połączenia przychodzącego nad
+pulpitem i menu aplikacji.
+
+## Milestone 3 — aplikacje i integracja sprzętu
+
+Rozszerzyć zestaw aplikacji o galerię i brakujące podstawowe narzędzia.
+Zweryfikować połączenia przychodzące i wychodzące, identyfikację numeru,
+dźwięk w obie strony, dzwonek/ringback, SMS, dane komórkowe, Wi-Fi,
+Bluetooth, GPS, aparat, czujniki, uśpienie, ładowanie i aktualizacje.
 
 ## Milestone 3 — podstawowe aplikacje i integracja sprzętu
 
