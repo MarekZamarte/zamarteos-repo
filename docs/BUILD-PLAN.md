@@ -1,77 +1,98 @@
 # ZamarteOS Pure FP4 — build plan
 
-## Architecture decision
+## Docelowa decyzja architektoniczna
 
-Use a native aarch64 Linux userspace and the existing FP4 Linux hardware port
-as the initial device-support base:
+ZamarteOS Pure ma być samodzielnym systemem dla Fairphone 4, a nie motywem,
+launcherem ani aplikacją uruchamianą wewnątrz Sailfish OS. Sailfish OS nie
+jest docelowym systemem użytkownika i nie może być wymagany do uruchomienia
+ZamarteOS Pure.
 
-- Arch Linux ARM userspace with systemd;
-- SM6350/SM7225 Linux kernel and FP4 device tree;
-- Qualcomm firmware only where the hardware requires it;
-- ModemManager + Q6Voice + q6voiced for cellular call audio;
-- Hyprland as the Wayland compositor;
-- a new ZamarteOS Quickshell/QML shell, written as our own project.
+Punktem wyjścia jest natywny userspace Linux ARM64 oparty na przypiętej bazie
+sprzętowej FP4: Arch Linux ARM + systemd, kernel Linux SM6350/SM7225, device
+tree i firmware FP4, Hyprland, własna powłoka ZamarteOS w Quickshell/QML,
+natywne aplikacje Linux/Wayland i własne aplikacje ZamarteOS.
 
-This avoids the old Ubuntu Touch builder, which only replaced branding and
-continued to launch Lomiri. It also avoids shipping an Android userspace.
-The Android boot-image container is a bootloader format, not the OS.
+Nie dostarczamy Android userspace, Android UI ani usług Google. Kontener
+Android boot image jest wyłącznie formatem startowym wymaganym przez
+bootloader, a nie systemem Android.
 
-## Milestone 1 — reproduce the hardware base
+## Co ma zastąpić ZamarteOS
 
-The pinned base build omits the optional `spot-client` AUR package for now:
-its pinned `openssl-sys 0.9.104` rejects the OpenSSL 4.1 version in the
-current ARM64 build environment. It is not a dependency of the phone image,
-so an optional music client must not block the OS build. Re-enable only after
-updating that package to a compatible OpenSSL binding.
+W obrazie końcowym użytkownik ma widzieć wyłącznie ZamarteOS. Do zastąpienia
+lub integracji z własnymi odpowiednikami są wszystkie warstwy użytkowe:
+ekran blokady, ekran główny, nawigacja, pasek stanu, powiadomienia, szybkie
+ustawienia, centrum sterowania, menu i wyszukiwanie aplikacji, ustawienia,
+Telefon, kontakty, historia połączeń, interfejs połączenia przychodzącego,
+Wiadomości/SMS, pliki, galeria, aparat, przeglądarka, kalendarz i pozostałe
+podstawowe aplikacje, klawiatura ekranowa, polski układ, podpowiedzi,
+aktualizacje, kopie zapasowe i pierwsze uruchomienie.
 
-Build the pinned FP4 development tree in CI. This is a reference build only.
-It must not be flashed. Save the complete build log and image artifact.
+Nie wolno uznawać pustego kafelka, skrótu do nieistniejącej aplikacji ani
+przemianowanego ekranu Moarchy za ukończoną funkcję. Każda pozycja menu ma
+uruchamiać rzeczywistą aplikację albo pozostać ukryta do czasu jej wdrożenia.
 
-Acceptance checks:
-1. Kernel package builds from the pinned source commit.
-2. The ZamarteOS shell package builds and qmllint passes.
-3. The image builder completes for DEVICE=fp4.
-4. Image verification passes.
-5. The artifact includes the FP4 device package, Q6Voice modules, q6voiced
-   configuration and zamarteos-shell.
-6. The build log and source pins are retained with the artifact.
+## Co zachowujemy jako techniczne zaplecze
 
-## Milestone 2 — ZamarteOS shell
+Nie usuwamy działających komponentów tylko dlatego, że pochodzą z bazy
+sprzętowej. Zachowujemy i integrujemy kernel, device tree, firmware i sterowniki
+Qualcomm/FP4; modem, SIM, ModemManager, usługi IMS/VoLTE i q6voiced/Q6Voice;
+routing dźwięku rozmów, mikrofon, słuchawkę i głośnik; Wi-Fi, Bluetooth, NFC,
+GPS i dane komórkowe; ekran, dotyk, czujniki, aparat, lampę błyskową; baterię,
+ładowanie, klawisze fizyczne, uśpienie i wybudzanie; PipeWire/WirePlumber,
+NetworkManager, systemd, D-Bus, PAM i usługi wymagane przez sprzęt lub
+aplikacje.
 
-A first prototype now exists under packaging/zamarteos-shell. It provides a
-home screen, desktop-entry app drawer, search, a persistent top strip, a
-control-centre entry point and a PAM-backed Wayland session lock.
+Zachowanie zaplecza nie oznacza zachowania interfejsu Moarchy/Omarchy ani
+Sailfish. Usługi i sterowniki mogą pozostać, ale ich branding, menu i
+powłoka nie mogą być widoczne jako interfejs telefonu. Nie zmieniamy
+konfiguracji modemu ani działającego routingu audio bez konkretnej potrzeby
+i testu regresji.
 
-The tracked overlay script integrates the actual ZamarteOS session into the
-pinned FP4 image build:
-- installs shell.qml, the Hyprland touch-first session config and launchers;
-- redirects tty1 from the upstream desktop shell to zamarteos-session;
-- routes lock and restart helpers to ZamarteOS IPC and QML;
-- starts the FP4 graphical-session target, polkit/geoclue agents, on-screen
-  keyboard and idle/suspend policy from the ZamarteOS session.
+## Obecna implementacja i ograniczenia
 
-This replaces the user-facing shell and session, not the kernel, modem,
-firmware, NetworkManager or audio services. The native Moarchy/Omarchy shell
-must not start in the finished image. Package/image verification checks the
-session wiring, but QML behaviour and every hardware feature still require
-tests on a physical Fairphone 4. Do not call the image ready before those tests.
+Katalog packaging/zamarteos-shell zawiera początkową własną sesję Wayland:
+ekran główny, szufladę aplikacji, wyszukiwanie, pasek, centrum sterowania,
+blokadę PAM i polskie ustawienia. Skrypt overlay kieruje tty1 do sesji
+ZamarteOS zamiast do powłoki upstream.
 
-The first shell milestone will provide:
-- ZamarteOS home screen and application drawer;
-- status bar and quick settings/control centre;
-- lock screen and idle integration;
-- call/notification presentation;
-- Polish locale and ZamarteOS visual identity.
+To jest początek zastąpienia warstwy użytkowej, a nie ukończony system.
+Menu ustawień i kafelki muszą być stopniowo podłączone do prawdziwych
+aplikacji i usług. Testy statyczne nie potwierdzają działania na telefonie.
 
-## Milestone 3 — apps and device integration
+Osobny prototyp Sailfish Silica w katalogu sailfish-home/ nie jest
+docelową architekturą ZamarteOS Pure i nie może być traktowany jako zamiennik
+systemu ani jako wydanie końcowe. Nie rozwijamy go zamiast pełnej powłoki
+Pure.
 
-Integrate native Linux applications and ZamarteOS apps. Validate modem, calls,
-SMS, mobile data, Wi-Fi, audio routing, sensors, camera, GPS, suspend/resume,
-charging and updates.
+## Milestone 1 — powtarzalna baza sprzętowa
 
-## Milestone 4 — release candidate
+Zbudować przypiętą bazę FP4 w CI jako obraz referencyjny, bez flashowania.
+Zachować logi, manifest pakietów, sumy kontrolne i pochodzenie źródeł.
+Warunki: kernel i pakiety ARM64 budują się z przypiętych źródeł; pakiet
+ZamarteOS shell przechodzi qmllint; obraz DEVICE=fp4 buduje się i przechodzi
+weryfikator; obraz zawiera powłokę ZamarteOS, kernel FP4, modem i wymagane
+komponenty Q6Voice/IMS; weryfikator odrzuca obraz, w którym tty1 uruchamia
+natywną powłokę Moarchy zamiast sesji ZamarteOS.
 
-Only create a flashable release after repeated physical-device tests. Verify
-incoming/outgoing calls, two-way audio, ringback, speaker/earpiece routing and
-operator-specific VoLTE. Keep the current phone installation untouched until
-the user explicitly chooses to test the image.
+## Milestone 2 — kompletna powłoka ZamarteOS
+
+Dokończyć ekran główny, blokadę, pasek stanu, powiadomienia, szybkie
+ustawienia, centrum sterowania, menu aplikacji i ustawienia. Każdy przycisk
+musi mieć działającą akcję. Wdrożyć polską klawiaturę i sprawdzić polskie
+znaki oraz podpowiedzi na ekranie telefonu.
+
+## Milestone 3 — podstawowe aplikacje i integracja sprzętu
+
+Dostarczyć prawdziwe aplikacje Telefon, Kontakty, SMS, Pliki, Galeria,
+Aparat, Przeglądarka i Ustawienia. Zweryfikować połączenia przychodzące i
+wychodzące, identyfikację numeru, dźwięk w obie strony, dzwonek, SMS, dane
+komórkowe, Wi-Fi, Bluetooth, GPS, aparat, czujniki, uśpienie, ładowanie i
+aktualizacje.
+
+## Milestone 4 — kandydat do wydania
+
+Wydanie flashowalne powstaje dopiero po powtarzalnych testach na fizycznym
+FP4. Wymagane są testy rozmów przez słuchawkę i głośnik, mikrofonu,
+dzwonka/ringback, SIM/IMS, dotyku, klawiatury, aparatu, baterii i wznowienia
+po uśpieniu. Obecnego systemu telefonu nie ruszamy, dopóki użytkownik
+wyraźnie nie zdecyduje o testowym flashowaniu.
