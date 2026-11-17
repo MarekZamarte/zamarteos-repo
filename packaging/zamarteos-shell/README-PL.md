@@ -1,4 +1,4 @@
-# Powłoka ZamarteOS Pure — etap 0.2.3
+# Powłoka ZamarteOS Pure — etap 0.2.4
 
 ## Cel
 
@@ -14,8 +14,8 @@ natywny userspace Arch Linux ARM z własną sesją Wayland ZamarteOS.
 
 - własna sesja Hyprland/Wayland uruchamiana z tty1;
 - ekran główny, szuflada aplikacji i wyszukiwanie wpisów .desktop;
-- hostowanie natywnych modułów Phone, Messages i Files z przypiętej bazy FP4;
-- osobne pozycje Telefon, Wiadomości, Kontakty i Pliki w menu aplikacji;\n- edytowalna baza kontaktów wspólna z Telefonem i Wiadomościami (dodawanie, usuwanie i wybieranie numeru);
+- hostowanie natywnych modułów Phone, Messages, Contacts, Files, Calculator, Calendar, Clock, Editor, Weather, Mail, Keep i Vitals z przypiętej bazy FP4;
+- osobne pozycje Telefon, Wiadomości, Kontakty i Pliki w menu aplikacji;\n- pełny moduł Kontakty z edycją danych, współdzielony z Telefonem i Wiadomościami;
 - moduły Telefonu i Wiadomości są ładowane przy starcie sesji i wywołują
   warmUp(), aby nasłuch ModemManager nie zależał od otwartego okna;
 - Centrum telefonu odczytuje i zmienia Wi-Fi, dane komórkowe, Bluetooth,
@@ -38,9 +38,8 @@ osobno i ma być w całości ZamarteOS.
 
 ## Co nie jest jeszcze ukończone
 
-Ta powłoka nie oznacza, że wszystkie aplikacje są gotowe. Aparat, galeria,
-kalendarz, pełne ustawienia systemowe, aktualizacje i kopie zapasowe
-wymagają dalszej integracji. Nieaktywne funkcje mają pozostać ukryte.
+Ta powłoka nie oznacza, że wszystkie aplikacje są gotowe. Galeria, pełne ustawienia systemowe, aktualizacje i kopie zapasowe
+wymagają dalszej integracji. Aparat uruchamia natywny Megapixels z bazy FP4. Nieaktywne funkcje mają pozostać ukryte.
 Każda nowa kontrolka ma wywoływać prawdziwą usługę, a nie zmieniać tylko
 wygląd przełącznika.
 
