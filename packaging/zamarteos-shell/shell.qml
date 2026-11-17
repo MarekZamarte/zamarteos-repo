@@ -469,7 +469,7 @@ Scope {
         if (joined.indexOf("messages") !== -1 || joined.indexOf("sms") !== -1)
             return summonPlugin("moarchy.messages", "{}")
         if (joined.indexOf("contacts") !== -1 || joined.indexOf("kontakty") !== -1)
-            return summonPlugin("moarchy.phone", "{\"contacts\":true}")
+            return openContactsManager()
         if (joined.indexOf("files") !== -1 || joined.indexOf("pliki") !== -1)
             return summonPlugin("moarchy.files", "{}")
         const entries = DesktopEntries.applications.values
@@ -521,7 +521,7 @@ Scope {
             else if (app === "messages")
                 root.summonPlugin("moarchy.messages", "{}")
             else if (app === "contacts")
-                root.summonPlugin("moarchy.phone", "{\"contacts\":true}")
+                root.openContactsManager()
             else if (app === "files")
                 root.summonPlugin("moarchy.files", "{}")
             else
