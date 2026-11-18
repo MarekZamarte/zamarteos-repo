@@ -14,3 +14,4 @@ run=7 dependency-sync and compiler-diagnostic
 run=8 corrected overlay dependency patch
 run=9 close heredoc in overlay
 run=10 fix shell variable expansion in libhybris preflight
+run=11 add missing native_handle_clone declaration
