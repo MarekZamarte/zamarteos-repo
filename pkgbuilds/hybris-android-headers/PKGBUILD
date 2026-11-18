@@ -3,7 +3,7 @@
 # ANDROID_VERSION_MAJOR to enable its Android 10+ linker implementation.
 pkgname=hybris-android-headers
 pkgver=5.1.1_30
-pkgrel=4
+pkgrel=5
 pkgdesc="Android 11/API 30 headers for libhybris and FP4 Droid audio"
 arch=('aarch64')
 url="https://github.com/mickybart/gnulinux_support-common"
@@ -22,6 +22,34 @@ package() {
   cd "$srcdir/headers"
   install -d "$pkgdir/opt/android"
   make DESTDIR="$pkgdir" PREFIX=/opt/android INCLUDEDIR=/opt/android/include PKGCONFIGDIR=/usr/lib/pkgconfig install
+
+  # The bundled Android 5.1 header snapshot predates native_handle_clone(),
+  # which is declared by Android 11 (VNDK 30) cutils/native_handle.h.
+  # Add only the missing public prototype; implementation is provided by
+  # the Android 11 libcutils runtime on the FP4.
+  python3 - "$pkgdir/opt/android/include" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+matches = list(root.rglob("native_handle.h"))
+if len(matches) != 1:
+    raise SystemExit(f"expected exactly one cutils/native_handle.h, found: {matches}")
+header = matches[0]
+if header.parent.name != "cutils":
+    raise SystemExit(f"unexpected native_handle.h location: {header}")
+text = header.read_text()
+prototype = "native_handle_t* native_handle_clone(const native_handle_t* handle);"
+if prototype not in text:
+    if "native_handle_t" not in text:
+        raise SystemExit("native_handle_t type missing; refusing incompatible header patch")
+    pos = text.rfind("#endif")
+    if pos < 0:
+        raise SystemExit("header has no final #endif; refusing patch")
+    text = text[:pos] + "/* Android 11 VNDK 30 API */\\n" + prototype + "\\n" + text[pos:]
+    header.write_text(text)
+PY
+  grep -Fq 'native_handle_clone(const native_handle_t* handle)' "$pkgdir/opt/android/include/cutils/native_handle.h"
   sed -i 's|Cflags:.*|Cflags: -I\${includedir}|' "$pkgdir/usr/lib/pkgconfig/android-headers.pc"
 
   # The FP4 vendor blobs target Android 11/API 30. libhybris checks these
