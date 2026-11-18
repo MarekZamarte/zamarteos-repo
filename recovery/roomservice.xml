@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <project name="z3ntu/android_device_fairphone_FP4" path="device/fairphone/FP4" remote="github" revision="android-11" />
+</manifest>
