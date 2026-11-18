@@ -15,3 +15,5 @@ run=8 corrected overlay dependency patch
 run=9 close heredoc in overlay
 run=10 fix shell variable expansion in libhybris preflight
 run=11 add missing native_handle_clone declaration
+
+run=12 Android native-window constants and dataspace compatibility patch; rebuild ARM64 audio packages.
