@@ -46,7 +46,7 @@ if prototype not in text:
     pos = text.rfind("#endif")
     if pos < 0:
         raise SystemExit("header has no final #endif; refusing patch")
-    text = text[:pos] + "/* Android 11 VNDK 30 API */\\n" + prototype + "\\n" + text[pos:]
+    text = text[:pos] + "/* Android 11 VNDK 30 API */\n" + prototype + "\n" + text[pos:]
     header.write_text(text)
 PY
   grep -Fq 'native_handle_clone(const native_handle_t* handle)' "$pkgdir/opt/android/include/cutils/native_handle.h"
