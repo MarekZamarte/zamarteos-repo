@@ -52,6 +52,84 @@ PY
   grep -Fq 'native_handle_clone(const native_handle_t* handle)' "$pkgdir/opt/android/include/cutils/native_handle.h"
   sed -i 's|Cflags:.*|Cflags: -I\${includedir}|' "$pkgdir/usr/lib/pkgconfig/android-headers.pc"
 
+  # The pinned 5.1.1 snapshot is missing public Android 6/8/9 native-window
+  # declarations used by the Android-11-targeted libhybris source. Supply the
+  # stable API constants required by that source without changing ABI structs.
+  python3 - "$pkgdir/opt/android/include" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+window_headers = list(root.rglob("window.h"))
+graphics_headers = list(root.rglob("graphics.h"))
+window_headers = [p for p in window_headers if p.parent.name == "system"]
+graphics_headers = [p for p in graphics_headers if p.parent.name == "system"]
+if len(window_headers) != 1 or len(graphics_headers) != 1:
+    raise SystemExit(
+        "expected exactly one system/window.h and system/graphics.h; "
+        f"found {window_headers} and {graphics_headers}"
+    )
+
+window = window_headers[0]
+text = window.read_text()
+compat = """
+/* Android 6/8/9 native-window API constants missing from the pinned 5.1.1 snapshot. */
+#ifndef NATIVE_WINDOW_DEFAULT_DATASPACE
+#define NATIVE_WINDOW_DEFAULT_DATASPACE 12
+#endif
+#ifndef NATIVE_WINDOW_BUFFER_AGE
+#define NATIVE_WINDOW_BUFFER_AGE 13
+#endif
+#ifndef NATIVE_WINDOW_IS_VALID
+#define NATIVE_WINDOW_IS_VALID 17
+#endif
+#ifndef NATIVE_WINDOW_MAX_BUFFER_COUNT
+#define NATIVE_WINDOW_MAX_BUFFER_COUNT 21
+#endif
+#ifndef NATIVE_WINDOW_SET_USAGE64
+#define NATIVE_WINDOW_SET_USAGE64 30
+#endif
+#ifndef NATIVE_WINDOW_GET_CONSUMER_USAGE64
+#define NATIVE_WINDOW_GET_CONSUMER_USAGE64 31
+#endif
+"""
+if "ZamarteOS Android native-window compatibility constants" not in text:
+    compat = compat.replace(
+        "/* Android 6/8/9 native-window API constants missing from the pinned 5.1.1 snapshot. */",
+        "/* ZamarteOS Android native-window compatibility constants. */"
+    )
+    window.write_text(text.rstrip() + "\n\n" + compat)
+
+graphics = graphics_headers[0]
+gtext = graphics.read_text()
+if "HAL_DATASPACE_UNKNOWN" not in gtext:
+    gtext = gtext.rstrip() + """
+
+/* Android 6+ dataspace default required by libhybris. */
+#ifndef HAL_DATASPACE_UNKNOWN
+#define HAL_DATASPACE_UNKNOWN 0
+#endif
+"""
+    graphics.write_text(gtext)
+
+for name, path in (("window", window), ("graphics", graphics)):
+    data = path.read_text()
+    if name == "window":
+        required = (
+            "NATIVE_WINDOW_DEFAULT_DATASPACE",
+            "NATIVE_WINDOW_BUFFER_AGE",
+            "NATIVE_WINDOW_IS_VALID",
+            "NATIVE_WINDOW_MAX_BUFFER_COUNT",
+            "NATIVE_WINDOW_SET_USAGE64",
+            "NATIVE_WINDOW_GET_CONSUMER_USAGE64",
+        )
+    else:
+        required = ("HAL_DATASPACE_UNKNOWN",)
+    missing = [symbol for symbol in required if symbol not in data]
+    if missing:
+        raise SystemExit(f"{path}: missing compatibility symbols: {missing}")
+PY
+
   # The FP4 vendor blobs target Android 11/API 30. libhybris checks these
   # macros to enable HAS_ANDROID_10_0_0 and WANT_LINKER_Q.
   local version_header="$pkgdir/opt/android/include/android-version.h"
