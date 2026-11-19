@@ -10,7 +10,7 @@ url="https://github.com/SailfishOS-for-the-fairphone-4/droid-configs-FP4"
 license=('BSD-3-Clause')
 depends=('pulseaudio-modules-droid-fp4')
 source=("droid-configs-FP4::git+https://github.com/SailfishOS-for-the-fairphone-4/droid-configs-FP4#commit=48934cb6aadf06eaef138104914fe4421ab9cad3"
-        "zamarteos-fp4-audio::git+https://github.com/mlehtima/droid-config-fp4#branch=devel")
+        "zamarteos-fp4-audio::git+https://github.com/mlehtima/droid-config-fp4#commit=40cc56b4598062a9436eaf4312179dd56d137b5e")
 sha256sums=('SKIP' 'SKIP')
 
 package() {
