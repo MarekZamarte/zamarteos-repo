@@ -47,3 +47,5 @@ Build request 2026-11-15: fix black-screen startup in ZamarteOS shell: show home
 Build request 2026-11-17: build the latest ZamarteOS Pure FP4 branch after successful ARM64 package and overlay CI; include the full native app host, Settings and Themes, ZamarteOS app entries, Polish keyboard and spelling support, Q6Voice/VoLTE call-audio audit, image verifier, package manifest, provenance and SHA256 checksums. Build and audit only; do not flash the phone.
 
 Build request 2026-11-17: retry after staging Phone.qml modified by the ZamarteOS overlay; build and audit only, never flash.
+
+Build request 2026-11-19: run the full FP4 reference-image workflow from the latest branch head; build the complete image, collect the package manifest and provenance, run image verification and SHA256 checks; never flash the phone.
