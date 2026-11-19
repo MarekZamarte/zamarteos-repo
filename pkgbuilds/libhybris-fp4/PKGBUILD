@@ -40,7 +40,7 @@ PY
 
 build() {
   cd "$srcdir/libhybris/hybris"
-  export CPPFLAGS="-I/opt/android/include ${CPPFLAGS:-}"
+  export CPPFLAGS="-D_DEFAULT_SOURCE -I/opt/android/include ${CPPFLAGS:-}"
   echo "==> libhybris compiler environment"
   gcc --version
   printf 'CC=%s\nCFLAGS=%s\nCPPFLAGS=%s\nLDFLAGS=%s\n' "${CC:-gcc}" "${CFLAGS:-}" "${CPPFLAGS:-}" "${LDFLAGS:-}"
