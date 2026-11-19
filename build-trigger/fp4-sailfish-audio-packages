@@ -17,3 +17,5 @@ run=10 fix shell variable expansion in libhybris preflight
 run=11 add missing native_handle_clone declaration
 
 run=12 Android native-window constants and dataspace compatibility patch; rebuild ARM64 audio packages.
+
+run=13 replace legacy ANativeWindowBuffer with the official Android 11 ABI layout; compile-time ARM64 offset and size assertions gate libhybris
