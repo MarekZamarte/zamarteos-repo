@@ -21,3 +21,5 @@ run=12 Android native-window constants and dataspace compatibility patch; rebuil
 run=13 replace legacy ANativeWindowBuffer with the official Android 11 ABI layout; compile-time ARM64 offset and size assertions gate libhybris
 
 run=14 add missing Android 11 native-window query/perform identifiers; add compile-time numeric ABI assertions and rebuild ARM64 audio packages
+
+run=15 expose POSIX strdup declaration for Android audio headers and rebuild FP4 audio packages
