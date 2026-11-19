@@ -1,7 +1,7 @@
 # ARM64 libhybris build for the Fairphone 4 Sailfish audio HAL.
 pkgname=libhybris-fp4
 pkgver=0.0.5.57
-pkgrel=5
+pkgrel=6
 pkgdesc="libhybris Android hardware compatibility layer for ZamarteOS FP4"
 arch=('aarch64')
 url="https://github.com/libhybris/libhybris"
@@ -76,7 +76,12 @@ package() {
   # Keep both the real versioned shared objects and libtool's SONAME/
   # linker-name symlinks. Meson uses cc.find_library('hybris-common'), which
   # specifically needs libhybris-common.so (not only .so.1.0.0).
-  find "$pkgdir/opt/android/hybris/lib" -maxdepth 1 \( -type f -o -type l \) -name '*.so*' -printf '%f\n' 2>/dev/null | while read -r f; do
+  find "$pkgdir/opt/android/hybris/lib" -maxdepth 1 \\( -type f -o -type l \\) -name '*.so*' -printf '%f\\n' 2>/dev/null | while read -r f; do
+    # libEGL and libGLESv2 are owned by libglvnd in /usr/lib.
+    # Keep libhybris copies private under /opt; never create conflicting links.
+    case "$f" in
+      libEGL.so*|libGLESv2.so*) continue ;;
+    esac
     [ -e "$pkgdir/opt/android/hybris/lib/$f" ] || continue
     [ -e "$pkgdir/usr/lib/$f" ] || [ -L "$pkgdir/usr/lib/$f" ] || ln -s "/opt/android/hybris/lib/$f" "$pkgdir/usr/lib/$f"
   done
