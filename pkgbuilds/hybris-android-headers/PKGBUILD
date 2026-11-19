@@ -3,7 +3,7 @@
 # ANDROID_VERSION_MAJOR to enable its Android 10+ linker implementation.
 pkgname=hybris-android-headers
 pkgver=5.1.1_30
-pkgrel=5
+pkgrel=6
 pkgdesc="Android 11/API 30 headers for libhybris and FP4 Droid audio"
 arch=('aarch64')
 url="https://github.com/mickybart/gnulinux_support-common"
@@ -52,18 +52,18 @@ PY
   grep -Fq 'native_handle_clone(const native_handle_t* handle)' "$pkgdir/opt/android/include/cutils/native_handle.h"
   sed -i 's|Cflags:.*|Cflags: -I\${includedir}|' "$pkgdir/usr/lib/pkgconfig/android-headers.pc"
 
-  # The pinned 5.1.1 snapshot is missing public Android 6/8/9 native-window
-  # declarations used by the Android-11-targeted libhybris source. Supply the
-  # stable API constants required by that source without changing ABI structs.
+  # Replace the obsolete Android 5.1 ANativeWindowBuffer member layout with
+  # the public Android 11 VNDK/nativebase ABI definition. The FP4 vendor blobs
+  # target API 30; libhybris 0.0.5.57 accesses layerCount and 64-bit usage.
+  # This is an ABI layout replacement, not a synthetic field append.
   python3 - "$pkgdir/opt/android/include" <<'PY'
 from pathlib import Path
+import re
 import sys
 
 root = Path(sys.argv[1])
-window_headers = list(root.rglob("window.h"))
-graphics_headers = list(root.rglob("graphics.h"))
-window_headers = [p for p in window_headers if p.parent.name == "system"]
-graphics_headers = [p for p in graphics_headers if p.parent.name == "system"]
+window_headers = [p for p in root.rglob("window.h") if p.parent.name == "system"]
+graphics_headers = [p for p in root.rglob("graphics.h") if p.parent.name == "system"]
 if len(window_headers) != 1 or len(graphics_headers) != 1:
     raise SystemExit(
         "expected exactly one system/window.h and system/graphics.h; "
@@ -71,34 +71,55 @@ if len(window_headers) != 1 or len(graphics_headers) != 1:
     )
 
 window = window_headers[0]
-text = window.read_text()
-compat = """
-/* Android 6/8/9 native-window API constants missing from the pinned 5.1.1 snapshot. */
-#ifndef NATIVE_WINDOW_DEFAULT_DATASPACE
-#define NATIVE_WINDOW_DEFAULT_DATASPACE 12
-#endif
-#ifndef NATIVE_WINDOW_BUFFER_AGE
-#define NATIVE_WINDOW_BUFFER_AGE 13
-#endif
-#ifndef NATIVE_WINDOW_IS_VALID
-#define NATIVE_WINDOW_IS_VALID 17
-#endif
-#ifndef NATIVE_WINDOW_MAX_BUFFER_COUNT
-#define NATIVE_WINDOW_MAX_BUFFER_COUNT 21
-#endif
-#ifndef NATIVE_WINDOW_SET_USAGE64
-#define NATIVE_WINDOW_SET_USAGE64 30
-#endif
-#ifndef NATIVE_WINDOW_GET_CONSUMER_USAGE64
-#define NATIVE_WINDOW_GET_CONSUMER_USAGE64 31
-#endif
-"""
-if "ZamarteOS Android native-window compatibility constants" not in text:
-    compat = compat.replace(
-        "/* Android 6/8/9 native-window API constants missing from the pinned 5.1.1 snapshot. */",
-        "/* ZamarteOS Android native-window compatibility constants. */"
+source = window.read_text()
+pattern = re.compile(
+    r"(typedef struct ANativeWindowBuffer\\s*\\{.*?"
+    r"struct android_native_base_t common;\\s*)"
+    r"(.*?)"
+    r"(\\}\\s*ANativeWindowBuffer_t;)",
+    re.S,
+)
+matches = list(pattern.finditer(source))
+if len(matches) != 1:
+    raise SystemExit(
+        f"expected exactly one ANativeWindowBuffer definition in {window}; "
+        f"found {len(matches)}"
     )
-    window.write_text(text.rstrip() + "\n\n" + compat)
+
+official_android11_members = """int width;
+int height;
+int stride;
+int format;
+int usage_deprecated;
+uintptr_t layerCount;
+
+void* reserved[1];
+
+const native_handle_t* handle;
+uint64_t usage;
+
+/* Android 11 reserves the final slot for 64-bit usage compatibility. */
+void* reserved_proc[8 - (sizeof(uint64_t) / sizeof(void*))];
+"""
+old_members = matches[0].group(2)
+if "uintptr_t layerCount;" not in old_members:
+    if "int usage;" not in old_members or "void* reserved[2];" not in old_members:
+        raise SystemExit(
+            "ANativeWindowBuffer is neither the expected legacy Android 5.1 "
+            "layout nor an already patched Android 11 layout; refusing to guess"
+        )
+    source = source[:matches[0].start(2)] + official_android11_members + source[matches[0].end(2):]
+    window.write_text(source)
+else:
+    # Do not silently accept a partial or hand-edited structure.
+    normalized = re.sub(r"/\\*.*?\\*/", "", old_members, flags=re.S)
+    normalized = re.sub(r"\\s+", " ", normalized).strip()
+    expected = re.sub(r"\\s+", " ", official_android11_members).strip()
+    if normalized != expected:
+        raise SystemExit(
+            "ANativeWindowBuffer already contains layerCount but does not "
+            "match the complete Android 11 member layout"
+        )
 
 graphics = graphics_headers[0]
 gtext = graphics.read_text()
@@ -112,23 +133,47 @@ if "HAL_DATASPACE_UNKNOWN" not in gtext:
 """
     graphics.write_text(gtext)
 
-for name, path in (("window", window), ("graphics", graphics)):
-    data = path.read_text()
-    if name == "window":
-        required = (
-            "NATIVE_WINDOW_DEFAULT_DATASPACE",
-            "NATIVE_WINDOW_BUFFER_AGE",
-            "NATIVE_WINDOW_IS_VALID",
-            "NATIVE_WINDOW_MAX_BUFFER_COUNT",
-            "NATIVE_WINDOW_SET_USAGE64",
-            "NATIVE_WINDOW_GET_CONSUMER_USAGE64",
-        )
-    else:
-        required = ("HAL_DATASPACE_UNKNOWN",)
-    missing = [symbol for symbol in required if symbol not in data]
-    if missing:
-        raise SystemExit(f"{path}: missing compatibility symbols: {missing}")
+updated = window.read_text()
+required = (
+    "int usage_deprecated;",
+    "uintptr_t layerCount;",
+    "const native_handle_t* handle;",
+    "uint64_t usage;",
+)
+missing = [symbol for symbol in required if symbol not in updated]
+if missing:
+    raise SystemExit(f"{window}: Android 11 ANativeWindowBuffer ABI incomplete: {missing}")
+if "HAL_DATASPACE_UNKNOWN" not in graphics.read_text():
+    raise SystemExit(f"{graphics}: HAL_DATASPACE_UNKNOWN is missing")
 PY
+
+  # Compile-time ABI gate: Android 11's ARM64 ANativeWindowBuffer layout is
+  # 168 bytes, with layerCount/handle/usage at offsets 80/96/104.
+  cat > "$srcdir/fp4-window-header-abi.cpp" <<'EOF'
+#include <stddef.h>
+#include <stdint.h>
+#include <system/window.h>
+
+static_assert(sizeof(((ANativeWindowBuffer*)0)->layerCount) == sizeof(uintptr_t),
+              "Android 11 layerCount has the wrong type");
+static_assert(sizeof(((ANativeWindowBuffer*)0)->usage) == sizeof(uint64_t),
+              "Android 11 usage must be 64-bit");
+#if defined(__aarch64__)
+static_assert(offsetof(ANativeWindowBuffer, layerCount) == 80,
+              "ANativeWindowBuffer::layerCount offset does not match Android 11 ARM64 ABI");
+static_assert(offsetof(ANativeWindowBuffer, handle) == 96,
+              "ANativeWindowBuffer::handle offset does not match Android 11 ARM64 ABI");
+static_assert(offsetof(ANativeWindowBuffer, usage) == 104,
+              "ANativeWindowBuffer::usage offset does not match Android 11 ARM64 ABI");
+static_assert(sizeof(ANativeWindowBuffer) == 168,
+              "ANativeWindowBuffer size does not match Android 11 ARM64 ABI");
+#endif
+int main() { return 0; }
+EOF
+  g++ -std=c++11 -I"$pkgdir/opt/android/include" -c \
+    "$srcdir/fp4-window-header-abi.cpp" -o "$srcdir/fp4-window-header-abi.o"
+  test -s "$srcdir/fp4-window-header-abi.o"
+
 
   # The FP4 vendor blobs target Android 11/API 30. libhybris checks these
   # macros to enable HAS_ANDROID_10_0_0 and WANT_LINKER_Q.
