@@ -57,3 +57,4 @@ Build request 2026-11-19: start a fresh full FP4 reference-image build from the 
 Build request 2026-11-19: correct local package dependency resolution for the FP4 audio stack; expose pacman errors and stop at failed prerequisite installation; build and audit full reference image only, never flash.
 
 Build request 2026-11-19: fix libhybris-fp4 package ownership collision with libglvnd by omitting duplicate egl.pc and glesv2.pc from the package; retain libhardware.pc for Droid audio build; bump pkgrel and rebuild/audit full FP4 reference image only, never flash.
+Build request 2026-11-19: fix libhybris-fp4 packaging so versioned libraries AND libtool .so linker symlinks are exposed under /usr/lib; assert libhybris-common.so and libhardware.so before compiling PulseAudio Droid; then build and audit the FP4 reference image only, never flash.
