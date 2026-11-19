@@ -3,7 +3,7 @@
 # ANDROID_VERSION_MAJOR to enable its Android 10+ linker implementation.
 pkgname=hybris-android-headers
 pkgver=5.1.1_30
-pkgrel=6
+pkgrel=7
 pkgdesc="Android 11/API 30 headers for libhybris and FP4 Droid audio"
 arch=('aarch64')
 url="https://github.com/mickybart/gnulinux_support-common"
@@ -147,6 +147,59 @@ if "HAL_DATASPACE_UNKNOWN" not in graphics.read_text():
     raise SystemExit(f"{graphics}: HAL_DATASPACE_UNKNOWN is missing")
 PY
 
+  # The bundled Android 5.1 system/window.h also lacks Android 8/9+
+  # query/perform identifiers referenced by libhybris 0.0.5.57.
+  # Values are the public Android native-window ABI values (API 30).
+  python3 - "$pkgdir/opt/android/include" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+matches = [p for p in root.rglob("window.h") if p.parent.name == "system"]
+if len(matches) != 1:
+    raise SystemExit(f"expected exactly one system/window.h, found: {matches}")
+header = matches[0]
+source = header.read_text()
+compat = """
+/* Android 8/9+ native-window identifiers missing from the legacy snapshot. */
+#ifndef NATIVE_WINDOW_DEFAULT_DATASPACE
+#define NATIVE_WINDOW_DEFAULT_DATASPACE 12
+#endif
+#ifndef NATIVE_WINDOW_BUFFER_AGE
+#define NATIVE_WINDOW_BUFFER_AGE 13
+#endif
+#ifndef NATIVE_WINDOW_IS_VALID
+#define NATIVE_WINDOW_IS_VALID 17
+#endif
+#ifndef NATIVE_WINDOW_MAX_BUFFER_COUNT
+#define NATIVE_WINDOW_MAX_BUFFER_COUNT 21
+#endif
+#ifndef NATIVE_WINDOW_SET_USAGE64
+#define NATIVE_WINDOW_SET_USAGE64 30
+#endif
+#ifndef NATIVE_WINDOW_GET_CONSUMER_USAGE64
+#define NATIVE_WINDOW_GET_CONSUMER_USAGE64 31
+#endif
+"""
+if "/* Android 8/9+ native-window identifiers missing from the legacy snapshot. */" not in source:
+    pos = source.rfind("#endif")
+    if pos < 0:
+        raise SystemExit(f"{header}: no final include guard found")
+    source = source[:pos] + compat + "\n" + source[pos:]
+    header.write_text(source)
+
+for name, value in {
+    "NATIVE_WINDOW_DEFAULT_DATASPACE": 12,
+    "NATIVE_WINDOW_BUFFER_AGE": 13,
+    "NATIVE_WINDOW_IS_VALID": 17,
+    "NATIVE_WINDOW_MAX_BUFFER_COUNT": 21,
+    "NATIVE_WINDOW_SET_USAGE64": 30,
+    "NATIVE_WINDOW_GET_CONSUMER_USAGE64": 31,
+}.items():
+    if f"#define {name} {value}" not in header.read_text():
+        raise SystemExit(f"{header}: missing {name}={value}")
+PY
+
   # Compile-time ABI gate: Android 11's ARM64 ANativeWindowBuffer layout is
   # 168 bytes, with layerCount/handle/usage at offsets 80/96/104.
   cat > "$srcdir/fp4-window-header-abi.cpp" <<'EOF'
@@ -158,6 +211,12 @@ static_assert(sizeof(((ANativeWindowBuffer*)0)->layerCount) == sizeof(uintptr_t)
               "Android 11 layerCount has the wrong type");
 static_assert(sizeof(((ANativeWindowBuffer*)0)->usage) == sizeof(uint64_t),
               "Android 11 usage must be 64-bit");
+static_assert(NATIVE_WINDOW_DEFAULT_DATASPACE == 12, "wrong Android native-window dataspace query");
+static_assert(NATIVE_WINDOW_BUFFER_AGE == 13, "wrong Android native-window buffer-age query");
+static_assert(NATIVE_WINDOW_IS_VALID == 17, "wrong Android native-window validity query");
+static_assert(NATIVE_WINDOW_MAX_BUFFER_COUNT == 21, "wrong Android native-window max-buffer query");
+static_assert(NATIVE_WINDOW_SET_USAGE64 == 30, "wrong Android native-window usage64 operation");
+static_assert(NATIVE_WINDOW_GET_CONSUMER_USAGE64 == 31, "wrong Android native-window consumer-usage64 operation");
 #if defined(__aarch64__)
 static_assert(offsetof(ANativeWindowBuffer, layerCount) == 80,
               "ANativeWindowBuffer::layerCount offset does not match Android 11 ARM64 ABI");
