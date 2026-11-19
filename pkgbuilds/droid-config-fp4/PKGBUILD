@@ -9,10 +9,16 @@ arch=('any')
 url="https://github.com/SailfishOS-for-the-fairphone-4/droid-configs-FP4"
 license=('BSD-3-Clause')
 depends=('pulseaudio-modules-droid-fp4')
-source=("droid-configs-FP4::git+https://github.com/SailfishOS-for-the-fairphone-4/droid-configs-FP4#commit=48934cb6aadf06eaef138104914fe4421ab9cad3")
-sha256sums=('SKIP')
+source=("droid-configs-FP4::git+https://github.com/SailfishOS-for-the-fairphone-4/droid-configs-FP4#commit=48934cb6aadf06eaef138104914fe4421ab9cad3"
+        "zamarteos-fp4-audio::git+https://github.com/mlehtima/droid-config-fp4#branch=devel")
+sha256sums=('SKIP' 'SKIP')
 
 package() {
   cd "$srcdir/droid-configs-FP4"
   install -Dm644 sparse/etc/pulse/arm_droid_card_custom.pa "$pkgdir/etc/pulse/default.pa.d/10-zamarteos-droid.pa"
+  # FP4-specific HIDL audio compatibility mount from mlehtima/droid-config-fp4.
+  install -Dm644 "$srcdir/zamarteos-fp4-audio/sparse/usr/lib/systemd/system/vendor-lib64-hw-audio.primary.default.so.mount" "$pkgdir/usr/lib/systemd/system/vendor-lib64-hw-audio.primary.default.so.mount"
+  install -d "$pkgdir/usr/lib/systemd/system/local-fs.target.wants"
+  ln -s ../vendor-lib64-hw-audio.primary.default.so.mount "$pkgdir/usr/lib/systemd/system/local-fs.target.wants/vendor-lib64-hw-audio.primary.default.so.mount"
+  test -L "$pkgdir/usr/lib/systemd/system/local-fs.target.wants/vendor-lib64-hw-audio.primary.default.so.mount"
 }
