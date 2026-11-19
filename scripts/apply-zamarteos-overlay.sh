@@ -116,6 +116,83 @@ else:
     s = s[:m.start()] + replacement + s[m.end():]
     p.write_text(s)
 PY
+
+# Resolve in-repository build dependencies from the packages already produced
+# in /out. pacman -S only searches sync repositories; it cannot find a package
+# that this same build has just created locally. Keep remote dependencies on
+# -S, install local artifacts with -U, and never hide a failed transaction.
+python3 - "$ROOT/docker/build-packages.sh" <<'PY'
+from pathlib import Path
+import sys
+
+p = Path(sys.argv[1])
+s = p.read_text()
+old = '''  echo "    deps: $deps"
+  if pacman -S --needed --noconfirm --asdeps $deps >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "    (batch install failed; retrying one at a time)"
+  for d in $deps; do
+    pacman -S --needed --noconfirm --asdeps "$d" >/dev/null 2>&1 ||
+      echo "    !! could not install $d"
+  done
+  return 0
+'''
+new = '''  echo "    deps: $deps"
+  local remote_deps=() local_pkg
+  for d in $deps; do
+    # Install our own freshly built package from PKGDEST, not from a sync repo.
+    local_pkg=$(find "$OUT" -maxdepth 1 -type f -name "$d-*.pkg.tar.*" -print | sort -V | tail -n 1)
+    if [ -n "$local_pkg" ]; then
+      if ! pacman -Q "$d" >/dev/null 2>&1; then
+        echo "    installing local dependency: $(basename "$local_pkg")"
+        pacman -U --needed --noconfirm --asdeps "$local_pkg" || {
+          echo "!! failed to install local dependency $d from $local_pkg" >&2
+          return 1
+        }
+      fi
+    else
+      remote_deps+=("$d")
+    fi
+  done
+  [ "${#remote_deps[@]}" -gt 0 ] || return 0
+  if pacman -S --needed --noconfirm --asdeps "${remote_deps[@]}"; then
+    return 0
+  fi
+  echo "    (remote dependency batch failed; retrying one at a time)"
+  local failed_dep=0
+  for d in "${remote_deps[@]}"; do
+    pacman -S --needed --noconfirm --asdeps "$d" || {
+      echo "    !! could not install remote dependency $d" >&2
+      failed_dep=1
+    }
+  done
+  return "$failed_dep"
+'''
+if old not in s:
+    if 'installing local dependency:' in s:
+        raise SystemExit("Local package dependency resolver is already patched")
+    raise SystemExit("Could not find exact sync_deps implementation; refusing a blind edit")
+s = s.replace(old, new, 1)
+old_install = '''      run_root pacman -U --noconfirm --needed "$_fp" >/dev/null 2>&1 &&
+        echo "    installed $(basename "$_fp")" ||
+        echo "    !! could not install $(basename "$_fp") -- a later build may not find it"
+'''
+new_install = '''      echo "    installing build prerequisite: $(basename "$_fp")"
+      run_root pacman -U --noconfirm --needed "$_fp" || {
+        echo "!! failed to install build prerequisite $(basename "$_fp"); stopping before dependent packages" >&2
+        exit 1
+      }
+      echo "    installed $(basename "$_fp")"
+'''
+if old_install not in s:
+    if 'failed to install build prerequisite' not in s:
+        raise SystemExit("Could not find exact install-first pacman block; refusing a blind edit")
+else:
+    s = s.replace(old_install, new_install, 1)
+p.write_text(s)
+PY
+
 # The native phone plugin is kept loaded by ZamarteOS so incoming calls are
 # detected while the keypad is closed. Support opening its Contacts tab from
 # the ZamarteOS application drawer; the upstream plugin already owns the
