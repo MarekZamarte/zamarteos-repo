@@ -73,10 +73,10 @@ if len(window_headers) != 1 or len(graphics_headers) != 1:
 window = window_headers[0]
 source = window.read_text()
 pattern = re.compile(
-    r"(typedef struct ANativeWindowBuffer\\s*\\{.*?"
-    r"struct android_native_base_t common;\\s*)"
+    r"(typedef struct ANativeWindowBuffer\s*\{.*?"
+    r"struct android_native_base_t common;\s*)"
     r"(.*?)"
-    r"(\\}\\s*ANativeWindowBuffer_t;)",
+    r"(\}\s*ANativeWindowBuffer_t;)",
     re.S,
 )
 matches = list(pattern.finditer(source))
@@ -112,8 +112,8 @@ if "uintptr_t layerCount;" not in old_members:
     window.write_text(source)
 else:
     # Do not silently accept a partial or hand-edited structure.
-    normalized = re.sub(r"/\\*.*?\\*/", "", old_members, flags=re.S)
-    normalized = re.sub(r"\\s+", " ", normalized).strip()
+    normalized = re.sub(r"/\*.*?\*/", "", old_members, flags=re.S)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
     expected = re.sub(r"\\s+", " ", official_android11_members).strip()
     if normalized != expected:
         raise SystemExit(
