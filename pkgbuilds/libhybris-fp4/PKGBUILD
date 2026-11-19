@@ -76,7 +76,7 @@ package() {
   # Keep both the real versioned shared objects and libtool's SONAME/
   # linker-name symlinks. Meson uses cc.find_library('hybris-common'), which
   # specifically needs libhybris-common.so (not only .so.1.0.0).
-  find "$pkgdir/opt/android/hybris/lib" -maxdepth 1 \\( -type f -o -type l \\) -name '*.so*' -printf '%f\\n' 2>/dev/null | while read -r f; do
+  find "$pkgdir/opt/android/hybris/lib" -maxdepth 1 \( -type f -o -type l \) -name '*.so*' -printf '%f\n' 2>/dev/null | while read -r f; do
     [ -e "$pkgdir/opt/android/hybris/lib/$f" ] || continue
     [ -e "$pkgdir/usr/lib/$f" ] || [ -L "$pkgdir/usr/lib/$f" ] || ln -s "/opt/android/hybris/lib/$f" "$pkgdir/usr/lib/$f"
   done
