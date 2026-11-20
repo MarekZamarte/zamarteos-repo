@@ -6,7 +6,7 @@ pkgdesc="PulseAudio 17.0 private headers and pkg-config metadata for Droid modul
 arch=('any')
 url="https://github.com/pulseaudio/pulseaudio"
 license=('LGPL-2.1-or-later')
-makedepends=('git')
+makedepends=('git' 'pulseaudio' 'pkgconf')
 source=("pulseaudio::git+https://github.com/pulseaudio/pulseaudio.git#tag=v17.0")
 sha256sums=('SKIP')
 
