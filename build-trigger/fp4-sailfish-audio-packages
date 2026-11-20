@@ -1,1 +1,1 @@
-run=22 fix package() smoke checks to validate the three Droid modules and libdroid-util actually built by the pinned upstream Meson revision
+run=23 fix SHA256 manifest verification to run inside packages/ where the manifest's package basenames are located
