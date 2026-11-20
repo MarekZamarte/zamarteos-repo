@@ -76,7 +76,11 @@ jobs:
           for name in hybris-android-headers libhybris-fp4 pulsecore-headers-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4; do
             find packages -maxdepth 1 -type f -name "$name-*.pkg.tar.*" -print -quit | grep .
           done
-          sha256sum -c <(awk '/^[0-9a-f]{64}  / { print }' packages/.build-manifest)
+          # The manifest stores package basenames, so verify from the packages directory.
+          (
+            cd packages
+            sha256sum -c <(awk '/^[0-9a-f]{64}  / { print }' .build-manifest)
+          )
 
       - name: Upload Sailfish audio package build and logs
         if: always()
