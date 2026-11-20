@@ -1,1 +1,1 @@
-run=21 fix PulseCore smoke test to supply Meson-style config.h, include pulse/xmalloc.h, and link libpulsecommon alongside libpulsecore
+run=22 fix package() smoke checks to validate the three Droid modules and libdroid-util actually built by the pinned upstream Meson revision
