@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Pliki
+Comment=Pliki i foldery telefonu
+Icon=system-file-manager
+Exec=/usr/bin/zamarteos-open-app files
+Terminal=false
+Categories=System;FileManager;

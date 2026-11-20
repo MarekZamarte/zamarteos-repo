@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Wiadomości
+Comment=Wiadomości SMS
+Icon=mail-message-new
+Exec=/usr/bin/zamarteos-open-app messages
+Terminal=false
+Categories=Network;InstantMessaging;
