@@ -42,7 +42,7 @@ PC
     echo "ERROR: pulsecore.pc does not link libpulsecore-17.0: $pulsecore_libs" >&2
     return 1
   }
-  printf '%s\\n' '#include <pulsecore/mem.h>' \
+  printf '%s\n' '#include <pulsecore/mem.h>' \
     'int main(void) { void *p = pa_xmalloc0(16); pa_xfree(p); return 0; }' | \
     cc -x c -o "$srcdir/pulsecore-link-check" - \
       $(PKG_CONFIG_PATH="$pkgdir/usr/lib/pkgconfig" pkg-config --cflags --libs pulsecore)
