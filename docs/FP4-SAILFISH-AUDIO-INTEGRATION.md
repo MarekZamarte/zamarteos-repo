@@ -1,8 +1,16 @@
 # FP4 call audio: Sailfish HAL integration plan
 
-Status: **stage 1 package build added to CI**. The packages are not yet installed in the bootable image; call-state routing and hardware validation remain outstanding.
+Status: **stage 1 package build is being validated with pinned Android 11 VNDK 30 headers**. No bootable image has been produced from this audio stack; runtime integration and hardware validation remain outstanding.
 
-## Stage 1 now tracked in ZamarteOS\n\nThe branch now contains pinned ARM64 PKGBUILDs for `hybris-android-headers`, `libhybris-fp4`, `pulseaudio-modules-droid-fp4`, `hidl-audio-fp4`, and `droid-config-fp4`. A separate GitHub Actions workflow builds only these packages on an ARM64 runner and uploads the package artifacts. It does not build or flash a phone image.\n\nThe first build is intended to expose real dependency/ABI problems, especially whether the Arch Linux ARM PulseAudio package exports the `pulsecore` development metadata required by the Droid modules. A package compile is not proof of working call audio.\n\n## Required implementation
+## Stage 1 now tracked in ZamarteOS\n\nThe branch now contains pinned ARM64 PKGBUILDs for `hybris-android-headers`, `libhybris-fp4`, `pulseaudio-modules-droid-fp4`, `hidl-audio-fp4`, and `droid-config-fp4`. A separate GitHub Actions workflow builds only these packages on an ARM64 runner and uploads the package artifacts. It does not build or flash a phone image.\n\nThe first build is intended to expose real dependency/ABI problems, especially whether the Arch Linux ARM PulseAudio package exports the `pulsecore` development metadata required by the Droid modules. A package compile is not proof of working call audio.\n\n## Header ABI correction after reference build #57
+
+The previous reference-image workflow failed before image assembly because the bundled Android 5.1.1 header snapshot did not define Android 11 audio symbols used by the pinned Droid modules. The package error for `hidl-audio-fp4` was only a downstream dependency failure.
+
+The header package now keeps the legacy common headers for compatibility but overlays the pinned ARM64 public headers from the Android VNDK 30 snapshot (AOSP mirror commit `5f9884aa352825291757dfd6694b874ad8c1805e`). Its compile-time preflight checks the exact missing device enums, call mode, audio sources, input/output flags, formats and microphone address constants. The libhybris build also receives these VNDK 30 include paths first.
+
+This package-only CI run is a dependency/ABI check. It is not a full ZamarteOS image build and does not prove that calls work on the phone.
+
+## Required implementation
 
 The FP4 Sailfish adaptation uses the Android 11 audio HAL through the following chain:
 
