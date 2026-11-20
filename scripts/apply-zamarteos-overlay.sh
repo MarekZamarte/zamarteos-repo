@@ -159,11 +159,23 @@ new = '''  echo "    deps: $deps"
   if pacman -S --needed --noconfirm --asdeps "${remote_deps[@]}"; then
     return 0
   fi
-  echo "    (remote dependency batch failed; retrying one at a time)"
+  # Arch Linux ARM mirrors remove old package files after publishing a new
+  # database. A 404 can therefore mean a stale package index, not a bad recipe.
+  # Refresh databases AND perform a full upgrade before retrying; -Sy alone
+  # would leave an unsupported partial-upgrade builder.
+  echo "    remote dependency transaction failed; refreshing ARM databases and full system"
+  if ! pacman -Syyu --noconfirm; then
+    echo "!! pacman database refresh/full upgrade failed; refusing stale dependencies" >&2
+    return 1
+  fi
+  if pacman -S --needed --noconfirm --asdeps "${remote_deps[@]}"; then
+    return 0
+  fi
+  echo "    (refreshed batch still failed; retrying dependencies individually)"
   local failed_dep=0
   for d in "${remote_deps[@]}"; do
     pacman -S --needed --noconfirm --asdeps "$d" || {
-      echo "    !! could not install remote dependency $d" >&2
+      echo "    !! could not install remote dependency $d after refresh" >&2
       failed_dep=1
     }
   done
