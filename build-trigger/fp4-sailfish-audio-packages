@@ -1,1 +1,1 @@
-run=20 fix PulseCore package smoke test with a here-document and a direct link check against staged headers
+run=21 fix PulseCore smoke test to supply Meson-style config.h, include pulse/xmalloc.h, and link libpulsecommon alongside libpulsecore
