@@ -42,8 +42,11 @@ PC
     echo "ERROR: pulsecore.pc does not link libpulsecore-17.0: $pulsecore_libs" >&2
     return 1
   }
-  printf '%s\n' '#include <pulsecore/mem.h>' \
-    'int main(void) { void *p = pa_xmalloc0(16); pa_xfree(p); return 0; }' | \
-    cc -x c -o "$srcdir/pulsecore-link-check" - \
-      $(PKG_CONFIG_PATH="$pkgdir/usr/lib/pkgconfig" pkg-config --cflags --libs pulsecore)
+  # Headers are staged in pkgdir and are not installed in /usr/include yet.
+  # Keep the real runtime library from the builder while compiling against staged headers.
+  printf '%s\\n' '#include <pulsecore/mem.h>' \\
+    'int main(void) { void *p = pa_xmalloc0(16); pa_xfree(p); return 0; }' | \\
+    cc -x c -I"$pkgdir/usr/include" -I"$pkgdir/usr/include/pulsecore" \\
+      -o "$srcdir/pulsecore-link-check" - \\
+      $(PKG_CONFIG_PATH="$pkgdir/usr/lib/pkgconfig" pkg-config --libs pulsecore)
 }
