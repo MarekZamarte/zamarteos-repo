@@ -1,1 +1,1 @@
-run=19 fix PulseCore smoke test to compile against staged pkgdir headers while linking the installed PulseAudio 17.0 core library
+run=20 fix PulseCore package smoke test with a here-document and a direct link check against staged headers
