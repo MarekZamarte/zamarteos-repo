@@ -27,3 +27,5 @@ run=15 expose POSIX strdup declaration for Android audio headers and rebuild FP4
 run=16 replace the incomplete Android 5.1.1 audio header set with pinned AOSP VNDK 30 ARM64 headers; compile-time assert all previously missing Droid audio symbols and build the isolated Sailfish FP4 audio packages
 
 run=17 retry isolated ARM64 Sailfish audio package build after pinning the VNDK 30 commit, fixing legacy header selection and disabling pacman's low-speed download timeout in the builder
+
+run=18 fix the PulseAudio 17.0 core pkg-config metadata to link libpulsecore-17.0 from /usr/lib/pulseaudio; add a compile-and-link smoke test for pa_xmalloc0/pa_xfree before rebuilding Droid modules
