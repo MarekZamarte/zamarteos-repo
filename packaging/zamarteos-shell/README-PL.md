@@ -15,18 +15,21 @@ natywny userspace Arch Linux ARM z własną sesją Wayland ZamarteOS.
 - własna sesja Hyprland/Wayland uruchamiana z tty1;
 - ekran główny, szuflada aplikacji i wyszukiwanie wpisów .desktop;
 - hostowanie natywnych modułów Phone, Messages, Contacts, Files, Calculator, Calendar, Clock, Editor, Weather, Mail, Keep, Vitals, Settings i Themes z przypiętej bazy FP4;
-- osobne pozycje Telefon, Wiadomości, Kontakty i Pliki w menu aplikacji;\n- pełny moduł Kontakty z edycją danych, współdzielony z Telefonem i Wiadomościami;
+- osobne pozycje Telefon, Wiadomości, Kontakty i Pliki w menu aplikacji;
+- pełny moduł Kontakty z edycją danych, współdzielony z Telefonem i Wiadomościami;
 - moduły Telefonu i Wiadomości są ładowane przy starcie sesji i wywołują
   warmUp(), aby nasłuch ModemManager nie zależał od otwartego okna;
-- Centrum telefonu odczytuje i zmienia Wi-Fi, dane komórkowe, Bluetooth,
-  jasność ekranu i głośność multimediów przez nmcli, bluetoothctl,
-  brightnessctl i pamixer; wyświetla też odczyt baterii i wersję jądra;
+- Centrum telefonu odczytuje stan Wi-Fi, sieci komórkowej i Bluetooth;
+  zmienia Wi-Fi, Bluetooth, jasność ekranu i głośność multimediów przez
+  nmcli, bluetoothctl, brightnessctl i pamixer; wyświetla baterię i jądro;
 - blokada sesji z uwierzytelnianiem PAM;
 - polski locale i polski układ klawiatury.
 
-Połączenia i SMS korzystają z ModemManager. Moduł Telefonu korzysta z
-callaudiod/Q6Voice oraz istniejącego routingu FP4; ta zmiana nie modyfikuje
-modemu ani ścieżki audio rozmów.
+Połączenia i SMS korzystają z ModemManager. Ścieżka rozmów FP4 opiera się na
+jądrowym Q6Voice, PCM VoiceMMode1, usłudze q6voiced i konfiguracji routingu
+FP4. Powłoka nie zastępuje tych komponentów ani nie zmienia konfiguracji
+modemu. Obecność tych elementów w obrazie nie jest równoznaczna z zaliczonym
+testem rozmowy na konkretnym egzemplarzu telefonu.
 
 ## Zaplecze techniczne, które pozostaje
 
