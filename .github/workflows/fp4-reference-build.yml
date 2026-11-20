@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - zamarteos-pure-fp4-dev
+      - zamarteos-pure-fp4-fixes-20261120
     paths:
       - "build-trigger/fp4-reference-image"
 
