@@ -847,6 +847,23 @@ if grep -Fq '/usr/share/q6voiced/q6voiced.conf' "$R/usr/lib/systemd/system/q6voi
 else
   no "q6voiced is not wired to the FP4 device configuration"
 fi
+if grep -Fq 'for _svc in ${DEVICE_SERVICES:-}' "$R/usr/lib/moarchy/bin/moarchy-firstboot" &&
+   grep -Fq 'systemctl enable --now "$_svc"' "$R/usr/lib/moarchy/bin/moarchy-firstboot"; then
+  ok "first boot enables the device-declared Q6Voice service"
+else
+  no "first boot does not enable the device-declared Q6Voice service"
+fi
+if grep -Fq 'ConditionPathExists=/usr/share/q6voiced/q6voiced.conf' "$R/usr/lib/systemd/system/q6voiced.service" &&
+   grep -Fq 'ExecStart=' "$R/usr/lib/systemd/system/q6voiced.service"; then
+  ok "q6voiced is guarded by the FP4 PCM config and has a systemd start command"
+else
+  no "q6voiced systemd unit is missing its config guard or start command"
+fi
+if [ -L "$R/usr/lib/systemd/user/wireplumber.service.wants/moarchy-fp4-mic-route.service" ]; then
+  ok "the FP4 audio-route helper is enabled with the user WirePlumber service"
+else
+  no "the FP4 audio-route helper is not enabled with WirePlumber"
+fi
 if grep -Fq 'q6voice_device=3' "$R/usr/share/q6voiced/q6voiced.conf" &&
    grep -Fq 'VoiceMMode1' "$R/usr/lib/moarchy/bin/fp4-audio-route"; then
   ok "call-audio userspace agrees on VoiceMMode1"
