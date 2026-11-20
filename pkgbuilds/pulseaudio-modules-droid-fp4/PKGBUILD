@@ -1,7 +1,7 @@
 # PulseAudio Droid HAL modules, pinned to the upstream Android 11 implementation.
 pkgname=pulseaudio-modules-droid-fp4
 pkgver=17.0.115
-pkgrel=1
+pkgrel=2
 pkgdesc="PulseAudio Droid HAL modules for Fairphone 4 (Android 11 vendor HAL)"
 arch=('aarch64')
 url="https://github.com/mer-hybris/pulseaudio-modules-droid"
@@ -33,6 +33,12 @@ build() {
 package() {
   cd "$srcdir/pulseaudio-modules-droid"
   meson install -C build --destdir "$pkgdir"
-  test -s "$pkgdir/usr/lib/pulse-17.0/modules/module-droid-card.so"
-  test -s "$pkgdir/usr/lib/pulse-17.0/modules/module-droid-discover.so"
+
+  # Validate the exact modules produced by the pinned upstream Meson recipe.
+  # This revision builds card, sink and source modules; it has no
+  # module-droid-discover.so target.
+  for module in module-droid-card.so module-droid-sink.so module-droid-source.so; do
+    test -s "$pkgdir/usr/lib/pulse-17.0/modules/$module"
+  done
+  test -s "$pkgdir/usr/lib/pulse-17.0/modules/libdroid-util.so"
 }
