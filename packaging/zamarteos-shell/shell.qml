@@ -1488,9 +1488,12 @@ Scope {
             onPressed: pressY = mouse.y
             onReleased: {
                 if (mouse.y - pressY > 18) {
+                    // Do not cover an incoming or active call with the control centre.
+                    if (!root.canOpenHomeOverlay()) return
                     root.drawerOpen = false
                     root.homeOpen = false
                     root.controlOpen = true
+                    root.refreshSettings()
                 }
             }
         }
