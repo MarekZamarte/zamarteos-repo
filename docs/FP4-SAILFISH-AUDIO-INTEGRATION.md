@@ -1,6 +1,6 @@
-# FP4 call audio: Sailfish HAL integration plan
+# FP4 call audio: experimental Sailfish HAL alternative (not selected)
 
-Status: **stage 1 package build is being validated with pinned Android 11 VNDK 30 headers**. No bootable image has been produced from this audio stack; runtime integration and hardware validation remain outstanding.
+Status: **deferred alternative; not part of the ZamarteOS Pure runtime image**. The active FP4 path is the native Q6Voice/VoiceMMode1 stack from the pinned Moarchy hardware base. Do not switch the image to PulseAudio/Droid HAL on the basis of this package-only experiment. The packages below are isolated build research and are not proof of working calls. The active Q6Voice image still requires real incoming/outgoing call acceptance tests on the target Fairphone 4.
 
 ## Stage 1 now tracked in ZamarteOS\n\nThe branch now contains pinned ARM64 PKGBUILDs for `hybris-android-headers`, `libhybris-fp4`, `pulseaudio-modules-droid-fp4`, `hidl-audio-fp4`, and `droid-config-fp4`. A separate GitHub Actions workflow builds only these packages on an ARM64 runner and uploads the package artifacts. It does not build or flash a phone image.\n\nThe first build is intended to expose real dependency/ABI problems, especially whether the Arch Linux ARM PulseAudio package exports the `pulsecore` development metadata required by the Droid modules. A package compile is not proof of working call audio.\n\n## Header ABI correction after reference build #57
 
@@ -34,8 +34,8 @@ Sources:
 - The FP4 HIDL RPM spec is MIT-licensed and provides the HIDL compatibility library plus the VNDK v30 `libaudioroute.so` link.
 - The upstream `pulseaudio-modules-droid` project documents Android 11.x support and requires PulseAudio core >= 14.2, Android headers, libhardware/libhybris, ALSA and libudev.
 - Its `module-droid-card` exposes virtual `voicecall` routing profiles. The FP4 Sailfish configuration includes the policy mappings for call audio and physical outputs/inputs.
-- The current pinned Moarchy FP4 base uses PipeWire, PipeWire-Pulse and WirePlumber. Its FP4 device package explicitly says cellular-call audio is not working upstream.
-- ZamarteOS currently inherits that PipeWire stack and has Q6Voice-specific call-audio checks. That is not the requested Sailfish audio implementation.
+- The current pinned Moarchy FP4 base uses PipeWire, PipeWire-Pulse and WirePlumber alongside the native Q6Voice kernel/daemon path.
+- ZamarteOS currently inherits that native Q6Voice path. The Sailfish PulseAudio/Droid HAL chain remains a separate, deferred alternative and must not be mixed into the active image without a complete server-ownership and call-state design.
 
 ## Integration blockers that must be resolved before a release image
 
@@ -44,7 +44,7 @@ Sources:
 3. Include the FP4 HIDL compatibility library and verify that the pinned vendor image really contains the expected VNDK v30 target `/apex/com.android.vndk.v30/lib64/libaudioroute.so`.
 4. Port the FP4 PulseAudio policy/configuration and its call-state integration to ZamarteOS. The Sailfish policy cannot simply be copied without verifying which service publishes call state and route changes in this image.
 5. Resolve the audio-server ownership transition. The current image uses PipeWire/WirePlumber; the Droid HAL modules are PulseAudio modules. They cannot be treated as drop-in PipeWire plugins. The final image must have one deliberate audio-server/routing design, not two competing services controlling the same ALSA device.
-6. Update image verification to check the Sailfish HAL/PulseAudio components and remove Q6Voice-only acceptance criteria only after the replacement path is built and wired.\n7. Add a ModemManager call-state bridge that switches the Droid card to `voicecall` on call connect and returns to `default` after hangup. The Sailfish `xpolicy.conf` is intentionally not installed because it expects Sailfish/Telepathy policy properties absent from ZamarteOS.
+6. These steps apply only if the project explicitly chooses the Sailfish alternative later; they are not prerequisites for validating the active Q6Voice path.\n7. Add a ModemManager call-state bridge that switches the Droid card to `voicecall` on call connect and returns to `default` after hangup. The Sailfish `xpolicy.conf` is intentionally not installed because it expects Sailfish/Telepathy policy properties absent from ZamarteOS.
 
 ## Required hardware acceptance tests
 
