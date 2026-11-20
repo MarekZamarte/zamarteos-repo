@@ -64,3 +64,4 @@ Build request 2026-11-19: rebuild libhybris-fp4 after excluding libEGL.so* and l
 Build request 2026-11-19: retry FP4 reference build after correcting the PKGBUILD shell escaping that caused bash syntax failure; pkgrel=7, GLVND EGL/GLES linker-name collisions excluded; shell syntax preflight passed for the corrected library-link stanza; build and audit only, never flash.
 
 Build request 2026-11-20: build latest ZamarteOS Pure FP4 reference image after successful audio package build #23 (all six audio packages and SHA256 checks passed). Run complete image verification, verify Q6Voice/VoiceMMode1, q6voiced, 81voltd IMS service, UCM/WirePlumber call routes, shell/session and package manifest; upload image, audit, provenance and checksums. Build and inspect only; never flash.
+2026-11-20 Q6Voice startup and FP4 audio-route verifier expansion after commit 8084b8c
