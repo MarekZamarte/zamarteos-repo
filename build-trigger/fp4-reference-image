@@ -66,3 +66,5 @@ Build request 2026-11-19: retry FP4 reference build after correcting the PKGBUIL
 Build request 2026-11-20: build latest ZamarteOS Pure FP4 reference image after successful audio package build #23 (all six audio packages and SHA256 checks passed). Run complete image verification, verify Q6Voice/VoiceMMode1, q6voiced, 81voltd IMS service, UCM/WirePlumber call routes, shell/session and package manifest; upload image, audit, provenance and checksums. Build and inspect only; never flash.
 2026-11-20 Q6Voice startup and FP4 audio-route verifier expansion after commit 8084b8c
 2026-11-20 retry with strict pacman -Syyu refresh after rolling-repo 404 fix 7ddfb7b
+
+Build request 2026-11-20: validate ZamarteOS fixes branch: protect active/incoming calls from top-edge control-centre overlay, refresh device status on gesture, add package regression checks, correct FP4 Q6Voice documentation; build and audit full reference image only; never flash.

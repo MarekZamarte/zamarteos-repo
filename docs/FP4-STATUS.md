@@ -14,6 +14,10 @@ The tested voice PCM list was:
 
 The FP4 q6voiced configuration selects card 0, device 3 (VoiceMMode1).
 
+## Current ZamarteOS decision
+
+The active image path is the native FP4 Q6Voice implementation supplied by the pinned hardware base. The isolated Sailfish PulseAudio/Droid HAL package workflow is an experimental alternative and is not installed into the reference image. Do not mix both audio-server designs in one image. The current static audit confirms packaged components only; it does not establish working call audio on the user's handset.
+
 ## Call-audio acceptance in the ZamarteOS image
 
 The pinned hardware base used by the Pure FP4 builder includes
