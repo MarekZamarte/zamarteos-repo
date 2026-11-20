@@ -20,14 +20,30 @@ package() {
   install -d "$pkgdir/usr/lib/pkgconfig"
   cat > "$pkgdir/usr/lib/pkgconfig/pulsecore.pc" <<'PC'
 prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
 Name: pulsecore
-Description: PulseAudio private core headers (17.0)
+Description: PulseAudio private core headers and linker flags (17.0 ABI)
 Version: 17.0
 Cflags: -I${includedir} -I${includedir}/pulsecore
-Libs:
+Libs: -L${libdir}/pulseaudio -lpulsecore-17.0
 PC
   test -s "$pkgdir/usr/lib/pkgconfig/pulsecore.pc"
   test -s "$pkgdir/usr/include/pulsecore/module.h"
+  test -s /usr/lib/pulseaudio/libpulsecore-17.0.so
+
+  # Verify that pkg-config exposes the real PulseAudio Core shared library
+  # and that private allocator symbols used by Droid modules resolve at link time.
+  local pulsecore_libs
+  pulsecore_libs="$(PKG_CONFIG_PATH="$pkgdir/usr/lib/pkgconfig" pkg-config --libs pulsecore)"
+  [[ "$pulsecore_libs" == *"-lpulsecore-17.0"* ]] || {
+    echo "ERROR: pulsecore.pc does not link libpulsecore-17.0: $pulsecore_libs" >&2
+    return 1
+  }
+  printf '%s\\n' '#include <pulsecore/mem.h>' \
+    'int main(void) { void *p = pa_xmalloc0(16); pa_xfree(p); return 0; }' | \
+    cc -x c -o "$srcdir/pulsecore-link-check" - \
+      $(PKG_CONFIG_PATH="$pkgdir/usr/lib/pkgconfig" pkg-config --cflags --libs pulsecore)
 }
