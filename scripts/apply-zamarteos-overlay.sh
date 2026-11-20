@@ -310,7 +310,17 @@ if new not in s:
     if old not in s:
         raise SystemExit("Dockerfile.builder dependency anchor changed")
     s = s.replace(old, new, 1)
-    p.write_text(s)
+
+# The Arch Linux ARM mirror can stall below pacman's default low-speed
+# threshold. Disable only that low-speed timeout in the isolated builder so
+# pacman can finish the pinned package bootstrap and later dependency installs.
+old_timeout = r"RUN sed -i '/^\[options\]/a DisableSandbox' /etc/pacman.conf"
+new_timeout = old_timeout + " && \\\n    sed -i '/^\\[options\\]/a DisableDownloadTimeout' /etc/pacman.conf"
+if "DisableDownloadTimeout" not in s:
+    if old_timeout not in s:
+        raise SystemExit("Dockerfile.builder pacman options anchor changed")
+    s = s.replace(old_timeout, new_timeout, 1)
+p.write_text(s)
 PY
 
 # Caller ID must never identify somebody by a coincidental suffix match.
