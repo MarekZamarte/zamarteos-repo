@@ -23,3 +23,5 @@ run=13 replace legacy ANativeWindowBuffer with the official Android 11 ABI layou
 run=14 add missing Android 11 native-window query/perform identifiers; add compile-time numeric ABI assertions and rebuild ARM64 audio packages
 
 run=15 expose POSIX strdup declaration for Android audio headers and rebuild FP4 audio packages
+
+run=16 replace the incomplete Android 5.1.1 audio header set with pinned AOSP VNDK 30 ARM64 headers; compile-time assert all previously missing Droid audio symbols and build the isolated Sailfish FP4 audio packages
