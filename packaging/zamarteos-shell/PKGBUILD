@@ -58,6 +58,10 @@ check() {
   grep -q 'item.warmUp()' "$srcdir/shell.qml"
   grep -q 'target: "zamarteos-apps"' "$srcdir/shell.qml"
   grep -q 'function refreshSettings()' "$srcdir/shell.qml"
+  # The top-edge control-centre gesture must refresh real device state and
+  # must not cover an incoming or active phone call.
+  grep -q 'if (!root.canOpenHomeOverlay()) return' "$srcdir/shell.qml"
+  grep -A7 'onReleased: {' "$srcdir/shell.qml" | grep -q 'root.refreshSettings()'
   grep -q 'indexOf("zamarteos-") === 0' "$srcdir/shell.qml"
   grep -q 'nmcli' "$srcdir/shell.qml"
   grep -q 'bluetoothctl' "$srcdir/shell.qml"
