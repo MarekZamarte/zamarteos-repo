@@ -318,8 +318,13 @@ static_assert(sizeof(ANativeWindowBuffer) == 168,
 #endif
 int main() { return 0; }
 EOF
-  g++ -std=c++11 -I"$pkgdir/opt/android/include" -c \
-    "$srcdir/fp4-window-header-abi.cpp" -o "$srcdir/fp4-window-header-abi.o"
+  g++ -std=c++11 \
+    -I"$pkgdir/opt/android/include/vndk30/system/media/audio/include" \
+    -I"$pkgdir/opt/android/include/vndk30/hardware/libhardware/include" \
+    -I"$pkgdir/opt/android/include/vndk30/system/core/libcutils/include" \
+    -I"$pkgdir/opt/android/include/vndk30/system/core/libsystem/include" \
+    -I"$pkgdir/opt/android/include" \
+    -c "$srcdir/fp4-window-header-abi.cpp" -o "$srcdir/fp4-window-header-abi.o"
   test -s "$srcdir/fp4-window-header-abi.o"
 
 
