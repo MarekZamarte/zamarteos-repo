@@ -29,7 +29,7 @@ prepare() {
     arm64/include/hardware/libhardware/include \
     arm64/include/system/core/libcutils/include \
     arm64/include/system/core/libsystem/include
-  git -C "$srcdir/android-vndk-v30" fetch --filter=blob:none --depth=1 origin main
+  git -C "$srcdir/android-vndk-v30" fetch --filter=blob:none --depth=1 origin 5f9884aa352825291757dfd6694b874ad8c1805e
   git -C "$srcdir/android-vndk-v30" checkout --detach FETCH_HEAD
   test "$(git -C "$srcdir/android-vndk-v30" rev-parse HEAD)" = \
     "5f9884aa352825291757dfd6694b874ad8c1805e"
@@ -151,15 +151,13 @@ import re
 import sys
 
 root = Path(sys.argv[1])
-window_headers = [p for p in root.rglob("window.h") if p.parent.name == "system"]
-graphics_headers = [p for p in root.rglob("graphics.h") if p.parent.name == "system"]
-if len(window_headers) != 1 or len(graphics_headers) != 1:
+window = root / "system/window.h"
+graphics = root / "system/graphics.h"
+if not window.is_file() or not graphics.is_file():
     raise SystemExit(
-        "expected exactly one system/window.h and system/graphics.h; "
-        f"found {window_headers} and {graphics_headers}"
+        "expected the legacy compatibility headers at "
+        f"{window} and {graphics}"
     )
-
-window = window_headers[0]
 source = window.read_text()
 pattern = re.compile(
     r"(typedef struct ANativeWindowBuffer\s*\{.*?"
@@ -210,7 +208,6 @@ else:
             "match the complete Android 11 member layout"
         )
 
-graphics = graphics_headers[0]
 gtext = graphics.read_text()
 if "HAL_DATASPACE_UNKNOWN" not in gtext:
     gtext = gtext.rstrip() + """
