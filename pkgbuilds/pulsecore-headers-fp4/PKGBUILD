@@ -1,7 +1,7 @@
 # Private PulseAudio core headers for out-of-tree modules (same PA ABI as the phone).
 pkgname=pulsecore-headers-fp4
 pkgver=17.0
-pkgrel=1
+pkgrel=2
 pkgdesc="PulseAudio 17.0 private headers and pkg-config metadata for Droid modules"
 arch=('any')
 url="https://github.com/pulseaudio/pulseaudio"
@@ -28,24 +28,25 @@ Name: pulsecore
 Description: PulseAudio private core headers and linker flags (17.0 ABI)
 Version: 17.0
 Cflags: -I${includedir} -I${includedir}/pulsecore
-Libs: -L${libdir}/pulseaudio -lpulsecore-17.0
+Libs: -L${libdir}/pulseaudio -lpulsecore-17.0 -lpulsecommon-17.0
 PC
   test -s "$pkgdir/usr/lib/pkgconfig/pulsecore.pc"
   test -s "$pkgdir/usr/include/pulsecore/module.h"
   test -s /usr/lib/pulseaudio/libpulsecore-17.0.so
+  test -s /usr/lib/pulseaudio/libpulsecommon-17.0.so
 
-  # Verify that pkg-config exposes the real PulseAudio Core shared library
-  # and that private allocator symbols used by Droid modules resolve at link time.
-  local pulsecore_libs
-  pulsecore_libs="$(PKG_CONFIG_PATH="$pkgdir/usr/lib/pkgconfig" pkg-config --libs pulsecore)"
-  [[ "$pulsecore_libs" == *"-lpulsecore-17.0"* ]] || {
-    echo "ERROR: pulsecore.pc does not link libpulsecore-17.0: $pulsecore_libs" >&2
-    return 1
-  }
-  # Headers are staged in pkgdir and are not installed in /usr/include yet.
-  # Keep the real runtime library from the builder while compiling against staged headers.
-  # A here-document avoids fragile shell escaping and accidental command splitting.
+  # PulseAudio private headers require the build's config.h to be included first.
+  # The Droid Meson project generates config.h with PACKAGE and compiles with
+  # HAVE_CONFIG_H, so reproduce that contract in this isolated smoke test.
+  mkdir -p "$srcdir/pulsecore-smoke-config"
+  cat > "$srcdir/pulsecore-smoke-config/config.h" <<'CONFIG'
+#define PACKAGE "pulsecore-headers-fp4"
+CONFIG
   cat > "$srcdir/pulsecore-link-check.c" <<'C'
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#include <pulse/xmalloc.h>
 #include <pulsecore/mem.h>
 
 int main(void) {
@@ -54,5 +55,22 @@ int main(void) {
   return 0;
 }
 C
-  cc -I"$pkgdir/usr/include" -I"$pkgdir/usr/include/pulsecore" -o "$srcdir/pulsecore-link-check" "$srcdir/pulsecore-link-check.c" $(PKG_CONFIG_PATH="$pkgdir/usr/lib/pkgconfig" pkg-config --libs pulsecore)
+
+  # Compile against the staged private headers; link the actual installed
+  # PulseAudio core and common libraries used by the FP4 Droid modules.
+  local pulsecore_libs
+  pulsecore_libs="$(PKG_CONFIG_PATH="$pkgdir/usr/lib/pkgconfig" pkg-config --libs pulsecore)"
+  [[ "$pulsecore_libs" == *"-lpulsecore-17.0"* ]] || {
+    echo "ERROR: pulsecore.pc does not link libpulsecore-17.0: $pulsecore_libs" >&2
+    return 1
+  }
+  [[ "$pulsecore_libs" == *"-lpulsecommon-17.0"* ]] || {
+    echo "ERROR: pulsecore.pc does not link libpulsecommon-17.0: $pulsecore_libs" >&2
+    return 1
+  }
+  cc -DHAVE_CONFIG_H \
+    -I"$srcdir/pulsecore-smoke-config" \
+    -I"$pkgdir/usr/include" -I"$pkgdir/usr/include/pulsecore" \
+    -o "$srcdir/pulsecore-link-check" "$srcdir/pulsecore-link-check.c" \
+    $pulsecore_libs
 }
