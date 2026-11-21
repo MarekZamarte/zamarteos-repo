@@ -1,6 +1,6 @@
 pkgname=zamarteos-shell
 pkgver=0.2.4
-pkgrel=1
+pkgrel=2
 pkgdesc="ZamarteOS touch-first Wayland shell and Fairphone 4 session"
 arch=('aarch64')
 url="https://github.com/MarekZamarte/zamarteos-repo"
@@ -129,6 +129,11 @@ check() {
 
 package() {
   install -Dm644 "$srcdir/shell.qml" "$pkgdir/usr/share/zamarteos-shell/shell.qml"
+  # Quickshell resolves qs.Commons and qs.Ui relative to its config root.
+  # ZamarteOS loads Moarchy plugins by absolute URL, so expose the base shell
+  # modules in this config root as well; otherwise those plugins fail imports.
+  ln -s /usr/share/moarchy/shell/Commons "$pkgdir/usr/share/zamarteos-shell/Commons"
+  ln -s /usr/share/moarchy/shell/Ui "$pkgdir/usr/share/zamarteos-shell/Ui"
   install -Dm644 "$srcdir/hyprland.conf" "$pkgdir/usr/share/zamarteos-shell/hyprland.conf"
   install -Dm755 "$srcdir/zamarteos-session" "$pkgdir/usr/bin/zamarteos-session"
   install -Dm755 "$srcdir/zamarteos-shell" "$pkgdir/usr/bin/zamarteos-shell"
