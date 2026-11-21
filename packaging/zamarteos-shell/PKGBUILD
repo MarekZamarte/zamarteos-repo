@@ -129,11 +129,8 @@ check() {
 
 package() {
   install -Dm644 "$srcdir/shell.qml" "$pkgdir/usr/share/zamarteos-shell/shell.qml"
-  # Quickshell resolves qs.Commons and qs.Ui relative to its config root.
-  # ZamarteOS loads Moarchy plugins by absolute URL, so expose the base shell
-  # modules in this config root as well; otherwise those plugins fail imports.
-  ln -s /usr/share/moarchy/shell/Commons "$pkgdir/usr/share/zamarteos-shell/Commons"
-  ln -s /usr/share/moarchy/shell/Ui "$pkgdir/usr/share/zamarteos-shell/Ui"
+  # qs.Commons and qs.Ui are supplied by the Moarchy shell framework.
+  # Do not add guessed symlinks here; resolve the actual framework package path.
   install -Dm644 "$srcdir/hyprland.conf" "$pkgdir/usr/share/zamarteos-shell/hyprland.conf"
   install -Dm755 "$srcdir/zamarteos-session" "$pkgdir/usr/bin/zamarteos-session"
   install -Dm755 "$srcdir/zamarteos-shell" "$pkgdir/usr/bin/zamarteos-shell"
