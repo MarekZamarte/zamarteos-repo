@@ -68,3 +68,6 @@ Build request 2026-11-20: build latest ZamarteOS Pure FP4 reference image after 
 2026-11-20 retry with strict pacman -Syyu refresh after rolling-repo 404 fix 7ddfb7b
 
 Build request 2026-11-20: validate ZamarteOS fixes branch: protect active/incoming calls from top-edge control-centre overlay, refresh device status on gesture, add package regression checks, correct FP4 Q6Voice documentation; build and audit full reference image only; never flash.
+
+
+Build request 2026-11-21: run the latest FP4 reference image build from this branch after reviewing the black-screen DSI logs; collect full build logs, image verification, package manifest, provenance and SHA256 checksums. This is a diagnostic/reference image only; do not flash the phone and do not claim the DSI clock issue is fixed by this build.
