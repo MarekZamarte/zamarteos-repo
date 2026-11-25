@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+      - zamarteos-pure-fp4-dev
   workflow_dispatch:
 
 concurrency:
@@ -41,8 +42,22 @@ jobs:
               useradd -m builder
               echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
               chown -R builder:builder /repo/packaging/zamarteos-shell
-              runuser -u builder -- makepkg --noconfirm --cleanbuild
+              # omarchy-config is a custom package built by the pinned FP4 base,
+              # not present in this clean Arch Linux ARM sync repo. Build the
+              # package without dependency resolution, then assert its runtime
+              # dependency and the two packaged QML module links below.
+              runuser -u builder -- makepkg --nodeps --noconfirm --cleanbuild
               ls -lh *.pkg.tar.*
+              pkg=$(find . -maxdepth 1 -type f -name "*.pkg.tar.*" -print -quit)
+              test -n "$pkg"
+              rm -rf /tmp/zamarteos-shell-pkg
+              mkdir -p /tmp/zamarteos-shell-pkg
+              bsdtar -xf "$pkg" -C /tmp/zamarteos-shell-pkg
+              grep -Fx "depend = omarchy-config" /tmp/zamarteos-shell-pkg/.PKGINFO
+              test -L /tmp/zamarteos-shell-pkg/usr/share/zamarteos-shell/Commons
+              test -L /tmp/zamarteos-shell-pkg/usr/share/zamarteos-shell/Ui
+              test "$(readlink /tmp/zamarteos-shell-pkg/usr/share/zamarteos-shell/Commons)" = "/usr/share/omarchy/shell/Commons"
+              test "$(readlink /tmp/zamarteos-shell-pkg/usr/share/zamarteos-shell/Ui)" = "/usr/share/omarchy/shell/Ui"
             '
 
   overlay-integration:
@@ -57,10 +72,26 @@ jobs:
           git clone --branch fp4 --single-branch https://github.com/taufderl/moarchy.git moarchy-base
           git -C moarchy-base checkout --detach c78bcd1f43340c447e0016ab45a5fa99f186810c
 
+      - name: Verify pinned Omarchy QML module ABI
+        run: |
+          set -euxo pipefail
+          OMARCHY_REF="$(sed -n '/^\[omarchy\]/,/^\[/{ s/^ref[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p; }' moarchy-base/manifest.toml | head -n 1)"
+          git clone --filter=blob:none https://github.com/omacom/omarchy.git omarchy-source
+          git -C omarchy-source checkout --detach "$OMARCHY_REF"
+          for module in Commons Ui; do
+            test -s "omarchy-source/shell/$module/qmldir"
+            grep -Fxq "module qs.$module" "omarchy-source/shell/$module/qmldir"
+          done
+
       - name: Apply and verify ZamarteOS integration
         run: |
           set -euxo pipefail
           bash scripts/apply-zamarteos-overlay.sh moarchy-base
+          grep -Fq "'omarchy-config'" moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          grep -Fq 'ln -s /usr/share/omarchy/shell/Commons' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          grep -Fq 'ln -s /usr/share/omarchy/shell/Ui' moarchy-base/pkgbuilds/zamarteos-shell/PKGBUILD
+          grep -Fq 'ZamarteOS Quickshell root-relative module imports' moarchy-base/image/verify.sh
+          bash -n moarchy-base/image/verify.sh
           bash -n moarchy-base/bin/moarchy-lock
           ! grep -q 'var TAIL = 9' moarchy-base/default/omarchy/plugins/moarchy.phone/Numbers.js
           ! grep -q 'var TAIL = 9' moarchy-base/default/omarchy/plugins/moarchy.messages/Numbers.js
