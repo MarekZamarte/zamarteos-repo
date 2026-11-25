@@ -103,7 +103,17 @@ jobs:
               if stream_needle not in source:
                   raise SystemExit("Could not find the Python 3 stderr-print loop")
               source = source.replace(stream_needle, stream_patch, 1)
-          required = "        for line in proc.stderr:\\n            if isinstance(line, bytes):\\n                line = line.decode(\"utf-8\", errors=\"replace\")\\n            print(line, end=' ')"
+          stream_start = source.find("        for line in proc.stderr:")
+          if stream_start < 0:
+              raise SystemExit("Could not locate the compiler stderr loop")
+          stream_end = source.find("            interpret_warning(line)", stream_start)
+          if stream_end < 0:
+              raise SystemExit("Could not locate the warning-parser call")
+          stream = source[stream_start:stream_end]
+          decode = 'line = line.decode("utf-8", errors="replace")'
+          print_at = stream.find("print(line, end=' ')")
+          if decode not in stream or print_at < 0 or stream.find(decode) > print_at:
+              raise SystemExit("Compiler output is not decoded before print()")
           if required not in source:
               raise SystemExit("Compiler output is not decoded before print()")
           path.write_text(source)
