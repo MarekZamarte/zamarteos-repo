@@ -52,7 +52,7 @@ jobs:
               test -n "$pkg"
               rm -rf /tmp/zamarteos-shell-pkg
               mkdir -p /tmp/zamarteos-shell-pkg
-              bsdtar -xf "$pkg" -C /tmp/zamarteos-shell-pkg .PKGINFO usr/share/zamarteos-shell/Commons usr/share/zamarteos-shell/Ui
+              bsdtar -xf "$pkg" -C /tmp/zamarteos-shell-pkg
               grep -Fx "depend = omarchy-config" /tmp/zamarteos-shell-pkg/.PKGINFO
               test -L /tmp/zamarteos-shell-pkg/usr/share/zamarteos-shell/Commons
               test -L /tmp/zamarteos-shell-pkg/usr/share/zamarteos-shell/Ui
