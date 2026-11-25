@@ -68,3 +68,5 @@ Build request 2026-11-20: build latest ZamarteOS Pure FP4 reference image after 
 2026-11-20 retry with strict pacman -Syyu refresh after rolling-repo 404 fix 7ddfb7b
 
 Build request 2026-11-20: validate ZamarteOS fixes branch: protect active/incoming calls from top-edge control-centre overlay, refresh device status on gesture, add package regression checks, correct FP4 Q6Voice documentation; build and audit full reference image only; never flash.
+
+Build request 2026-11-25: rebuild after adding the pinned Omarchy qs.Commons and qs.Ui modules to the ZamarteOS Quickshell root; verify package dependency, module links, final rootfs qmldir targets, image manifest, provenance and SHA256. Build and audit only; never flash the phone.
