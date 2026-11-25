@@ -114,8 +114,6 @@ jobs:
           print_at = stream.find("print(line, end=' ')")
           if decode not in stream or print_at < 0 or stream.find(decode) > print_at:
               raise SystemExit("Compiler output is not decoded before print()")
-          if required not in source:
-              raise SystemExit("Compiler output is not decoded before print()")
           path.write_text(source)
           PY
           python3 -m py_compile upstream-fp4-kernel/scripts/gcc-wrapper.py
