@@ -75,7 +75,7 @@ jobs:
       - name: Verify pinned Omarchy QML module ABI
         run: |
           set -euxo pipefail
-          OMARCHY_REF="$(python3 -c 'import tomllib; print(tomllib.load(open("moarchy-base/manifest.toml", "rb"))["omarchy"]["ref"])')"
+          OMARCHY_REF="$(sed -n '/^\[omarchy\]/,/^\[/{ s/^ref[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p; }' moarchy-base/manifest.toml | head -n 1)"
           git clone --filter=blob:none https://github.com/omacom/omarchy.git omarchy-source
           git -C omarchy-source checkout --detach "$OMARCHY_REF"
           for module in Commons Ui; do
