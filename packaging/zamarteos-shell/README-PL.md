@@ -39,6 +39,19 @@ WirePlumber, D-Bus, systemd ani obsługi sprzętu FP4. Te komponenty są
 niezbędne do działania telefonu. Interfejs użytkownika jest budowany
 osobno i ma być w całości ZamarteOS.
 
+## Moduły QML powłoki
+
+Quickshell rozwiązuje importy `qs.*` względem katalogu głównego sesji, czyli
+katalogu zawierającego `shell.qml`. Moduły `qs.Commons` i `qs.Ui` pochodzą
+z przypiętego pakietu `omarchy-config` i są instalowane w
+`/usr/share/omarchy/shell/Commons` oraz `/usr/share/omarchy/shell/Ui`.
+
+Pakiet `zamarteos-shell` musi udostępniać oba katalogi pod własnym rootem
+Quickshell. W przeciwnym razie pluginy ładowane z
+`/usr/share/moarchy/plugins` mogą zgłaszać, że `qs.Commons` lub `qs.Ui`
+nie są zainstalowane. Kontrola obrazu sprawdza teraz zarówno linki modułów,
+jak i obecność ich `qmldir` w rootfs.
+
 ## Co nie jest jeszcze ukończone
 
 Ta powłoka nie oznacza, że wszystkie aplikacje są gotowe. Galeria, pełne ustawienia systemowe, aktualizacje i kopie zapasowe
