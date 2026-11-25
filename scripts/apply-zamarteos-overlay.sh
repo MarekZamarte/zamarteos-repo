@@ -891,4 +891,37 @@ if marker not in source:
     path.write_text(source)
 PY
 
+# The ZamarteOS Quickshell root must expose the upstream QML modules it imports.
+# Quickshell's qs.* imports are resolved from the directory containing shell.qml.
+# The package links Commons and Ui to omarchy-config's pinned module tree; check
+# both the links and the target qmldir files in the final rootfs, not just QML
+# syntax in the build container.
+python3 - "$ROOT/image/verify.sh" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+marker = "have /usr/share/omarchy/shell/shell.qml\n"
+addition = r"""# ZamarteOS Quickshell root-relative module imports.
+for _qml_module in Commons Ui; do
+  _qml_link="$R/usr/share/zamarteos-shell/$_qml_module"
+  _qml_target="/usr/share/omarchy/shell/$_qml_module"
+  if [ -L "$_qml_link" ] &&
+     [ "$(readlink "$_qml_link")" = "$_qml_target" ] &&
+     [ -f "$R$_qml_target/qmldir" ] &&
+     grep -Fxq "module qs.$_qml_module" "$R$_qml_target/qmldir"; then
+    ok "ZamarteOS qs.$_qml_module import resolves to the pinned Omarchy module"
+  else
+    no "ZamarteOS qs.$_qml_module import is missing or points to an absent module"
+  fi
+done
+"""
+if addition not in source:
+    if source.count(marker) != 1:
+        raise SystemExit("Could not find the unique Omarchy shell verifier marker")
+    source = source.replace(marker, marker + addition + "\n", 1)
+    path.write_text(source)
+PY
+
 echo "ZamarteOS overlay applied to $ROOT"
