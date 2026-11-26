@@ -1,6 +1,6 @@
 pkgname=zamarteos-shell
 pkgver=0.2.4
-pkgrel=2
+pkgrel=3
 pkgdesc="ZamarteOS touch-first Wayland shell and Fairphone 4 session"
 arch=('aarch64')
 url="https://github.com/MarekZamarte/zamarteos-repo"
@@ -35,8 +35,10 @@ source=(
   'getty-firstboot-pin.conf'
   'polish-letters.json'
   'contacts.json'
+  'zamarteos-fix-qt612-color'
+  'zamarteos-fix-qt612-color.service'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 check() {
   set -x
@@ -50,6 +52,25 @@ check() {
   bash -n "$srcdir/zamarteos-shell"
   bash -n "$srcdir/zamarteos-open-app"
   bash -n "$srcdir/zamarteos-firstboot-pin"
+  python3 - "$srcdir/zamarteos-fix-qt612-color" <<'PY'
+import sys
+from pathlib import Path
+compile(Path(sys.argv[1]).read_text(), sys.argv[1], "exec")
+PY
+  tmp_qml="$(mktemp -d)"
+  mkdir -p "$tmp_qml/Commons"
+  cat > "$tmp_qml/Commons/Test.qml" <<'QML'
+import QtQuick
+import qs.Commons
+Item { property color testColor: Color.background }
+QML
+  python3 "$srcdir/zamarteos-fix-qt612-color" "$tmp_qml"
+  grep -Fq 'import qs.Commons as Commons' "$tmp_qml/Commons/Test.qml"
+  grep -Fq 'Commons.Color.background' "$tmp_qml/Commons/Test.qml"
+  python3 "$srcdir/zamarteos-fix-qt612-color" "$tmp_qml"
+  test "$(grep -Fc 'import qs.Commons as Commons' "$tmp_qml/Commons/Test.qml")" -eq 1
+  test "$(grep -Fc 'Commons.Color.background' "$tmp_qml/Commons/Test.qml")" -eq 1
+  rm -rf "$tmp_qml"
   grep -q 'exec Hyprland --config /usr/share/zamarteos-shell/hyprland.conf' "$srcdir/zamarteos-session"
   grep -q 'exec qs -n -p /usr/share/zamarteos-shell' "$srcdir/zamarteos-shell"
   grep -q 'IpcHandler' "$srcdir/shell.qml"
@@ -171,4 +192,8 @@ package() {
   # useradd copies /etc/skel into the new phone account during image creation.
   install -Dm644 "$srcdir/polish-letters.json" "$pkgdir/etc/skel/.config/moarchy-keyboard/layouts/letters.json"
   install -Dm600 "$srcdir/contacts.json" "$pkgdir/etc/skel/.local/share/moarchy-contacts/contacts.json"
+  install -Dm755 "$srcdir/zamarteos-fix-qt612-color" "$pkgdir/usr/bin/zamarteos-fix-qt612-color"
+  install -Dm644 "$srcdir/zamarteos-fix-qt612-color.service" "$pkgdir/usr/lib/systemd/system/zamarteos-fix-qt612-color.service"
+  install -d "$pkgdir/usr/lib/systemd/system/multi-user.target.wants"
+  ln -s ../zamarteos-fix-qt612-color.service "$pkgdir/usr/lib/systemd/system/multi-user.target.wants/zamarteos-fix-qt612-color.service"
 }
