@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+"""Qualify Omarchy's qs.Commons Color singleton for Qt 6.12.
+
+Qt 6.12 adds QtQuick.Color, which shadows Omarchy's unqualified Color singleton.
+This idempotent boot-time compatibility patch keeps the upstream shell in place
+and rewrites only QML files that import qs.Commons.
+"""
+from pathlib import Path
+import re
+import sys
+
+ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("/usr/share/omarchy/shell")
+if not ROOT.is_dir():
+    raise SystemExit(f"Omarchy shell directory not found: {ROOT}")
+
+bare_color = re.compile(r"(?<![\w.])Color\.")
+alias_import = "import qs.Commons as Commons"
+changed_files = 0
+changed_refs = 0
+
+for path in sorted(ROOT.rglob("*.qml")):
+    try:
+        source = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise SystemExit(f"Cannot read QML file {path}: {exc}")
+    if "qs.Commons" not in source:
+        continue
+    matches = list(bare_color.finditer(source))
+    if not matches:
+        continue
+    updated = bare_color.sub("Commons.Color.", source)
+    if alias_import not in updated:
+        lines = updated.splitlines(keepends=True)
+        import_lines = [i for i, line in enumerate(lines) if line.lstrip().startswith("import ")]
+        if not import_lines:
+            raise SystemExit(f"QML has qs.Commons/Color references but no import block: {path}")
+        index = import_lines[-1] + 1
+        lines.insert(index, alias_import + "\n")
+        updated = "".join(lines)
+    if updated != source:
+        path.write_text(updated, encoding="utf-8")
+        changed_files += 1
+        changed_refs += len(matches)
+
+print(f"Qt 6.12 Omarchy Color compatibility: patched {changed_refs} references in {changed_files} QML files under {ROOT}")
