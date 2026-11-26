@@ -916,7 +916,18 @@ for _qml_module in Commons Ui; do
     no "ZamarteOS qs.$_qml_module import is missing or points to an absent module"
   fi
 done
-"""
+
+# Qt 6.12 adds QtQuick.Color, which shadows the Omarchy qs.Commons Color singleton.
+if [ -x "$R/usr/bin/zamarteos-fix-qt612-color" ] &&
+   [ -f "$R/usr/lib/systemd/system/zamarteos-fix-qt612-color.service" ] &&
+   [ -L "$R/usr/lib/systemd/system/multi-user.target.wants/zamarteos-fix-qt612-color.service" ] &&
+   [ "$(readlink "$R/usr/lib/systemd/system/multi-user.target.wants/zamarteos-fix-qt612-color.service")" = "../zamarteos-fix-qt612-color.service" ] &&
+   grep -Fq "ExecStart=/usr/bin/zamarteos-fix-qt612-color" "$R/usr/lib/systemd/system/zamarteos-fix-qt612-color.service" &&
+   grep -Fq "Before=getty@tty1.service display-manager.service" "$R/usr/lib/systemd/system/zamarteos-fix-qt612-color.service"; then
+  ok "Qt 6.12 qs.Commons.Color compatibility fix runs before the phone session"
+else
+  no "Qt 6.12 qs.Commons.Color compatibility fix is not installed or enabled"
+fi"""
 if addition not in source:
     if source.count(marker) != 1:
         raise SystemExit("Could not find the unique Omarchy shell verifier marker")
