@@ -34,17 +34,19 @@ jobs:
           chmod +x /tmp/sailfish-sdk.run
           /tmp/sailfish-sdk.run non-interactive=1 accept-licenses=1 build-engine-type=docker
 
-      - name: Select Fairphone 4 Sailfish target and build
+      - name: Install Sailfish 5.0 compatible target and build
         run: |
           SFDK="$HOME/SailfishOS/bin/sfdk"
           test -x "$SFDK"
           "$SFDK" engine start
+          # Use the released 5.0.0.62 SDK tooling/target (available for aarch64)
+          # rather than auto-selecting 5.1, which introduced GLIBC_2.34.
+          TOOLING="SailfishOS-5.0.0.62"
+          TARGET="${TOOLING}-aarch64"
+          "$SFDK" tools install-custom "$TOOLING" "https://releases.sailfishos.org/sdk/targets/Sailfish_OS-5.0.0.62-Sailfish_SDK_Tooling-i486.tar.7z"
+          "$SFDK" tools install-custom "$TARGET" "https://releases.sailfishos.org/sdk/targets/Sailfish_OS-5.0.0.62-Sailfish_SDK_Target-aarch64.tar.7z"
           "$SFDK" tools list | tee /tmp/sfdk-tools.txt
-          TARGET="$(grep -Eo 'SailfishOS-[^[:space:]]+-aarch64' /tmp/sfdk-tools.txt | tail -n 1)"
-          if [ -z "$TARGET" ]; then
-            echo "Sailfish SDK did not install an aarch64 target." >&2
-            exit 1
-          fi
+          grep -Fq "$TARGET" /tmp/sfdk-tools.txt
           "$SFDK" config --push target "$TARGET"
           cd apps/zamarte-weather
           mkdir -p SOURCES rpm
