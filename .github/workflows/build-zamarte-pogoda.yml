@@ -22,7 +22,8 @@ jobs:
       - name: Install host prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl docker.io libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xkb1 libxcb-xfixes0 libxcb-shape0 libxcb-sync1 libxcb-util1
+          sudo apt-get install -y curl libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xkb1 libxcb-xfixes0 libxcb-shape0 libxcb-sync1 libxcb-util1
+          docker --version
           sudo systemctl start docker
 
       - name: Install Sailfish SDK headlessly
