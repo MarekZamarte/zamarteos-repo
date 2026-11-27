@@ -30,7 +30,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: minimal
         run: |
-          curl -fL --retry 3 https://releases.sailfishos.org/sdk/installers/latest/SailfishSDK-3.13.5-linux64-online.run -o /tmp/sailfish-sdk.run
+          curl -fL --retry 3 https://releases.sailfishos.org/sdk/installers/3.13.5/SailfishSDK-3.13.5-linux64-online.run -o /tmp/sailfish-sdk.run
           chmod +x /tmp/sailfish-sdk.run
           /tmp/sailfish-sdk.run non-interactive=1 accept-licenses=1 build-engine-type=docker
 
