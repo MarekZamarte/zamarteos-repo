@@ -47,11 +47,13 @@ jobs:
           fi
           "$SFDK" config --push target "$TARGET"
           cd apps/zamarte-weather
-          mkdir -p SOURCES
+          mkdir -p SOURCES rpm
+          cp harbour-zamarteweather.spec rpm/harbour-zamarteweather.spec
           tar -cjf SOURCES/harbour-zamarteweather-0.1.0.tar.bz2 \
             --transform='s,^apps/zamarte-weather,harbour-zamarteweather-0.1.0,' \
             --exclude='apps/zamarte-weather/SOURCES' \
             --exclude='apps/zamarte-weather/RPMS' \
+            --exclude='apps/zamarte-weather/rpm' \
             -C ../.. apps/zamarte-weather
           "$SFDK" build
           find RPMS -type f -name '*.rpm' -print -quit | grep -q .
