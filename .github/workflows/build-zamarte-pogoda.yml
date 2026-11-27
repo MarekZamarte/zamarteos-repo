@@ -29,22 +29,27 @@ jobs:
       - name: Install Sailfish SDK headlessly
         env:
           QT_QPA_PLATFORM: minimal
+          LANG: C
+          LC_ALL: C
         run: |
           curl -fL --retry 3 https://releases.sailfishos.org/sdk/installers/3.13.5/SailfishSDK-3.13.5-linux64-online.run -o /tmp/sailfish-sdk.run
           chmod +x /tmp/sailfish-sdk.run
           /tmp/sailfish-sdk.run non-interactive=1 accept-licenses=1 build-engine-type=docker
 
       - name: Install Sailfish 5.0 compatible target and build
+        env:
+          LANG: C
+          LC_ALL: C
         run: |
           SFDK="$HOME/SailfishOS/bin/sfdk"
           test -x "$SFDK"
           "$SFDK" engine start
-          # Use the released 5.0.0.62 SDK tooling/target (available for aarch64)
-          # rather than auto-selecting 5.1, which introduced GLIBC_2.34.
+          # Keep prompts in English and answer the install-custom confirmations
+          # automatically; otherwise the localized yes/no prompt can loop.
           TOOLING="SailfishOS-5.0.0.62"
           TARGET="${TOOLING}-aarch64"
-          "$SFDK" tools install-custom "$TOOLING" "https://releases.sailfishos.org/sdk/targets/Sailfish_OS-5.0.0.62-Sailfish_SDK_Tooling-i486.tar.7z"
-          "$SFDK" tools install-custom "$TARGET" "https://releases.sailfishos.org/sdk/targets/Sailfish_OS-5.0.0.62-Sailfish_SDK_Target-aarch64.tar.7z"
+          yes yes | "$SFDK" tools install-custom "$TOOLING" "https://releases.sailfishos.org/sdk/targets/Sailfish_OS-5.0.0.62-Sailfish_SDK_Tooling-i486.tar.7z"
+          yes yes | "$SFDK" tools install-custom "$TARGET" "https://releases.sailfishos.org/sdk/targets/Sailfish_OS-5.0.0.62-Sailfish_SDK_Target-aarch64.tar.7z"
           "$SFDK" tools list | tee /tmp/sfdk-tools.txt
           grep -Fq "$TARGET" /tmp/sfdk-tools.txt
           "$SFDK" config --push target "$TARGET"
