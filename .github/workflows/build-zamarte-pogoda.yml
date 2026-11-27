@@ -1,0 +1,63 @@
+name: Build Zamarte Pogoda RPM
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/zamarte-weather/**'
+      - '.github/workflows/build-zamarte-pogoda.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-rpm:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install host prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl docker.io libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xkb1 libxcb-xfixes0 libxcb-shape0 libxcb-sync1 libxcb-xinerama0 libxcb-xkb1 libxcb-util1 libxcb-xfixes0 libxcb-render0 libxcb-shm0 libxcb1 libxcb-glx0 libxcb-present0 libxcb-dri3-0 libxcb-dri2-0 libxcb-xtest0 libxcb-xinput0 libxcb-xkb1 libxcb-xv0 libxcb-record0 libxcb-res0 libxcb-screensaver0 libxcb-damage0 libxcb-composite0 libxcb-dpms0 libxcb-randr0 libxcb-xinerama0 libxcb-xfixes0 libxcb-xkb1 libxcb-xv0 libxcb-util1 libxcb-image0 libxcb-keysyms1 libxcb-icccm4 libxcb-render-util0 libxcb-cursor0 libxcb-shape0 libxcb-sync1 libxcb-xinput0 libxcb-record0 libxcb-res0 libxcb-screensaver0 libxcb-damage0 libxcb-composite0 libxcb-dpms0 libxcb-present0 libxcb-dri3-0 libxcb-dri2-0 libxcb-xtest0 libxcb-glx0 libxcb-shm0 libxcb1 libxcb-render0 libxcb-xkb1 libxcb-util1 libxcb-xfixes0 libxcb-xv0 libxcb-randr0 libxcb-xinerama0 libxcb-xtest0 libxcb-xinput0 libxcb-res0 libxcb-screensaver0 libxcb-damage0 libxcb-composite0 libxcb-dpms0 libxcb-present0 libxcb-dri3-0 libxcb-dri2-0 libxcb-record0 libxcb-shape0 libxcb-sync1 libxcb-render-util0 libxcb-image0 libxcb-keysyms1 libxcb-icccm4 libxcb-cursor0 libxcb-xkb1 libxcb-util1 libxcb-xfixes0 libxcb-xv0
+
+      - name: Install Sailfish SDK headlessly
+        env:
+          QT_QPA_PLATFORM: minimal
+        run: |
+          curl -fL --retry 3 https://releases.sailfishos.org/sdk/installers/latest/SailfishSDK-3.13.5-linux64-online.run -o /tmp/sailfish-sdk.run
+          chmod +x /tmp/sailfish-sdk.run
+          /tmp/sailfish-sdk.run non-interactive=1 accept-licenses=1 build-engine-type=docker
+
+      - name: Select latest aarch64 target and build
+        run: |
+          SFDK="$HOME/SailfishOS/bin/sfdk"
+          test -x "$SFDK"
+          "$SFDK" engine start
+          "$SFDK" tools list | tee /tmp/sfdk-tools.txt
+          TARGET="$(grep -Eo 'SailfishOS-[^[:space:]]+-aarch64' /tmp/sfdk-tools.txt | tail -n 1)"
+          if [ -z "$TARGET" ]; then
+            echo "Sailfish SDK did not install an aarch64 target." >&2
+            exit 1
+          fi
+          "$SFDK" config --push target "$TARGET"
+          cd apps/zamarte-weather
+          mkdir -p SOURCES
+          tar -cjf SOURCES/harbour-zamarteweather-0.1.0.tar.bz2 \
+            --transform='s,^apps/zamarte-weather,harbour-zamarteweather-0.1.0,' \
+            --exclude='apps/zamarte-weather/SOURCES' \
+            --exclude='apps/zamarte-weather/RPMS' \
+            -C ../.. apps/zamarte-weather
+          "$SFDK" build
+          find RPMS -type f -name '*.rpm' -print -quit | grep -q .
+
+      - name: Upload RPM
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarte-pogoda-rpm-aarch64
+          path: apps/zamarte-weather/RPMS/*.rpm
+          if-no-files-found: error
+          retention-days: 30
