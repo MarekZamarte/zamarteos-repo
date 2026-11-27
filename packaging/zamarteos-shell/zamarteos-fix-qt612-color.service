@@ -1,0 +1,12 @@
+[Unit]
+Description=Fix Omarchy qs.Commons Color lookup for Qt 6.12
+After=local-fs.target
+Before=getty@tty1.service display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/zamarteos-fix-qt612-color
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

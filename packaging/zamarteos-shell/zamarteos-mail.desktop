@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Poczta
+Comment=Poczta elektroniczna
+Icon=mail-client
+Exec=/usr/bin/zamarteos-open-app mail
+Terminal=false
+Categories=Network;Email;

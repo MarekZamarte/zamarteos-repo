@@ -1,0 +1,11 @@
+[Unit]
+Description=ZamarteOS first-boot private PIN setup
+After=systemd-user-sessions.service
+Before=moarchy-firstboot.service getty@tty1.service
+ConditionPathExists=!/var/lib/zamarteos/firstboot-pin-done
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+TimeoutStartSec=0
+ExecStart=/usr/lib/zamarteos/firstboot-pin

@@ -1,0 +1,56 @@
+{
+  "name": "letters",
+  "label": "abc",
+  "rows": [
+    {
+      "keys": [
+        { "text": "q", "alt": ["1"] },
+        { "text": "w", "alt": ["2"] },
+        { "text": "e", "alt": ["ę", "Ę", "3", "è", "é", "ê", "ë"] },
+        { "text": "r", "alt": ["4"] },
+        { "text": "t", "alt": ["5"] },
+        { "text": "y", "alt": ["6", "ý"] },
+        { "text": "u", "alt": ["7", "ù", "ú", "û", "ü"] },
+        { "text": "i", "alt": ["8", "ì", "í", "î", "ï"] },
+        { "text": "o", "alt": ["ó", "Ó", "9", "ò", "ô", "ö", "ø"] },
+        { "text": "p", "alt": ["0"] }
+      ]
+    },
+    {
+      "keys": [
+        { "text": "a", "alt": ["ą", "Ą", "@", "à", "á", "â", "ä", "å"] },
+        { "text": "s", "alt": ["ś", "Ś", "#", "ß"] },
+        { "text": "d", "alt": ["$"] },
+        { "text": "f", "alt": ["%"] },
+        { "text": "g", "alt": ["&"] },
+        { "text": "h", "alt": ["*"] },
+        { "text": "j", "alt": ["-"] },
+        { "text": "k", "alt": ["+"] },
+        { "text": "l", "alt": ["ł", "Ł", "="] }
+      ]
+    },
+    {
+      "keys": [
+        { "type": "modifier", "modifier": "shift", "label": "⇧", "width": 1.5 },
+        { "text": "z", "alt": ["ź", "Ź", "ż", "Ż"] },
+        { "text": "x" },
+        { "text": "c", "alt": ["ć", "Ć", "ç"] },
+        { "text": "v" },
+        { "text": "b" },
+        { "text": "n", "alt": ["ń", "Ń", "ñ"] },
+        { "text": "m" },
+        { "type": "action", "key": "BackSpace", "label": "⌫", "width": 1.5, "repeats": true }
+      ]
+    },
+    {
+      "keys": [
+        { "type": "layout", "layout": "symbols", "label": "?123", "width": 1.5 },
+        { "text": ",", "alt": ["'", "\"", ";", ":"] },
+        { "text": " ", "label": "", "width": 4, "type": "space" },
+        { "text": ".", "alt": ["!", "?", "-", "_", "/"] },
+        { "type": "layout", "layout": "terminal", "label": "⌘", "width": 1 },
+        { "type": "action", "key": "Return", "label": "↵", "width": 1.5, "accent": true }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Kalendarz
+Comment=Kalendarz i wydarzenia
+Icon=x-office-calendar
+Exec=/usr/bin/zamarteos-open-app calendar
+Terminal=false
+Categories=Office;Calendar;

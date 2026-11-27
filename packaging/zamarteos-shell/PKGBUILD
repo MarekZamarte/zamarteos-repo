@@ -1,0 +1,199 @@
+pkgname=zamarteos-shell
+pkgver=0.2.4
+pkgrel=3
+pkgdesc="ZamarteOS touch-first Wayland shell and Fairphone 4 session"
+arch=('aarch64')
+url="https://github.com/MarekZamarte/zamarteos-repo"
+license=('custom')
+depends=('omarchy-config' 'hyprland' 'quickshell' 'pam' 'epiphany' 'networkmanager' 'bluez-utils' 'brightnessctl' 'pamixer')
+source=(
+  'shell.qml'
+  'hyprland.conf'
+  'zamarteos-session'
+  'zamarteos-shell'
+  'zamarteos.desktop'
+  'zamarteos-open-app'
+  'zamarteos-phone.desktop'
+  'zamarteos-messages.desktop'
+  'zamarteos-contacts.desktop'
+  'zamarteos-files.desktop'
+  'zamarteos-calculator.desktop'
+  'zamarteos-calendar.desktop'
+  'zamarteos-clock.desktop'
+  'zamarteos-editor.desktop'
+  'zamarteos-weather.desktop'
+  'zamarteos-mail.desktop'
+  'zamarteos-keep.desktop'
+  'zamarteos-vitals.desktop'
+  'zamarteos-camera.desktop'
+  'zamarteos-internet.desktop'
+  'zamarteos-settings.desktop'
+  'zamarteos-lock.pam'
+  'zamarteos-firstboot-pin'
+  'zamarteos-firstboot-pin.service'
+  'moarchy-firstboot-pin.conf'
+  'getty-firstboot-pin.conf'
+  'polish-letters.json'
+  'contacts.json'
+  'zamarteos-fix-qt612-color'
+  'zamarteos-fix-qt612-color.service'
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+check() {
+  set -x
+  # qs.* imports resolve from the Quickshell config root. These two runtime
+  # modules are supplied by the pinned omarchy-config package and linked into
+  # this shell root during package().
+  grep -Fq "'omarchy-config'" "$startdir/PKGBUILD"
+  grep -Fq 'ln -s /usr/share/omarchy/shell/Commons' "$startdir/PKGBUILD"
+  grep -Fq 'ln -s /usr/share/omarchy/shell/Ui' "$startdir/PKGBUILD"
+  bash -n "$srcdir/zamarteos-session"
+  bash -n "$srcdir/zamarteos-shell"
+  bash -n "$srcdir/zamarteos-open-app"
+  bash -n "$srcdir/zamarteos-firstboot-pin"
+  python3 - "$srcdir/zamarteos-fix-qt612-color" <<'PY'
+import sys
+from pathlib import Path
+compile(Path(sys.argv[1]).read_text(), sys.argv[1], "exec")
+PY
+  tmp_qml="$(mktemp -d)"
+  mkdir -p "$tmp_qml/Commons"
+  cat > "$tmp_qml/Commons/Test.qml" <<'QML'
+import QtQuick
+import qs.Commons
+Item { property color testColor: Color.background }
+QML
+  python3 "$srcdir/zamarteos-fix-qt612-color" "$tmp_qml"
+  grep -Fq 'import qs.Commons as Commons' "$tmp_qml/Commons/Test.qml"
+  grep -Fq 'Commons.Color.background' "$tmp_qml/Commons/Test.qml"
+  python3 "$srcdir/zamarteos-fix-qt612-color" "$tmp_qml"
+  test "$(grep -Fc 'import qs.Commons as Commons' "$tmp_qml/Commons/Test.qml")" -eq 1
+  test "$(grep -Fc 'Commons.Color.background' "$tmp_qml/Commons/Test.qml")" -eq 1
+  rm -rf "$tmp_qml"
+  grep -q 'exec Hyprland --config /usr/share/zamarteos-shell/hyprland.conf' "$srcdir/zamarteos-session"
+  grep -q 'exec qs -n -p /usr/share/zamarteos-shell' "$srcdir/zamarteos-shell"
+  grep -q 'IpcHandler' "$srcdir/shell.qml"
+  grep -q 'target: "zamarteos-lock"' "$srcdir/shell.qml"
+  grep -q 'property bool homeOpen: true' "$srcdir/shell.qml"
+  grep -q 'visible: root.homeOpen || root.drawerOpen || root.controlOpen' "$srcdir/shell.qml"
+  grep -q 'id: drawerTitle' "$srcdir/shell.qml"
+  grep -q 'id: controlTitle' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.phone/Phone.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.messages/Messages.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.files/Files.qml' "$srcdir/shell.qml"
+  grep -q 'item.warmUp()' "$srcdir/shell.qml"
+  grep -q 'target: "zamarteos-apps"' "$srcdir/shell.qml"
+  grep -q 'function refreshSettings()' "$srcdir/shell.qml"
+  # The top-edge control-centre gesture must refresh real device state and
+  # must not cover an incoming or active phone call.
+  grep -q 'if (!root.canOpenHomeOverlay()) return' "$srcdir/shell.qml"
+  grep -A7 'onReleased: {' "$srcdir/shell.qml" | grep -q 'root.refreshSettings()'
+  grep -q 'indexOf("zamarteos-") === 0' "$srcdir/shell.qml"
+  grep -q 'nmcli' "$srcdir/shell.qml"
+  grep -q 'bluetoothctl' "$srcdir/shell.qml"
+  grep -q 'brightnessctl' "$srcdir/shell.qml"
+  grep -q 'pamixer' "$srcdir/shell.qml"
+  grep -q 'qs -p /usr/share/zamarteos-shell ipc call zamarteos-apps open' "$srcdir/zamarteos-open-app"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app phone' "$srcdir/zamarteos-phone.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app messages' "$srcdir/zamarteos-messages.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app contacts' "$srcdir/zamarteos-contacts.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app files' "$srcdir/zamarteos-files.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app calculator' "$srcdir/zamarteos-calculator.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app calendar' "$srcdir/zamarteos-calendar.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app clock' "$srcdir/zamarteos-clock.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app editor' "$srcdir/zamarteos-editor.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app weather' "$srcdir/zamarteos-weather.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app mail' "$srcdir/zamarteos-mail.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app keep' "$srcdir/zamarteos-keep.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app vitals' "$srcdir/zamarteos-vitals.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app camera' "$srcdir/zamarteos-camera.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app internet' "$srcdir/zamarteos-internet.desktop"
+  grep -q 'Exec=/usr/bin/zamarteos-open-app settings' "$srcdir/zamarteos-settings.desktop"
+  grep -Eq 'calculator|calendar|clock|editor|weather|mail|keep|vitals|camera|internet|settings' "$srcdir/zamarteos-open-app"
+  grep -q 'moarchy.contacts' "$srcdir/shell.qml"
+  grep -q 'moarchy.calculator' "$srcdir/shell.qml"
+  grep -q 'moarchy.calendar' "$srcdir/shell.qml"
+  grep -q 'moarchy.clock' "$srcdir/shell.qml"
+  grep -q 'moarchy.editor' "$srcdir/shell.qml"
+  grep -q 'moarchy.weather' "$srcdir/shell.qml"
+  grep -q 'moarchy.mail' "$srcdir/shell.qml"
+  grep -q 'moarchy.keep' "$srcdir/shell.qml"
+  grep -q 'moarchy.vitals' "$srcdir/shell.qml"
+  grep -q 'root.refreshSettings()' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.contacts/Contacts.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.calculator/Calculator.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.calendar/Calendar.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.clock/Clock.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.editor/Editor.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.weather/Weather.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.mail/Mail.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.keep/Keep.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.vitals/Vitals.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.settings/Settings.qml' "$srcdir/shell.qml"
+  grep -q 'file:///usr/share/moarchy/plugins/moarchy.themes/Themes.qml' "$srcdir/shell.qml"
+  grep -q 'pluginId === "moarchy.app-drawer"' "$srcdir/shell.qml"
+  grep -q 'pluginId === "moarchy.control-center"' "$srcdir/shell.qml"
+  grep -q 'target: "zamarteos-apps"' "$srcdir/shell.qml"
+  test -x /usr/lib/qt6/bin/qmllint
+  # Parse and lint the actual packaged QML with Qt's import metadata.
+  # Quickshell-specific type warnings are retained in the log; syntax and
+  # hard QML errors still fail the package check.
+  /usr/lib/qt6/bin/qmllint --ignore-settings --max-warnings 99999 -I /usr/lib/qt6/qml "$srcdir/shell.qml"
+  grep -q 'od -An -N4 -tu4 /dev/urandom' "$srcdir/zamarteos-firstboot-pin"
+  grep -q 'PIERWSZE-URUCHOMIENIE.txt' "$srcdir/zamarteos-firstboot-pin"
+  grep -q 'chpasswd -c SHA512' "$srcdir/zamarteos-firstboot-pin"
+  grep -q 'Before=moarchy-firstboot.service getty@tty1.service' "$srcdir/zamarteos-firstboot-pin.service"
+  grep -q 'Requires=zamarteos-firstboot-pin.service' "$srcdir/moarchy-firstboot-pin.conf"
+  grep -q 'Requires=moarchy-firstboot.service' "$srcdir/getty-firstboot-pin.conf"
+  python3 -m json.tool "$srcdir/polish-letters.json" >/dev/null
+  python3 -m json.tool "$srcdir/contacts.json" >/dev/null
+  grep -Fq '"contacts":[]' "$srcdir/contacts.json"
+  for char in ą ć ę ł ń ó ś ź ż Ą Ć Ę Ł Ń Ó Ś Ź Ż; do
+    grep -Fq "$char" "$srcdir/polish-letters.json"
+  done
+}
+
+package() {
+  install -Dm644 "$srcdir/shell.qml" "$pkgdir/usr/share/zamarteos-shell/shell.qml"
+  install -Dm644 "$srcdir/hyprland.conf" "$pkgdir/usr/share/zamarteos-shell/hyprland.conf"
+
+  # Quickshell resolves import qs.Commons / qs.Ui from this shell root.
+  # omarchy-config installs these exact modules at /usr/share/omarchy/shell.
+  # Keep the modules shared with the pinned upstream package rather than
+  # copying a second, potentially divergent QML implementation.
+  install -d "$pkgdir/usr/share/zamarteos-shell"
+  ln -s /usr/share/omarchy/shell/Commons "$pkgdir/usr/share/zamarteos-shell/Commons"
+  ln -s /usr/share/omarchy/shell/Ui "$pkgdir/usr/share/zamarteos-shell/Ui"
+  install -Dm755 "$srcdir/zamarteos-session" "$pkgdir/usr/bin/zamarteos-session"
+  install -Dm755 "$srcdir/zamarteos-shell" "$pkgdir/usr/bin/zamarteos-shell"
+  install -Dm644 "$srcdir/zamarteos.desktop" "$pkgdir/usr/share/wayland-sessions/zamarteos.desktop"
+  install -Dm755 "$srcdir/zamarteos-open-app" "$pkgdir/usr/bin/zamarteos-open-app"
+  install -Dm644 "$srcdir/zamarteos-phone.desktop" "$pkgdir/usr/share/applications/zamarteos-phone.desktop"
+  install -Dm644 "$srcdir/zamarteos-messages.desktop" "$pkgdir/usr/share/applications/zamarteos-messages.desktop"
+  install -Dm644 "$srcdir/zamarteos-contacts.desktop" "$pkgdir/usr/share/applications/zamarteos-contacts.desktop"
+  install -Dm644 "$srcdir/zamarteos-files.desktop" "$pkgdir/usr/share/applications/zamarteos-files.desktop"
+  install -Dm644 "$srcdir/zamarteos-calculator.desktop" "$pkgdir/usr/share/applications/zamarteos-calculator.desktop"
+  install -Dm644 "$srcdir/zamarteos-calendar.desktop" "$pkgdir/usr/share/applications/zamarteos-calendar.desktop"
+  install -Dm644 "$srcdir/zamarteos-clock.desktop" "$pkgdir/usr/share/applications/zamarteos-clock.desktop"
+  install -Dm644 "$srcdir/zamarteos-editor.desktop" "$pkgdir/usr/share/applications/zamarteos-editor.desktop"
+  install -Dm644 "$srcdir/zamarteos-weather.desktop" "$pkgdir/usr/share/applications/zamarteos-weather.desktop"
+  install -Dm644 "$srcdir/zamarteos-mail.desktop" "$pkgdir/usr/share/applications/zamarteos-mail.desktop"
+  install -Dm644 "$srcdir/zamarteos-keep.desktop" "$pkgdir/usr/share/applications/zamarteos-keep.desktop"
+  install -Dm644 "$srcdir/zamarteos-vitals.desktop" "$pkgdir/usr/share/applications/zamarteos-vitals.desktop"
+  install -Dm644 "$srcdir/zamarteos-camera.desktop" "$pkgdir/usr/share/applications/zamarteos-camera.desktop"
+  install -Dm644 "$srcdir/zamarteos-internet.desktop" "$pkgdir/usr/share/applications/zamarteos-internet.desktop"
+  install -Dm644 "$srcdir/zamarteos-settings.desktop" "$pkgdir/usr/share/applications/zamarteos-settings.desktop"
+  install -Dm644 "$srcdir/zamarteos-lock.pam" "$pkgdir/etc/pam.d/zamarteos-lock"
+  install -Dm755 "$srcdir/zamarteos-firstboot-pin" "$pkgdir/usr/lib/zamarteos/firstboot-pin"
+  install -Dm644 "$srcdir/zamarteos-firstboot-pin.service" "$pkgdir/usr/lib/systemd/system/zamarteos-firstboot-pin.service"
+  install -Dm644 "$srcdir/moarchy-firstboot-pin.conf" "$pkgdir/usr/lib/systemd/system/moarchy-firstboot.service.d/10-zamarteos-pin.conf"
+  install -Dm644 "$srcdir/getty-firstboot-pin.conf" "$pkgdir/usr/lib/systemd/system/getty@tty1.service.d/10-zamarteos-firstboot.conf"
+  # useradd copies /etc/skel into the new phone account during image creation.
+  install -Dm644 "$srcdir/polish-letters.json" "$pkgdir/etc/skel/.config/moarchy-keyboard/layouts/letters.json"
+  install -Dm600 "$srcdir/contacts.json" "$pkgdir/etc/skel/.local/share/moarchy-contacts/contacts.json"
+  install -Dm755 "$srcdir/zamarteos-fix-qt612-color" "$pkgdir/usr/bin/zamarteos-fix-qt612-color"
+  install -Dm644 "$srcdir/zamarteos-fix-qt612-color.service" "$pkgdir/usr/lib/systemd/system/zamarteos-fix-qt612-color.service"
+  install -d "$pkgdir/usr/lib/systemd/system/multi-user.target.wants"
+  ln -s ../zamarteos-fix-qt612-color.service "$pkgdir/usr/lib/systemd/system/multi-user.target.wants/zamarteos-fix-qt612-color.service"
+}

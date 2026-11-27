@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+# Keep the FP4 service helpers available without exposing their branding in the UI.
+export MOARCHY_PATH="${MOARCHY_PATH:-/usr/share/moarchy}"
+case ":${PATH:-}:" in
+  *":/usr/lib/moarchy/bin:"*) ;;
+  *) PATH="/usr/lib/moarchy/bin:${PATH:-/usr/bin:/bin}" ;;
+esac
+export PATH
+
+export XDG_CURRENT_DESKTOP=ZamarteOS
+export XDG_SESSION_DESKTOP=zamarteos
+export XDG_SESSION_TYPE=wayland
+export MOZ_ENABLE_WAYLAND=1
+export QT_QPA_PLATFORM=wayland
+export ELECTRON_OZONE_PLATFORM_HINT=wayland
+
+exec Hyprland --config /usr/share/zamarteos-shell/hyprland.conf

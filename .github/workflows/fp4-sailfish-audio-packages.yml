@@ -1,0 +1,93 @@
+name: FP4 Sailfish audio package build (no image)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - zamarteos-pure-fp4-dev
+    paths:
+      - "build-trigger/fp4-sailfish-audio-packages"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zamarteos-fp4-sailfish-audio-packages
+  cancel-in-progress: false
+
+jobs:
+  build-sailfish-audio-packages:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 180
+    steps:
+      - name: Checkout ZamarteOS
+        uses: actions/checkout@v4
+
+      - name: Fetch the pinned FP4 hardware base
+        env:
+          BASE_COMMIT: c78bcd1f43340c447e0016ab45a5fa99f186810c
+        run: |
+          set -euxo pipefail
+          git clone --branch fp4 --single-branch https://github.com/taufderl/moarchy.git moarchy-base
+          git -C moarchy-base checkout --detach "$BASE_COMMIT"
+          test "$(git -C moarchy-base rev-parse HEAD)" = "$BASE_COMMIT"
+
+      - name: Apply ZamarteOS and Sailfish audio build overlay
+        run: |
+          set -euxo pipefail
+          bash scripts/apply-zamarteos-overlay.sh moarchy-base
+          git -C moarchy-base diff --check
+          test -d moarchy-base/pkgbuilds/hybris-android-headers
+          test -d moarchy-base/pkgbuilds/libhybris-fp4
+          test -d moarchy-base/pkgbuilds/pulsecore-headers-fp4
+          test -d moarchy-base/pkgbuilds/pulseaudio-modules-droid-fp4
+          test -d moarchy-base/pkgbuilds/hidl-audio-fp4
+          test -d moarchy-base/pkgbuilds/droid-config-fp4
+
+      - name: Build the isolated ARM64 package builder
+        working-directory: moarchy-base
+        run: |
+          set -euxo pipefail
+          docker build --platform linux/arm64 -f docker/Dockerfile.builder -t zamarteos-fp4-sailfish-audio-builder .
+
+      - name: Build Sailfish FP4 audio packages only
+        working-directory: moarchy-base
+        env:
+          ONLY_REPO_PACKAGES: "hybris-android-headers libhybris-fp4 pulsecore-headers-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4"
+          COMMIT: ${{ github.sha }}
+          DIRTY: "0"
+        run: |
+          set -euxo pipefail
+          mkdir -p packages
+          docker run --rm --platform linux/arm64 \
+            -e ONLY_REPO_PACKAGES \
+            -e DEVICES=fp4 \
+            -e COMMIT \
+            -e DIRTY \
+            -v "$PWD/packages:/out" \
+            zamarteos-fp4-sailfish-audio-builder
+
+      - name: Verify built package artifacts
+        if: success()
+        working-directory: moarchy-base
+        run: |
+          set -euxo pipefail
+          test -s packages/.build-manifest
+          for name in hybris-android-headers libhybris-fp4 pulsecore-headers-fp4 pulseaudio-modules-droid-fp4 hidl-audio-fp4 droid-config-fp4; do
+            find packages -maxdepth 1 -type f -name "$name-*.pkg.tar.*" -print -quit | grep .
+          done
+          # The manifest stores package basenames, so verify from the packages directory.
+          (
+            cd packages
+            sha256sum -c <(awk '/^[0-9a-f]{64}  / { print }' .build-manifest)
+          )
+
+      - name: Upload Sailfish audio package build and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zamarteos-fp4-sailfish-audio-packages-${{ github.run_number }}
+          path: |
+            moarchy-base/packages/
+          if-no-files-found: warn
+          retention-days: 14

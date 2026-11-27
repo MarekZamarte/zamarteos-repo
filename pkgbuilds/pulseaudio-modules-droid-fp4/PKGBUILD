@@ -1,0 +1,44 @@
+# PulseAudio Droid HAL modules, pinned to the upstream Android 11 implementation.
+pkgname=pulseaudio-modules-droid-fp4
+pkgver=17.0.115
+pkgrel=2
+pkgdesc="PulseAudio Droid HAL modules for Fairphone 4 (Android 11 vendor HAL)"
+arch=('aarch64')
+url="https://github.com/mer-hybris/pulseaudio-modules-droid"
+license=('LGPL-2.1-or-later')
+depends=('pulseaudio' 'libhybris-fp4' 'hybris-android-headers' 'pulsecore-headers-fp4' 'alsa-lib' 'expat' 'systemd-libs' 'libltdl')
+makedepends=('meson' 'ninja' 'pkgconf' 'hybris-android-headers' 'pulsecore-headers-fp4' 'pulseaudio' 'libhybris-fp4')
+source=("pulseaudio-modules-droid::git+https://github.com/mer-hybris/pulseaudio-modules-droid#commit=345fda0dc86efb00c739b4b7ba760aa9e6d97693")
+sha256sums=('SKIP')
+
+build() {
+  cd "$srcdir/pulseaudio-modules-droid"
+  pkg-config --exists pulsecore || {
+    echo "ERROR: PulseAudio development package does not expose pulsecore.pc" >&2
+    exit 1
+  }
+  pkg-config --exists libhardware || {
+    echo "ERROR: libhybris did not install the libhardware pkg-config dependency" >&2
+    exit 1
+  }
+  meson setup build \
+    --prefix=/usr \
+    --libdir=lib \
+    -D droid-device=fp4 \
+    -D android-headers=android-headers \
+    -D modlibexecdir=/usr/lib/pulse-17.0/modules
+  meson compile -C build
+}
+
+package() {
+  cd "$srcdir/pulseaudio-modules-droid"
+  meson install -C build --destdir "$pkgdir"
+
+  # Validate the exact modules produced by the pinned upstream Meson recipe.
+  # This revision builds card, sink and source modules; it has no
+  # module-droid-discover.so target.
+  for module in module-droid-card.so module-droid-sink.so module-droid-source.so; do
+    test -s "$pkgdir/usr/lib/pulse-17.0/modules/$module"
+  done
+  test -s "$pkgdir/usr/lib/pulse-17.0/modules/libdroid-util.so"
+}
