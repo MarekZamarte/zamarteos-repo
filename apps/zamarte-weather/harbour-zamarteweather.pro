@@ -16,7 +16,7 @@ DISTFILES += \
 target.path = /usr/bin
 qmlfiles.files = qml/harbour-zamarteweather.qml qml/WeatherPage.qml qml/cover.qml
 qmlfiles.path = /usr/share/harbour-zamarteweather/qml
-desktop.files = desktop/harbour-zamarteweather.desktop
-desktop.path = /usr/share/applications
+desktopfile.files = desktop/harbour-zamarteweather.desktop
+desktopfile.path = /usr/share/applications
 
-INSTALLS += target qmlfiles desktop
+INSTALLS += target qmlfiles desktopfile
