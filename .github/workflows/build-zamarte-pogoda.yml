@@ -22,7 +22,8 @@ jobs:
       - name: Install host prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl docker.io libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xkb1 libxcb-xfixes0 libxcb-shape0 libxcb-sync1 libxcb-xinerama0 libxcb-xkb1 libxcb-util1 libxcb-xfixes0 libxcb-render0 libxcb-shm0 libxcb1 libxcb-glx0 libxcb-present0 libxcb-dri3-0 libxcb-dri2-0 libxcb-xtest0 libxcb-xinput0 libxcb-xkb1 libxcb-xv0 libxcb-record0 libxcb-res0 libxcb-screensaver0 libxcb-damage0 libxcb-composite0 libxcb-dpms0 libxcb-randr0 libxcb-xinerama0 libxcb-xfixes0 libxcb-xkb1 libxcb-xv0 libxcb-util1 libxcb-image0 libxcb-keysyms1 libxcb-icccm4 libxcb-render-util0 libxcb-cursor0 libxcb-shape0 libxcb-sync1 libxcb-xinput0 libxcb-record0 libxcb-res0 libxcb-screensaver0 libxcb-damage0 libxcb-composite0 libxcb-dpms0 libxcb-present0 libxcb-dri3-0 libxcb-dri2-0 libxcb-xtest0 libxcb-glx0 libxcb-shm0 libxcb1 libxcb-render0 libxcb-xkb1 libxcb-util1 libxcb-xfixes0 libxcb-xv0 libxcb-randr0 libxcb-xinerama0 libxcb-xtest0 libxcb-xinput0 libxcb-res0 libxcb-screensaver0 libxcb-damage0 libxcb-composite0 libxcb-dpms0 libxcb-present0 libxcb-dri3-0 libxcb-dri2-0 libxcb-record0 libxcb-shape0 libxcb-sync1 libxcb-render-util0 libxcb-image0 libxcb-keysyms1 libxcb-icccm4 libxcb-cursor0 libxcb-xkb1 libxcb-util1 libxcb-xfixes0 libxcb-xv0
+          sudo apt-get install -y curl docker.io libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xkb1 libxcb-xfixes0 libxcb-shape0 libxcb-sync1 libxcb-util1
+          sudo systemctl start docker
 
       - name: Install Sailfish SDK headlessly
         env:
