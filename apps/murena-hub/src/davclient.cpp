@@ -1,6 +1,7 @@
 #include "davclient.h"
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QBuffer>
 #include <QDomDocument>
 #include <QFile>
 #include <QFileInfo>
@@ -19,8 +20,12 @@ void DavClient::list(const QString&url,const QString&user,const QString&pass){
  setError("Wpisz poprawny adres WebDAV, użytkownika i hasło aplikacji.");return;}
  QNetworkRequest r=request(target,user,pass);r.setRawHeader("Depth","1");r.setHeader(QNetworkRequest::ContentTypeHeader,"application/xml; charset=utf-8");
  QByteArray body="<?xml version=\"1.0\"?><d:propfind xmlns:d=\"DAV:\"><d:prop><d:displayname/><d:resourcetype/><d:getcontenttype/></d:prop></d:propfind>";
- QNetworkReply *rep=m_net.sendCustomRequest(r,"PROPFIND",body);
- connect(rep,&QNetworkReply::finished,this,[this,rep,target](){
+ QBuffer *bodyDevice=new QBuffer;
+ bodyDevice->setData(body);
+ bodyDevice->open(QIODevice::ReadOnly);
+ QNetworkReply *rep=m_net.sendCustomRequest(r,"PROPFIND",bodyDevice);
+ connect(rep,&QNetworkReply::finished,this,[this,rep,target,bodyDevice](){
+ bodyDevice->deleteLater();
  QByteArray data=rep->readAll();int status=rep->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
  if(rep->error()!=QNetworkReply::NoError||(status!=207&&status!=200)){
  setError(status==401?"Nieprawidłowy login lub hasło aplikacji.":"Błąd WebDAV: "+rep->errorString());rep->deleteLater();return;}

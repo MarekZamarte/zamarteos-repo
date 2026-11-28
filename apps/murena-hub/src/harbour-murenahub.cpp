@@ -1,4 +1,6 @@
 #include <sailfishapp.h>
+#include <QGuiApplication>
+#include <QQuickView>
 #include <QQmlContext>
 #include "davclient.h"
 int main(int argc,char *argv[]){
