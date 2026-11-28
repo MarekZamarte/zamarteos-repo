@@ -19,7 +19,7 @@ Page{
  Button{x:Theme.horizontalPageMargin;width:parent.width-2*x;text:"Połącz i pokaż pliki";onClicked:page.connectCloud()}
  Label{x:Theme.horizontalPageMargin;width:parent.width-2*x;wrapMode:Text.WordWrap;color:davClient.error.length?Theme.errorColor:Theme.secondaryColor;text:davClient.error.length?davClient.error:(page.status||page.current||"Natywne połączenie WebDAV — bez przeglądarki")}
  SectionHeader{text:"Pliki i foldery"}
- BackgroundItem{width:parent.width;height:Theme.itemSizeSmall;visible:page.current.length>0;Label{x:Theme.horizontalPageMargin;anchors.verticalCenter:parent.verticalCenter;text:"↑ Folder nadrzędny";color:Theme.highlightColor};onClicked:davClient.list(page.upUrl(),page.user,page.password)}
+ BackgroundItem{width:parent.width;height:Theme.itemSizeSmall;visible:page.current.length>0;onClicked:davClient.list(page.upUrl(),page.user,page.password);Label{x:Theme.horizontalPageMargin;anchors.verticalCenter:parent.verticalCenter;text:"↑ Folder nadrzędny";color:Theme.highlightColor}}
  Repeater{model:davClient.entries;delegate:ListItem{width:parent.width;contentHeight:Theme.itemSizeMedium;Label{x:Theme.horizontalPageMargin;anchors.verticalCenter:parent.verticalCenter;width:parent.width-2*x;text:(modelData.isFolder?"[Folder] ":modelData.isImage?"[Zdjęcie] ":"[Plik] ")+modelData.name;truncationMode:TruncationMode.Fade;color:Theme.primaryColor}
  onClicked:{if(modelData.isFolder){page.current=modelData.url;davClient.list(page.current,page.user,page.password)}else davClient.download(modelData.url,page.user,page.password,modelData.name)}
  menu:ContextMenu{MenuItem{text:"Pobierz";onClicked:davClient.download(modelData.url,page.user,page.password,modelData.name)}}}}
