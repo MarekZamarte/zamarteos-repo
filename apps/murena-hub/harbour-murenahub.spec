@@ -1,17 +1,18 @@
 Name: harbour-murenahub
-Summary: Murena Workspace hub for Sailfish OS
-Version: 0.1.0
+Summary: Native Murena WebDAV file browser and photo viewer for Sailfish OS
+Version: 0.2.0
 Release: 1
 Group: Applications/Internet
 License: GPL-3.0-or-later
 URL: https://murena.io
 Source0: %{name}-%{version}.tar.bz2
 BuildRequires: pkgconfig(sailfishapp)
-BuildRequires: pkgconfig(qt5embedwidget)
 BuildRequires: qt5-qtdeclarative
-Requires: sailfish-components-webview-qt5
+BuildRequires: qt5-qtbase-devel
+BuildRequires: qt5-qtxml
+Requires: qt5-qtdeclarative
 %description
-Native Sailfish Silica app opening Murena Workspace in Sailfish WebView.
+Native Sailfish Silica WebDAV file browser and photo viewer. No browser or WebView.
 %prep
 %setup -q
 %build

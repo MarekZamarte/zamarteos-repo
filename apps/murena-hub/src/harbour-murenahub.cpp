@@ -1,2 +1,9 @@
 #include <sailfishapp.h>
-int main(int argc, char *argv[]) { return SailfishApp::main(argc, argv); }
+#include <QQmlContext>
+#include "davclient.h"
+int main(int argc,char *argv[]){
+ QScopedPointer<QGuiApplication> app(SailfishApp::application(argc,argv));
+ QScopedPointer<QQuickView> view(SailfishApp::createView());
+ DavClient client;view->rootContext()->setContextProperty("davClient",&client);
+ view->setSource(SailfishApp::pathTo("qml/harbour-murenahub.qml"));view->show();return app->exec();
+}
