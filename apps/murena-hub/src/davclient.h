@@ -2,6 +2,8 @@
 #include <QObject>
 #include <QVariantList>
 #include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QUrl>
 class DavClient : public QObject {
  Q_OBJECT
  Q_PROPERTY(QVariantList entries READ entries NOTIFY entriesChanged)
