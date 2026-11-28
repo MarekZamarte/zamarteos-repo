@@ -1,16 +1,16 @@
 Name: harbour-murenahub
 Summary: Native Murena WebDAV file browser and photo viewer for Sailfish OS
 Version: 0.2.0
-Release: 2
+Release: 3
 Group: Applications/Internet
 License: GPL-3.0-or-later
 URL: https://murena.io
 Source0: %{name}-%{version}.tar.bz2
-BuildRequires: pkgconfig(sailfishapp)
-BuildRequires: pkgconfig(Qt5Xml)
-BuildRequires: pkgconfig(Qt5Network)
+BuildRequires: sailfishsilica-qt5
 BuildRequires: qt5-qtdeclarative
-BuildRequires: qt5-qtbase-devel
+BuildRequires: pkgconfig(Qt5Network)
+BuildRequires: pkgconfig(Qt5Xml)
+Requires: sailfishsilica-qt5
 Requires: qt5-qtdeclarative
 %description
 Native Sailfish Silica WebDAV file browser and photo viewer. No browser or WebView.
