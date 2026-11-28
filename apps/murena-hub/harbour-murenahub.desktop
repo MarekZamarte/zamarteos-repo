@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Murena Hub
+Icon=harbour-murenahub
+Exec=harbour-murenahub
+Comment=Murena Workspace for Sailfish OS
+X-Nemo-Application-Type=silica-qt5
