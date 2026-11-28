@@ -51,7 +51,7 @@ jobs:
           "$SFDK" config --push target "$TARGET"
           cd apps/murena-hub
           mkdir -p SOURCES rpm
-          cp rpm/harbour-murenahub.spec rpm/harbour-murenahub.spec
+          cp harbour-murenahub.spec rpm/harbour-murenahub.spec
           tar -cjf SOURCES/harbour-murenahub-0.1.0.tar.bz2 \
             --transform='s,^apps/murena-hub,harbour-murenahub-0.1.0,' \
             --exclude='apps/murena-hub/SOURCES' \
