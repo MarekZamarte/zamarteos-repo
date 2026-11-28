@@ -39,7 +39,7 @@ jobs:
           LANG: C
           LC_ALL: C
         run: |
-          set -euo pipefail
+          set -eu
           SFDK="$HOME/SailfishOS/bin/sfdk"
           "$SFDK" engine start
           TOOLING="SailfishOS-5.0.0.62"
