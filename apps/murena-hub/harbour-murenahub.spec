@@ -1,7 +1,7 @@
 Name: harbour-murenahub
 Summary: Native Murena WebDAV file browser and photo viewer for Sailfish OS
 Version: 0.2.0
-Release: 4
+Release: 5
 Group: Applications/Internet
 License: GPL-3.0-or-later
 URL: https://murena.io
@@ -29,4 +29,5 @@ install -m 0644 qml/pages/*.qml %{buildroot}%{_datadir}/harbour-murenahub/qml/pa
 %files
 %{_bindir}/harbour-murenahub
 %{_datadir}/applications/harbour-murenahub.desktop
-%{_datadir}/harbour-murenahub/qml/
+%{_datadir}/harbour-murenahub/qml/harbour-murenahub.qml
+%{_datadir}/harbour-murenahub/qml/pages/*.qml
