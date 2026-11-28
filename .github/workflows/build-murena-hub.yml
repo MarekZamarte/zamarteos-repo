@@ -1,0 +1,82 @@
+name: Build Murena Hub for Sailfish OS
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/murena-hub/**'
+      - '.github/workflows/build-murena-hub.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install host prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl libegl1 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xkb1 libxcb-xfixes0 libxcb-shape0 libxcb-sync1 libxcb-util1 rpm2cpio cpio binutils
+          sudo systemctl start docker
+
+      - name: Install Sailfish SDK headlessly
+        env:
+          QT_QPA_PLATFORM: minimal
+          LANG: C
+          LC_ALL: C
+        run: |
+          curl -fL --retry 3 https://releases.sailfishos.org/sdk/installers/3.13.5/SailfishSDK-3.13.5-linux64-online.run -o /tmp/sailfish-sdk.run
+          chmod +x /tmp/sailfish-sdk.run
+          /tmp/sailfish-sdk.run non-interactive=1 accept-licenses=1 build-engine-type=docker
+
+      - name: Build AArch64 package in Sailfish target
+        env:
+          LANG: C
+          LC_ALL: C
+        run: |
+          set -euo pipefail
+          SFDK="$HOME/SailfishOS/bin/sfdk"
+          "$SFDK" engine start
+          TOOLING="SailfishOS-5.0.0.62"
+          TARGET="${TOOLING}-aarch64"
+          yes yes | "$SFDK" tools install-custom "$TOOLING" "https://releases.sailfishos.org/sdk/targets/Sailfish_OS-5.0.0.62-Sailfish_SDK_Tooling-i486.tar.7z"
+          yes yes | "$SFDK" tools install-custom "$TARGET" "https://releases.sailfishos.org/sdk/targets/Sailfish_OS-5.0.0.62-Sailfish_SDK_Target-aarch64.tar.7z"
+          "$SFDK" tools list | tee /tmp/sfdk-tools.txt
+          grep -Fq "$TARGET" /tmp/sfdk-tools.txt
+          "$SFDK" config --push target "$TARGET"
+          cd apps/murena-hub
+          mkdir -p SOURCES rpm
+          cp rpm/harbour-murenahub.spec rpm/harbour-murenahub.spec
+          tar -cjf SOURCES/harbour-murenahub-0.1.0.tar.bz2 \
+            --transform='s,^apps/murena-hub,harbour-murenahub-0.1.0,' \
+            --exclude='apps/murena-hub/SOURCES' \
+            --exclude='apps/murena-hub/RPMS' \
+            --exclude='apps/murena-hub/rpm' \
+            -C ../.. apps/murena-hub
+          "$SFDK" build
+          RPM="$(find RPMS -type f -name '*.rpm' -print -quit)"
+          test -n "$RPM"
+          mkdir -p /tmp/murena-rpm-check
+          cd /tmp/murena-rpm-check
+          rpm2cpio "$GITHUB_WORKSPACE/apps/murena-hub/$RPM" | cpio -id --quiet
+          BIN="./usr/bin/harbour-murenahub"
+          test -x "$BIN"
+          readelf --version-info "$BIN" > /tmp/murena-symbol-versions.txt
+          if grep -E 'GLIBC_2\.(3[1-9]|[4-9][0-9])' /tmp/murena-symbol-versions.txt; then
+            echo "ERROR: binary requires newer glibc than Sailfish OS 5.0 provides"
+            exit 1
+          fi
+          rpm -qp --requires "$GITHUB_WORKSPACE/apps/murena-hub/$RPM" | tee /tmp/murena-rpm-requires.txt
+
+      - name: Upload AArch64 RPM
+        uses: actions/upload-artifact@v4
+        with:
+          name: murena-hub-sailfish-aarch64
+          path: apps/murena-hub/RPMS/*.rpm
+          if-no-files-found: error
+          retention-days: 30
